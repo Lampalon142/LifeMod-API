@@ -53,5 +53,5 @@ Open-source: Public codebase for transparency and potential improvements.
  Permissions can be assigned using your permissions plugin (such as LuckPerms, PermissionsEx, etc.).
 
 ## Technical Details
-Partial GUI: Only /reports have a GUI for the reportsnothingother moderation actions require typed
+Partial GUI: Only /reports have a GUI for the reports -- other moderation actions require typed
 Lightweight: No dependencies on external APIs, ensuring stability across supported versions.
