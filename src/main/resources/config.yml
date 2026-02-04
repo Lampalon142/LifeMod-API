@@ -49,6 +49,12 @@ database:
   sqlite:
     file: "database.db"
 
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  password: ""
+
 UseLuckPerms: false
 
 ## Chat Manager
