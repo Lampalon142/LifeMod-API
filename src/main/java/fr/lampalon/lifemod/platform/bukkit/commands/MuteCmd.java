@@ -18,13 +18,17 @@ public class MuteCmd extends BaseSanctionCmd {
         sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(success));
         
         if (target.isOnline()) {
-            String received = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("sanctions.mute.received", "&cYou have been muted! Reason: &f%reason%")
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            String received = lang.getMessage("sanctions.mute.received", "&cYou have been muted! Reason: &f%reason%")
                     .replace("%reason%", sanction.getReason());
             target.getPlayer().sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(received));
 
             // Ultra complete visual mute
             fr.lampalon.lifemod.integration.nms.PacketController pc = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getPacketController();
-            pc.sendTitle(target.getPlayer(), "&d&lMUTED", "&7" + sanction.getReason(), 10, 40, 10);
+            String title = lang.getMessage("sanctions.mute.title", "&d&lMUTED");
+            String subtitle = lang.getMessage("sanctions.mute.subtitle", "&7%reason%").replace("%reason%", sanction.getReason());
+            
+            pc.sendTitle(target.getPlayer(), title, subtitle, 10, 40, 10);
             pc.sendActionBar(target.getPlayer(), received);
         }
     }

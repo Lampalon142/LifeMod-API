@@ -54,6 +54,8 @@ sanctions:
   mute:
     success: "&aPlayer &e%player% &ahas been muted for: &f%reason%"
     received: "&cYou have been muted! Reason: &f%reason%"
+    title: "&d&lMUTED"
+    subtitle: "&7%reason%"
     blocked: |
       &cYou are muted!
       &7Reason: &f%reason%
@@ -76,6 +78,8 @@ sanctions:
   warn:
     success: "&aWarning sent to &e%player% for: &f%reason%"
     received: "&c&lWARNING! &7Reason: &f%reason%"
+    title: "&c&lWARNING"
+    subtitle: "&7%reason%"
 
   # Broadcasts (Local & Network)
   broadcast:
