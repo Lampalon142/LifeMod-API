@@ -4,7 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ColorUtil {
-    public static final Pattern HEX_PATTERN = Pattern.compile("(&#|#)([A-Fa-f0-9]{6})");
+    public static final Pattern HEX_PATTERN = Pattern.compile("(&#)([A-Fa-f0-9]{6})");
     public static final Pattern RGB_PATTERN = Pattern.compile("rgb\\((\\d{1,3}),(\\d{1,3}),(\\d{1,3})\\)");
 
     /**

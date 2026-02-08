@@ -12,9 +12,15 @@ public class WarnCmd extends BaseSanctionCmd {
 
     @Override
     protected void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction) {
-        sender.sendMessage("&aAvertissement envoyé à &e" + target.getName() + " &apour: &f" + sanction.getReason());
+        String success = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("warn.success", "&aWarning sent to &e%player% &afor: &f%reason%")
+                .replace("%player%", target.getName())
+                .replace("%reason%", sanction.getReason());
+        sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(success));
+        
         if (target.isOnline()) {
-            target.getPlayer().sendMessage("&c&lAVERTISSEMENT ! &7Raison: &f" + sanction.getReason());
+            String received = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("warn.received", "&c&lWARNING! &7Reason: &f%reason%")
+                    .replace("%reason%", sanction.getReason());
+            target.getPlayer().sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(received));
         }
     }
 }

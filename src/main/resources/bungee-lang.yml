@@ -1,0 +1,23 @@
+## LifeMod Proxy Language
+sanctions:
+  broadcast:
+    ban:
+      public: "&8&m----------------------------------------
+&6&lNetwork &8» &e%target% &aa été &c&lBAN &apar &e%issuer%&a.
+&7Raison: &f%reason%
+&7Serveur: &e%server%
+&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7a banni &c%target% &7depuis &e%server%"
+    unban: "&6&lNetwork &8» &a%target% a été débanni par %issuer%."
+
+ban:
+  kick-message: "&8&m----------------------------------------
+
+&6&lLifeMod Network
+
+&cVous êtes banni de tout le réseau !
+
+&7Raison: &f%reason%
+&7Par: &e%issuer%
+
+&8&m----------------------------------------"

@@ -1,7 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseManager;
+import fr.lampalon.lifemod.common.database.DatabaseManager;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
@@ -55,7 +55,7 @@ public class ModeratorAuthService {
         String hash = hash(password);
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(
-                     "INSERT OR REPLACE INTO moderator_auth (uuid, name, password_hash, ip, last_update) VALUES (?, ?, ?, ?, ?)")) {
+                     "REPLACE INTO moderator_auth (uuid, name, password_hash, ip, last_update) VALUES (?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, name);
             ps.setString(3, hash);

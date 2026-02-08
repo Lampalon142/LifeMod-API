@@ -22,8 +22,7 @@ public class SpectateCmd implements CommandExecutor, TabCompleter {
     }
 
     private String getLang(String key) {
-        String msg = LifeMod.getInstance().getLangConfig().getString(key);
-        return msg != null ? msg : "§c[Lang] Missing key: " + key;
+        return fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage(key);
     }
 
     @Override

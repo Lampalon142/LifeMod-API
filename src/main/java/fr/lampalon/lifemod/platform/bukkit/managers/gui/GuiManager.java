@@ -3,6 +3,7 @@ package fr.lampalon.lifemod.platform.bukkit.managers.gui;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.common.model.Report;
 import fr.lampalon.lifemod.platform.bukkit.gui.ReportMainMenu;
+import fr.lampalon.lifemod.platform.bukkit.gui.StaffNotesGui;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -29,6 +30,10 @@ public class GuiManager {
 
     public int getCurrentPage(Player player) {
         return currentPages.getOrDefault(player.getUniqueId(), 0);
+    }
+
+    public void openStaffNotesMenu(Player player, Report report) {
+        new StaffNotesGui(player, report).open();
     }
 }
 

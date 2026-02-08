@@ -10,28 +10,33 @@ import java.util.concurrent.CompletableFuture;
 public interface ISanctionService {
     
     /**
-     * Applique une nouvelle sanction à un joueur
+     * Applies a new sanction to a player
      */
     CompletableFuture<Sanction> applySanction(Sanction sanction);
 
     /**
-     * Révoque une sanction active
+     * Revokes an active sanction
      */
-    CompletableFuture<Boolean> revokeSanction(UUID playerUuid, SanctionType type, UUID removedBy, String removedByName, String reason);
+    CompletableFuture<Boolean> revokeSanction(UUID playerUuid, SanctionType type, UUID removedBy, String removedByName, String reason, boolean silent);
 
     /**
-     * Vérifie si une sanction de ce type est active pour le joueur
+     * Checks if a sanction of this type is active for the player
      */
-    CompletableFuture<Sanction> getActiveSanction(UUID playerUuid, SanctionType type);
+    CompletableFuture<Sanction> getActiveSanction(UUID playerUuid, String playerName, SanctionType type);
 
     /**
-     * Récupère l'historique complet d'un joueur
+     * Retrieves the complete history of a player
      */
     CompletableFuture<List<Sanction>> getHistory(UUID playerUuid);
 
     /**
-     * Vérifie et applique l'Auto-Punish si nécessaire
+     * Retrieves sanctions issued by a moderator
      */
-    void checkAutoPunish(UUID playerUuid, SanctionType type);
+    CompletableFuture<List<Sanction>> getSanctionsIssuedBy(String issuerName, UUID issuerUuid);
+
+    /**
+     * Checks and applies Auto-Punish if necessary
+     */
+    void checkAutoPunish(UUID playerUuid, String category);
 }
 

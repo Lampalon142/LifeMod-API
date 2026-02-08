@@ -6,10 +6,15 @@ import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.ISanctionService;
+import fr.lampalon.lifemod.common.utils.TimeUtil;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class BaseSanctionCmd extends LifeCommand {
@@ -21,10 +26,17 @@ public abstract class BaseSanctionCmd extends LifeCommand {
         this.type = type;
     }
 
+    protected boolean supportsDuration() {
+        return true;
+    }
+
     @Override
     public void execute(ICommandSender sender, String[] args) {
-        if (args.length < 2 && type != SanctionType.NOTE) {
-            sender.sendMessage("&cUsage: /" + getName() + " [joueur] [raison] <temps> <-s>");
+        if (args.length < 1) {
+            String key = supportsDuration() ? "sanctions.cmd.usage" : "sanctions.cmd.usage-no-time";
+            String usage = LifeMod.getInstance().getLangConfig().getString(key, "&cUsage: /" + getName() + " [player] [reason] <time> <-s>")
+                    .replace("%cmd%", getName());
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(usage));
             return;
         }
 
@@ -34,29 +46,48 @@ public abstract class BaseSanctionCmd extends LifeCommand {
 
         boolean silent = false;
         long duration = 0;
-        int reasonEndIndex = args.length;
+        List<String> reasonParts = new ArrayList<>();
 
         for (int i = 1; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("-s")) {
+            String arg = args[i];
+            if (arg.equalsIgnoreCase("-s")) {
                 silent = true;
-                reasonEndIndex = Math.min(reasonEndIndex, i);
-            }
-            if (i == args.length - 1 && args[i].matches("\\d+[smhdw]")) {
-                duration = parseTime(args[i]);
-                reasonEndIndex = Math.min(reasonEndIndex, i);
+            } else if (supportsDuration() && arg.matches("\\d+[smhdw]+") && i >= args.length - 2) {
+                // On considère que le temps est à la fin (LiteBans style)
+                duration = TimeUtil.parseTime(arg);
+            } else {
+                reasonParts.add(arg);
             }
         }
 
-        String reason = String.join(" ", Arrays.copyOfRange(args, 1, reasonEndIndex));
+        String reason = String.join(" ", reasonParts);
         if (reason.isEmpty() && type != SanctionType.NOTE) {
-            sender.sendMessage("&cVous devez spécifier une raison.");
-            return;
+            reason = LifeMod.getInstance().getLangConfig().getString("sanctions.cmd.default-reason", "No reason specified");
         }
+
+        String category = "Other";
+        ConfigurationSection categoriesSec = LifeMod.getInstance().getConfigConfig().getConfigurationSection("auto-punish.categories");
+        if (categoriesSec != null) {
+            for (String cat : categoriesSec.getKeys(false)) {
+                List<String> keywords = LifeMod.getInstance().getLangConfig().getStringList("report.detail.categories." + cat);
+                for (String kw : keywords) {
+                    if (reason.toLowerCase().contains(kw.toLowerCase())) {
+                        category = cat;
+                        break;
+                    }
+                }
+            }
+        }
+
+        String serverName = LifeMod.getInstance().getConfigConfig().getString("server-name", "Survival");
 
         Sanction sanction = new Sanction(
                 targetUuid,
+                offlineTarget.getName(),
                 sender.getUniqueId(),
                 sender.getName(),
+                serverName,
+                category,
                 type,
                 reason,
                 duration,
@@ -69,22 +100,5 @@ public abstract class BaseSanctionCmd extends LifeCommand {
     }
 
     protected abstract void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction);
-
-    private long parseTime(String time) {
-        try {
-            long val = Long.parseLong(time.substring(0, time.length() - 1));
-            char unit = time.charAt(time.length() - 1);
-            switch (unit) {
-                case 's': return val * 1000;
-                case 'm': return val * 60 * 1000;
-                case 'h': return val * 3600 * 1000;
-                case 'd': return val * 86400 * 1000;
-                case 'w': return val * 7 * 86400 * 1000;
-                default: return 0;
-            }
-        } catch (Exception e) {
-            return 0;
-        }
-    }
 }
 

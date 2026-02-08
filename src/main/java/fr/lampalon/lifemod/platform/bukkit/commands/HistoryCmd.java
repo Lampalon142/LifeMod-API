@@ -20,7 +20,8 @@ public class HistoryCmd extends LifeCommand {
     @Override
     public void execute(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            sender.sendMessage("&cUsage: /history [joueur]");
+            String usage = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("history.usage", "&cUsage: /history [player]");
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(usage));
             return;
         }
 
@@ -30,7 +31,7 @@ public class HistoryCmd extends LifeCommand {
 
         ServiceRegistry.get(ISanctionService.class).getHistory(targetUuid).thenAccept(history -> {
             Bukkit.getScheduler().runTask(Bukkit.getPluginManager().getPlugin("LifeMod"), () -> {
-                new HistoryGui((Player) Bukkit.getPlayer(sender.getUniqueId()), history, targetName).open();
+                new HistoryGui((Player) sender.getHandle(), history, targetName, targetUuid).open();
             });
         });
     }

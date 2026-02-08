@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageUtil {
-    private static final Pattern HEX_PATTERN = Pattern.compile("(&#|#)([A-Fa-f0-9]{6})");
+    private static final Pattern HEX_PATTERN = Pattern.compile("(&#)([A-Fa-f0-9]{6})");
     private static final Pattern RGB_PATTERN = Pattern.compile("rgb\\((\\d{1,3}),(\\d{1,3}),(\\d{1,3})\\)");
     private static final String PREFIX_PLACEHOLDER = "%prefix%";
 

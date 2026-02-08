@@ -1,11 +1,10 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit.commands;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.commands;
-
+import fr.lampalon.lifemod.common.database.DatabaseManager;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseManager;
+import fr.lampalon.lifemod.platform.bukkit.utils.BukkitDatabaseUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -64,7 +63,7 @@ public class OInvseeCmd implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        ItemStack[] savedInventory = databaseManager.getDatabaseProvider().getPlayerInventory(target.getUniqueId());
+        ItemStack[] savedInventory = BukkitDatabaseUtil.deserializeInventory(databaseManager.getDatabaseProvider().getRawInventory(target.getUniqueId()));
         if (savedInventory == null) {
             player.sendMessage(MessageUtil.formatMessage(langConfig.getString("oinvsee.no-inventory", "&cNo saved inventory for %target%.").replace("%target%", args[0])));
             debug.log("oinvsee", "No saved inventory for " + args[0]);

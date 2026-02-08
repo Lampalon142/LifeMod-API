@@ -1,0 +1,4 @@
+name: LifeMod
+version: '2.0.0-SNAPSHOT'
+main: fr.lampalon.lifemod.platform.bungee.BungeeLifeMod
+author: Lampalon

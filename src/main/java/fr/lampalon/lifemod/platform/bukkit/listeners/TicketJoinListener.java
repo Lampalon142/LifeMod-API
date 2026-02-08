@@ -1,6 +1,4 @@
-package fr.lampalon.lifemod.platform.bukkit
-
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.listeners;
+package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;

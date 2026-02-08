@@ -1,6 +1,6 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit.commands;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.commands;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;

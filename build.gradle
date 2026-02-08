@@ -1,0 +1,82 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.3'
+}
+
+group = 'fr.lampalon.lifemod'
+version = '2.0.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.xenondevs.xyz/releases' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://repo.codemc.io/repository/maven-public/' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
+    compileOnly 'net.md-5:bungeecord-api:1.20-R0.2-SNAPSHOT'
+    compileOnly 'net.luckperms:api:5.4'
+
+    implementation 'com.github.retrooper:packetevents-spigot:2.7.0'
+    implementation 'xyz.xenondevs.invui:invui:1.49'
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.mysql:mysql-connector-j:8.3.0'
+    implementation 'org.bstats:bstats-bukkit:3.0.2'
+    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+
+    relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
+    relocate 'xyz.xenondevs.invui', 'fr.lampalon.lifemod.libs.invui'
+    relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
+    relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
+    relocate 'org.bstats', 'fr.lampalon.lifemod.libs.bstats'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+tasks.register('deploy') {
+    dependsOn shadowJar
+    group = "deployment"
+
+    doLast {
+        def shadowJarFile = shadowJar.archiveFile.get().asFile
+        def destinations = [
+                "C:/Users/Lampalon/Desktop/serveurs/Proxy/plugins",
+                "C:/Users/Lampalon/Desktop/serveurs/Lobby/plugins"
+        ]
+
+        destinations.each { destPath ->
+            def destDir = file(destPath)
+            if (!destDir.exists()) {
+                destDir.mkdirs()
+            }
+
+            copy {
+                from shadowJarFile
+                into destDir
+            }
+        }
+    }
+}
+
+build.dependsOn deploy

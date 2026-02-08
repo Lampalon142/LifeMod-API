@@ -35,13 +35,21 @@ public abstract class PagedAbstractGui extends AbstractGui {
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName("§aPage Précédente");
+                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.previous", "&c« Previous Page")));
+                        if (!gui.hasPreviousPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.already-first", "&8You are already on the first page.")));
+                        return builder;
                     }
                 })
                 .addIngredient('>', new PageItem(true) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName("§aPage Suivante");
+                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.next", "&aNext Page »")));
+                        if (!gui.hasNextPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.already-last", "&8You are already on the last page.")));
+                        return builder;
                     }
                 })
                 .setContent(getListItems())

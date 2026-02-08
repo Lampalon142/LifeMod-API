@@ -7,6 +7,8 @@ import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import org.bukkit.Bukkit;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class BaseRevokeCmd extends LifeCommand {
@@ -20,22 +22,41 @@ public abstract class BaseRevokeCmd extends LifeCommand {
 
     @Override
     public void execute(ICommandSender sender, String[] args) {
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        
         if (args.length < 1) {
-            sender.sendMessage("&cUsage: /" + getName() + " [joueur] <raison>");
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("revoke.usage", "&cUsage: /%cmd% [player] <reason> <-s>").replace("%cmd%", getName())));
             return;
         }
 
         String targetName = args[0];
         UUID targetUuid = Bukkit.getOfflinePlayer(targetName).getUniqueId();
-        String reason = args.length > 1 ? String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)) : "Révoqué par un administrateur";
+        
+        boolean silent = false;
+        List<String> reasonParts = new ArrayList<>();
+        for (int i = 1; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("-s")) {
+                silent = true;
+            } else {
+                reasonParts.add(args[i]);
+            }
+        }
 
+        String reason = reasonParts.isEmpty() ? lang.getMessage("sanctions.cmd.default-reason", "Revoked by an administrator") : String.join(" ", reasonParts);
+
+        boolean finalSilent = silent;
         ServiceRegistry.get(ISanctionService.class).revokeSanction(
-                targetUuid, type, sender.getUniqueId(), sender.getName(), reason
+                targetUuid, type, sender.getUniqueId(), sender.getName(), reason, silent
         ).thenAccept(success -> {
             if (success) {
-                sender.sendMessage("&aLa sanction (" + type.name() + ") de &e" + targetName + " &aa été levée.");
+                // Le broadcast est géré dans SanctionService
+                String msgKey = finalSilent ? "revoke.success-silent" : "revoke.success";
+                String msg = lang.getMessage(msgKey, "&aThe sanction (%type%) for &e%player% &ahas been revoked.")
+                        .replace("%type%", type.name())
+                        .replace("%player%", targetName);
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(msg));
             } else {
-                sender.sendMessage("&cCe joueur n'a pas de sanction active de type " + type.name());
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("revoke.none-active", "&cThis player has no active sanction of type %type%").replace("%type%", type.name())));
             }
         });
     }

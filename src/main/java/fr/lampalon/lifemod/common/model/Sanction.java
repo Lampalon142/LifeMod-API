@@ -5,8 +5,11 @@ import java.util.UUID;
 public class Sanction {
     private final UUID uuid; // ID unique de la sanction
     private final UUID playerUuid;
+    private final String playerName;
     private final UUID issuerUuid; // UUID du staff (ou null si Console)
     private final String issuerName; // Nom du staff (pour historique rapide)
+    private final String serverName;
+    private final String category;
     private final SanctionType type;
     private final String reason;
     private final long createdAt;
@@ -19,12 +22,15 @@ public class Sanction {
     private String removeReason;
     private long removedAt;
 
-    public Sanction(UUID uuid, UUID playerUuid, UUID issuerUuid, String issuerName, SanctionType type, 
+    public Sanction(UUID uuid, UUID playerUuid, String playerName, UUID issuerUuid, String issuerName, String serverName, String category, SanctionType type, 
                     String reason, long createdAt, long duration, boolean silent, boolean active) {
         this.uuid = uuid;
         this.playerUuid = playerUuid;
+        this.playerName = playerName;
         this.issuerUuid = issuerUuid;
         this.issuerName = issuerName;
+        this.serverName = serverName;
+        this.category = category;
         this.type = type;
         this.reason = reason;
         this.createdAt = createdAt;
@@ -34,8 +40,8 @@ public class Sanction {
     }
     
     // Constructeur simplifié pour création
-    public Sanction(UUID playerUuid, UUID issuerUuid, String issuerName, SanctionType type, String reason, long duration, boolean silent) {
-        this(UUID.randomUUID(), playerUuid, issuerUuid, issuerName, type, reason, System.currentTimeMillis(), duration, silent, true);
+    public Sanction(UUID playerUuid, String playerName, UUID issuerUuid, String issuerName, String serverName, String category, SanctionType type, String reason, long duration, boolean silent) {
+        this(UUID.randomUUID(), playerUuid, playerName, issuerUuid, issuerName, serverName, category, type, reason, System.currentTimeMillis(), duration, silent, true);
     }
 
     public boolean isPermanent() {
@@ -67,8 +73,11 @@ public class Sanction {
     // Getters
     public UUID getUuid() { return uuid; }
     public UUID getPlayerUuid() { return playerUuid; }
+    public String getPlayerName() { return playerName; }
     public UUID getIssuerUuid() { return issuerUuid; }
     public String getIssuerName() { return issuerName; }
+    public String getServerName() { return serverName; }
+    public String getCategory() { return category; }
     public SanctionType getType() { return type; }
     public String getReason() { return reason; }
     public long getCreatedAt() { return createdAt; }

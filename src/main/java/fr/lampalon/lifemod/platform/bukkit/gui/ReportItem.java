@@ -30,14 +30,22 @@ public class ReportItem extends AbstractItem {
 
     @Override
     public ItemProvider getItemProvider() {
-        String targetName = getNameFromUuid(report.getTargetUuid());
-        String reporterName = getNameFromUuid(report.getReporterUuid());
+        OfflinePlayer target = Bukkit.getOfflinePlayer(report.getTargetUuid());
+        OfflinePlayer reporter = Bukkit.getOfflinePlayer(report.getReporterUuid());
+        
+        String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
+        String reporterName = reporter != null && reporter.getName() != null ? reporter.getName() : report.getReporterUuid().toString();
+        
+        String targetStatus = (target != null && target.isOnline()) ? "§aOnline" : "§cOffline";
+        String reporterStatus = (reporter != null && reporter.isOnline()) ? "§aOnline" : "§cOffline";
 
         List<String> loreTemplate = LifeMod.getInstance().getLangConfig().getStringList("report.gui.lore");
         List<String> lore = loreTemplate.stream()
                 .map(line -> MessageUtil.formatMessage(line
                         .replace("%target%", targetName)
+                        .replace("%target_status%", targetStatus)
                         .replace("%reporter%", reporterName)
+                        .replace("%reporter_status%", reporterStatus)
                         .replace("%reason%", report.getReason())
                         .replace("%status%", MessageUtil.getStatusDisplayName(report.getStatus()))
                         .replace("%server%", report.getServerName())
@@ -48,7 +56,7 @@ public class ReportItem extends AbstractItem {
 
         String displayName = LifeMod.getInstance().getLangConfig()
                 .getString("report.gui.name", "&eReport: %uuid%")
-                .replace("%uuid%", report.getUuid().toString());
+                .replace("%uuid%", report.getUuid().toString().substring(0, 8));
 
         ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(MessageUtil.formatMessage(displayName));
         for (String line : lore) {

@@ -1,11 +1,17 @@
 package fr.lampalon.lifemod.platform.bukkit.gui;
 
 import fr.lampalon.lifemod.common.model.Report;
+import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import xyz.xenondevs.invui.gui.Gui;
 import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class ReportDetailGui extends AbstractGui {
 
@@ -18,25 +24,56 @@ public class ReportDetailGui extends AbstractGui {
 
     @Override
     public Gui buildGui() {
+        OfflinePlayer reporter = Bukkit.getOfflinePlayer(report.getReporterUuid());
+        OfflinePlayer target = Bukkit.getOfflinePlayer(report.getTargetUuid());
+        
+        String reporterName = reporter != null && reporter.getName() != null ? reporter.getName() : report.getReporterUuid().toString();
+        String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
+
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+
         return Gui.normal()
                 .setStructure(
                         "# # # # # # # # #",
-                        "# R . T . . . . #",
+                        "# . R . I . T . #",
                         "# . . . . . . . #",
-                        "# . I . . . . . #",
+                        "# . L . A . C . #",
                         "# . . . . . . . #",
                         "# # # # B # # # #")
                 .addIngredient('#', createBorder())
-                .addIngredient('R', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD).setDisplayName("§eReporter: §f" + report.getReporterUuid())))
-                .addIngredient('T', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD).setDisplayName("§cTarget: §f" + report.getTargetUuid())))
-                .addIngredient('I', createActionItem(Material.BOOK, "report.detail.info.name", "report.detail.info.lore", 
-                        "%reason%", report.getReason(),
-                        "%server%", report.getServerName()))
-                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName("§7Retour"), click -> {
-                    // Exemple de retour
+                .addIngredient('R', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.reporter", "%player%", reporterName)))
+                        .addLoreLines(MessageUtil.formatMessage("&7Status: " + (reporter != null && reporter.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                .addIngredient('T', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.target", "%player%", targetName)))
+                        .addLoreLines(MessageUtil.formatMessage("&7Status: " + (target != null && target.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                .addIngredient('I', new SimpleItem(new ItemBuilder(Material.BOOK)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.info")))
+                        .addLoreLines(
+                                MessageUtil.formatMessage(lang.getMessage("report.detail.reason", "%reason%", report.getReason())),
+                                MessageUtil.formatMessage(lang.getMessage("report.detail.server", "%server%", report.getServerName())),
+                                MessageUtil.formatMessage(lang.getMessage("report.detail.status", "%status%", report.getStatus().name())),
+                                MessageUtil.formatMessage(lang.getMessage("report.detail.date", "%date%", new SimpleDateFormat(dateFormat).format(new Date(report.getCreatedAt()))))
+                        )))
+                .addIngredient('L', new SimpleItem(new ItemBuilder(Material.COMPASS)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.teleport")))
+                        .addLoreLines(lang.getStringList("report.detail.teleport-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                .addIngredient('A', new SimpleItem(new ItemBuilder(Material.LIME_DYE)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.assign")))
+                        .addLoreLines(lang.getStringList("report.detail.assign-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                .addIngredient('C', new SimpleItem(new ItemBuilder(Material.RED_DYE)
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.close")))
+                        .addLoreLines(lang.getStringList("report.detail.close-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.back", "&7« Back"))), click -> {
                     player.closeInventory();
                 }))
                 .build();
+    }
+
+    @Override
+    protected String getTitle() {
+        return MessageUtil.formatMessage("&dReport: &e#" + report.getUuid().toString().substring(0, 8));
     }
 
     @Override
@@ -44,4 +81,3 @@ public class ReportDetailGui extends AbstractGui {
         return "report.detail.title";
     }
 }
-

@@ -1,6 +1,6 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.listeners;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.NoteInputManager;

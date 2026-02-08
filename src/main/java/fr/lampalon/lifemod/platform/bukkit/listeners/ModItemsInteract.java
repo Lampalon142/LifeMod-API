@@ -61,10 +61,11 @@ public class ModItemsInteract implements Listener {
   }
 
   private void handleCPSTest(Player mod, Player target) {
+    fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
     if (cpsCooldowns.containsKey(mod.getUniqueId())) {
       long last = cpsCooldowns.get(mod.getUniqueId());
       if (System.currentTimeMillis() - last < cpsTestCooldown * 1000) {
-        mod.sendMessage(MessageUtil.formatMessage("&cCooldown en cours..."));
+        mod.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.cooldown", "&cCooldown active...")));
         return;
       }
     }
@@ -74,13 +75,13 @@ public class ModItemsInteract implements Listener {
     data.target = target;
     cpsTests.put(mod.getUniqueId(), data);
 
-    mod.sendMessage(MessageUtil.formatMessage("&aDébut du test CPS sur &e" + target.getName()));
+    mod.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.cps-start", "&aCPS test started on &e%player%").replace("%player%", target.getName())));
     
     Bukkit.getScheduler().runTaskLater(LifeMod.getInstance(), () -> {
       CPSData result = cpsTests.remove(mod.getUniqueId());
       if (result != null) {
         int cps = (int) (result.clicks / cpsTestDuration);
-        mod.sendMessage(MessageUtil.formatMessage("&6Résultat CPS pour &e" + target.getName() + " : &b" + cps + " CPS"));
+        mod.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.cps-result", "&6CPS Result for &e%player% : &b%cps% CPS").replace("%player%", target.getName()).replace("%cps%", String.valueOf(cps))));
       }
     }, cpsTestDuration * 20L);
 
@@ -112,18 +113,20 @@ public class ModItemsInteract implements Listener {
 
   private void handleFreeze(Player player, Player target) {
     FreezeManager fm = LifeMod.getInstance().getFreezeManager();
+    fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
     if (fm.isPlayerFrozen(target.getUniqueId())) {
       fm.unfreezePlayer(player, target);
-      player.sendMessage(MessageUtil.formatMessage("&aVous avez libéré &e" + target.getName()));
+      player.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.unfreeze", "&aYou unfroze &e%player%").replace("%player%", target.getName())));
     } else {
       fm.freezePlayer(player, target);
-      player.sendMessage(MessageUtil.formatMessage("&cVous avez gelé &e" + target.getName()));
+      player.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.freeze", "&cYou froze &e%player%").replace("%player%", target.getName())));
     }
   }
 
   private void handleKill(Player player, Player target) {
     target.setHealth(0);
-    player.sendMessage(MessageUtil.formatMessage("&cVous avez tué &e" + target.getName()));
+    fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+    player.sendMessage(MessageUtil.formatMessage(lang.getMessage("mod.items.kill", "&cYou killed &e%player%").replace("%player%", target.getName())));
   }
 
   private void teleportRandomPlayer(Player player) {
@@ -135,9 +138,11 @@ public class ModItemsInteract implements Listener {
 
   private void toggleVanish(Player player) {
     VanishedManager vm = LifeMod.getInstance().getPlayerManager();
+    fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
     boolean vanished = !VanishedManager.isVanished(player);
     vm.setVanished(vanished, player);
-    player.sendMessage(MessageUtil.formatMessage(vanished ? "&aVanish activé" : "&cVanish désactivé"));
+    String msg = vanished ? lang.getMessage("mod.items.vanish-on", "&aVanish enabled") : lang.getMessage("mod.items.vanish-off", "&cVanish disabled");
+    player.sendMessage(MessageUtil.formatMessage(msg));
   }
 
   private static class CPSData {

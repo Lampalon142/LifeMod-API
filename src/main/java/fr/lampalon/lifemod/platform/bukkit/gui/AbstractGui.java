@@ -44,13 +44,17 @@ public abstract class AbstractGui {
     }
 
     protected Item createBorder() {
-        return new SimpleItem(new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName(" "));
+        return new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setDisplayName(" ").setDamage((short) 15)); // Black stained glass for 1.8-1.12, or just DARK_GRAY in newer
     }
 
-    protected Item createItem(Material material, String nameKey, List<String> lore) {
-        ItemBuilder builder = new ItemBuilder(material).setDisplayName(lang.getMessage(nameKey));
+    protected Item createBorder(Material material) {
+        return new SimpleItem(new ItemBuilder(material).setDisplayName(" "));
+    }
+
+    protected Item createItem(Material material, String displayName, List<String> lore) {
+        ItemBuilder builder = new ItemBuilder(material).setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(displayName));
         for (String line : lore) {
-            builder.addLoreLines(line);
+            builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(line));
         }
         return new SimpleItem(builder);
     }
@@ -67,7 +71,7 @@ public abstract class AbstractGui {
 
         ItemBuilder builder = new ItemBuilder(material).setDisplayName(name);
         for (String line : loreRaw.split("\n")) {
-            builder.addLoreLines(line);
+            builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(line));
         }
         
         return new SimpleItem(builder);

@@ -8,5 +8,6 @@ public interface ICommandSender {
     String getName();
     UUID getUniqueId(); // Sera null pour la console
     boolean isPlayer();
+    Object getHandle();
 }
 

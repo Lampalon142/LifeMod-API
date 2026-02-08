@@ -1,0 +1,25 @@
+## LifeMod Proxy Configuration
+server-name: "Proxy"
+
+database:
+  type: "mysql"
+  host: localhost
+  port: 3306
+  name: lifemod
+  user: root
+  password: ""
+  poolsize: 10
+
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  password: ""
+
+# Le proxy peut forcer certaines règles globalement
+auto-punish:
+  enabled: true
+  mode: "GLOBAL"
+  global:
+    thresholds:
+      3: "kick %player% &cAuto-Punish Global: 3 avertissements."

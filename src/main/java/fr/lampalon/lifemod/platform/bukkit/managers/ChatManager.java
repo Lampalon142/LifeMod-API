@@ -15,6 +15,7 @@ public class ChatManager implements Listener {
     private final DebugManager debug;
     private boolean enabled;
     private List<String> blacklist;
+    private final java.util.Map<java.util.UUID, java.util.function.Consumer<String>> inputCallbacks = new java.util.HashMap<>();
 
     public ChatManager(LifeMod plugin) {
         this.plugin = plugin;
@@ -22,6 +23,10 @@ public class ChatManager implements Listener {
         reloadConfig();
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
+    }
+
+    public void awaitChatInput(Player player, java.util.function.Consumer<String> callback) {
+        inputCallbacks.put(player.getUniqueId(), callback);
     }
 
     public void reloadConfig() {
@@ -32,6 +37,14 @@ public class ChatManager implements Listener {
 
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
+        if (inputCallbacks.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+            java.util.function.Consumer<String> callback = inputCallbacks.remove(event.getPlayer().getUniqueId());
+            // Run on next tick to avoid async issues if callback opens GUI
+            Bukkit.getScheduler().runTask(plugin, () -> callback.accept(event.getMessage()));
+            return;
+        }
+
         if (enabled) {
             String message = event.getMessage();
             Player player = event.getPlayer();

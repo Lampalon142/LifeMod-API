@@ -1,11 +1,11 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.listeners;
-
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.PlayerManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.VanishedManager;
+import fr.lampalon.lifemod.platform.bukkit.utils.BukkitDatabaseUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -33,8 +33,10 @@ public class PlayerQuit implements Listener {
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
 
-        LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().savePlayerCoords(uuid, location);
-        LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().savePlayerInventory(uuid, player.getInventory());
+        DatabaseProvider db = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider();
+        db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        db.saveRawInventory(uuid, BukkitDatabaseUtil.serializeInventory(player.getInventory()));
+        
         VanishedManager.handlePlayerQuit(player);
 
         debug.log("playerquit", player.getName() + " data saved on quit.");

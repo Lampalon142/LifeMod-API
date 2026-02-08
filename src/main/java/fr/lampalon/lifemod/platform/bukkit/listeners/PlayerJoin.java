@@ -65,6 +65,43 @@ public class PlayerJoin implements Listener {
                 });
             });
         }
+
+        // Ban Evasion Check
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String ip = player.getAddress().getAddress().getHostAddress();
+            List<fr.lampalon.lifemod.common.model.PlayerData> alts = plugin.getDatabaseManager().getDatabaseProvider().getAlts(ip);
+            boolean evasion = false;
+            StringBuilder accounts = new StringBuilder();
+
+            fr.lampalon.lifemod.common.service.ISanctionService sanctionService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ISanctionService.class);
+
+            for (fr.lampalon.lifemod.common.model.PlayerData alt : alts) {
+                String color = "&7";
+                if (Bukkit.getPlayer(alt.getUuid()) != null) color = "&a";
+
+                fr.lampalon.lifemod.common.model.Sanction ban = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), fr.lampalon.lifemod.common.model.SanctionType.BAN).join();
+                if (ban != null) {
+                    evasion = true;
+                    color = "&c";
+                }
+                
+                accounts.append(color).append(alt.getLastName()).append("&7, ");
+            }
+
+            if (evasion) {
+                String accountList = accounts.length() > 2 ? accounts.substring(0, accounts.length() - 2) : "";
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                
+                String alert = lang.getMessage("alts.evasion-alert",
+                        "%player%", player.getName(),
+                        "%accounts%", accountList,
+                        "%ip%", ip);
+
+                Bukkit.getOnlinePlayers().stream()
+                        .filter(p -> p.hasPermission("lifemod.alts"))
+                        .forEach(p -> p.sendMessage(alert));
+            }
+        });
     }
 }
 

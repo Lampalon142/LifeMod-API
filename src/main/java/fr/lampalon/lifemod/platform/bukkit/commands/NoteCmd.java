@@ -12,7 +12,7 @@ public class NoteCmd extends BaseSanctionCmd {
 
     @Override
     protected void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction) {
-        sender.sendMessage("&aNote ajoutée pour &e" + target.getName() + " &a: &f" + sanction.getReason());
+        sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage("&aNote ajoutée pour &e" + target.getName() + " &a: &f" + sanction.getReason()));
         // Pas de message au joueur (invisible)
     }
 }

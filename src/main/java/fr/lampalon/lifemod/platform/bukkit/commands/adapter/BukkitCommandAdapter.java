@@ -72,6 +72,11 @@ public class BukkitCommandAdapter implements CommandExecutor, TabCompleter {
         public boolean isPlayer() {
             return sender instanceof Player;
         }
+
+        @Override
+        public Object getHandle() {
+            return sender;
+        }
     }
 }
 

@@ -1,11 +1,11 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit.commands;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.commands;
-
+import fr.lampalon.lifemod.common.database.DatabaseManager;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseManager;
+import fr.lampalon.lifemod.platform.bukkit.utils.BukkitDatabaseUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.*;
 import org.bukkit.command.Command;
@@ -61,7 +61,7 @@ public class OtpCmd implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        Location location = databaseManager.getDatabaseProvider().getPlayerCoords(target.getUniqueId());
+        Location location = BukkitDatabaseUtil.fromStoredLocation(databaseManager.getDatabaseProvider().getCoords(target.getUniqueId()));
         if (location == null) {
             player.sendMessage(MessageUtil.formatMessage(langConfig.getString("otp.no-position", "&cNo saved position for %target%.").replace("%target%", args[0])));
             debug.log("otp", "No saved position for " + args[0]);

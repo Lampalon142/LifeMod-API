@@ -28,7 +28,7 @@ public class SanctionListener implements Listener {
 
         // On bloque le thread de login pour vérifier la sanction (C'est un événement asynchrone, c'est fait pour)
         try {
-            Sanction ban = sanctionService.getActiveSanction(event.getUniqueId(), SanctionType.BAN).get();
+            Sanction ban = sanctionService.getActiveSanction(event.getUniqueId(), event.getName(), SanctionType.BAN).get();
             
             if (ban != null) {
                 if (ban.isExpired()) {
@@ -36,15 +36,16 @@ public class SanctionListener implements Listener {
                     return;
                 }
 
-                String expiration = ban.isPermanent() ? "Permanent" : new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date(ban.getExpirationTime()));
-                String message = MessageUtil.formatMessage(
-                        "&c&lVous êtes banni de ce serveur ! " +
-                        "&7Raison: &f" + ban.getReason() + " " +
-                        "&7Expire le: &e" + expiration + " " +
-                        "&7ID Sanction: &8#" + ban.getUuid().toString().substring(0, 8)
-                );
+                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+                String expiration = ban.isPermanent() ? "Permanent" : new SimpleDateFormat(dateFormat).format(new Date(ban.getExpirationTime()));
                 
-                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message);
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                String message = lang.getMessage("ban.login-message")
+                        .replace("%reason%", ban.getReason())
+                        .replace("%expiration%", expiration)
+                        .replace("%id%", ban.getUuid().toString().substring(0, 8));
+                
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, MessageUtil.formatMessage(message));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -56,15 +57,18 @@ public class SanctionListener implements Listener {
         if (sanctionService == null) return;
 
         try {
-            Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), SanctionType.MUTE).get();
+            Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), event.getPlayer().getName(), SanctionType.MUTE).get();
             if (mute != null && !mute.isExpired()) {
                 event.setCancelled(true);
-                String expiration = mute.isPermanent() ? "Jamais" : new SimpleDateFormat("dd/MM/yyyy HH:mm").format(new Date(mute.getExpirationTime()));
-                event.getPlayer().sendMessage(MessageUtil.formatMessage(
-                        "&cVous êtes réduit au silence !\n" +
-                        "&7Raison: &f" + mute.getReason() + "\n" +
-                        "&7Expire le: &e" + expiration
-                ));
+                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+                String expiration = mute.isPermanent() ? "Jamais" : new SimpleDateFormat(dateFormat).format(new Date(mute.getExpirationTime()));
+                
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                String message = lang.getMessage("mute.chat-blocked")
+                        .replace("%reason%", mute.getReason())
+                        .replace("%expiration%", expiration);
+                
+                event.getPlayer().sendMessage(MessageUtil.formatMessage(message));
             }
         } catch (Exception e) {
             e.printStackTrace();
