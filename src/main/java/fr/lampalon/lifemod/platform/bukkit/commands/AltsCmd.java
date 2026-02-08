@@ -1,6 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;.commands;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
 import fr.lampalon.lifemod.common.commands.framework.ICommandSender;
 import fr.lampalon.lifemod.common.commands.framework.LifeCommand;
@@ -20,8 +20,10 @@ public class AltsCmd extends LifeCommand {
 
     @Override
     public void execute(ICommandSender sender, String[] args) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+
         if (args.length < 1) {
-            sender.sendMessage("&cUsage: /alts [joueur/ip]");
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("alts.usage", "&cUsage: /alts [player/ip]")));
             return;
         }
 
@@ -34,22 +36,46 @@ public class AltsCmd extends LifeCommand {
                 UUID uuid = Bukkit.getOfflinePlayer(input).getUniqueId();
                 PlayerData data = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().getPlayerData(uuid);
                 if (data == null) {
-                    sender.sendMessage("&cCe joueur n'a jamais été enregistré.");
+                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("alts.not-found", "&cThis player has never been recorded.")));
                     return;
                 }
                 ip = data.getLastIp();
             }
 
             List<PlayerData> alts = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().getAlts(ip);
-            
-            sender.sendMessage("&8&m----------------------------------------");
-            sender.sendMessage("&6Comptes liés pour l'IP: &e" + ip);
-            sender.sendMessage(" ");
-            for (PlayerData alt : alts) {
-                String color = Bukkit.getPlayer(alt.getUuid()) != null ? "&a" : "&7";
-                sender.sendMessage(" &8• " + color + alt.getLastName() + " &8(&7" + alt.getUuid().toString().substring(0,8) + "&8)");
+
+            if (sender.isPlayer()) {
+                org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(sender.getUniqueId());
+                if (player != null) {
+                    new fr.lampalon.lifemod.platform.bukkit.gui.AltsGui(player, alts, ip).open();
+                    return;
+                }
             }
-            sender.sendMessage("&8&m----------------------------------------");
+
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+
+            sender.sendMessage(lang.getMessage("alts.header", "%ip%", ip));
+
+            fr.lampalon.lifemod.common.service.ISanctionService sanctionService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ISanctionService.class);
+
+            for (PlayerData alt : alts) {
+                String color = "&7"; // Offline by default
+                if (Bukkit.getPlayer(alt.getUuid()) != null) {
+                    color = "&a"; // Online
+                }
+                
+                // Check if banned
+                fr.lampalon.lifemod.common.model.Sanction ban = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), fr.lampalon.lifemod.common.model.SanctionType.BAN).join();
+                if (ban != null) {
+                    color = "&c"; // Banned
+                }
+
+                sender.sendMessage(lang.getMessage("alts.entry", 
+                    "%color%", color, 
+                    "%name%", alt.getLastName(), 
+                    "%uuid%", alt.getUuid().toString().substring(0,8)));
+            }
+            sender.sendMessage(lang.getMessage("alts.footer"));
         });
     }
 }
