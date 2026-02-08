@@ -52,8 +52,6 @@ public class AltsCmd extends LifeCommand {
                 }
             }
 
-            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-
             sender.sendMessage(lang.getMessage("alts.header", "%ip%", ip));
 
             fr.lampalon.lifemod.common.service.ISanctionService sanctionService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ISanctionService.class);

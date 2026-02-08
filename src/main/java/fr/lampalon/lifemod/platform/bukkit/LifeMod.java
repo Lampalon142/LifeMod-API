@@ -386,11 +386,8 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
     public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
-    
-    @Override
+
     public String getServerName() {
         return configConfig.getString("server.name", "Survival");
     }
 }
-}
-

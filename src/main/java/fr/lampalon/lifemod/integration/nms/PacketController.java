@@ -46,18 +46,18 @@ public class PacketController implements PacketListener {
 
     public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
         // Send times
-        WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.Action.TIMES, fadeIn, stay, fadeOut);
+        WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(fadeIn, stay, fadeOut);
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, timePacket);
 
         // Send title
         if (title != null) {
-            WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.Action.TITLE, Component.text(MessageUtil.formatMessage(title)));
+            WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.TitleAction.TITLE, Component.text(MessageUtil.formatMessage(title)));
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, titlePacket);
         }
 
         // Send subtitle
         if (subtitle != null) {
-            WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.Action.SUBTITLE, Component.text(MessageUtil.formatMessage(subtitle)));
+            WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.TitleAction.SUBTITLE, Component.text(MessageUtil.formatMessage(subtitle)));
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, subtitlePacket);
         }
     }

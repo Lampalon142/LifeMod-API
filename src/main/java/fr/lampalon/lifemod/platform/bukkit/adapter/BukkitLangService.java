@@ -27,5 +27,10 @@ public class BukkitLangService implements ILangService {
         }
         return message;
     }
+
+    @Override
+    public java.util.List<String> getStringList(String key) {
+        return lang.getStringList(key);
+    }
 }
 

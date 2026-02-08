@@ -30,4 +30,9 @@ public class BungeeLangService implements ILangService {
         }
         return msg;
     }
+
+    @Override
+    public List<String> getStringList(String key) {
+        return lang.getStringList(key);
+    }
 }
