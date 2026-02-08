@@ -1,6 +1,9 @@
-package fr.lampalon.lifemod.platform.bukkit
+package fr.lampalon.lifemod.platform.bukkit;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseProvider;;
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.database.DatabaseManager;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
+import fr.lampalon.lifemod.common.model.SanctionType;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.zaxxer.hikari.HikariDataSource;
@@ -12,6 +15,7 @@ import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.SanctionService;
+import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.integration.nms.PacketController;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
@@ -19,9 +23,9 @@ import fr.lampalon.lifemod.platform.bukkit.commands.*;
 import fr.lampalon.lifemod.platform.bukkit.commands.adapter.BukkitCommandAdapter;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
-import fr.lampalon.lifemod.platform.bukkit.managers.database.DatabaseManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.ConfigUpdater;
+import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bstats.bukkit.Metrics;
@@ -89,6 +93,8 @@ public class LifeMod extends JavaPlugin {
         new ConfigUpdater(this).updateConfigs();
         loadConfigurations();
         
+        ILifePlatform platform = new BukkitPlatform(this);
+        ServiceRegistry.register(ILifePlatform.class, platform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         
@@ -96,7 +102,102 @@ public class LifeMod extends JavaPlugin {
             String host = configConfig.getString("redis.host", "localhost");
             int port = configConfig.getInt("redis.port", 6379);
             String password = configConfig.getString("redis.password", "");
-            ServiceRegistry.register(IMessagingService.class, new RedisMessagingService(host, port, password));
+            IMessagingService redis = new RedisMessagingService(host, port, password);
+            ServiceRegistry.register(IMessagingService.class, redis);
+            
+            redis.subscribe("lifemod:sanctions", message -> {
+                String[] parts = message.split("\\|");
+                if (parts.length < 3) return;
+                
+                String action = parts[0];
+                String typeStr = parts[1];
+                UUID playerUuid = UUID.fromString(parts[2]);
+                
+                if (action.equals("ADD")) {
+                    // ADD|TYPE|PLAYER_UUID|ISSUER_NAME|REASON|DURATION|SILENT|SERVER|CATEGORY
+                    if (parts.length < 9) return;
+                    String issuerName = parts[3];
+                    String reason = parts[4];
+                    long duration = Long.parseLong(parts[5]);
+                    boolean silent = Boolean.parseBoolean(parts[6]);
+                    String server = parts[7];
+                    String category = parts[8];
+
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        Player player = Bukkit.getPlayer(playerUuid);
+                        if (player != null) {
+                            if (typeStr.equals("BAN")) {
+                                String kickMsg = langConfig.getString("ban.kick-message", "&cVous avez été banni !\n\nRaison: &f%reason%")
+                                        .replace("%reason%", reason);
+                                player.kickPlayer(MessageUtil.formatMessage(kickMsg));
+                            } else if (typeStr.equals("KICK")) {
+                                String kickMsg = langConfig.getString("kick.kick-message", "&cVous avez été expulsé !\n\nRaison: &f%reason%")
+                                        .replace("%reason%", reason);
+                                player.kickPlayer(MessageUtil.formatMessage(kickMsg));
+                            }
+                        }
+
+                        // Broadcast sur les autres serveurs
+                        String path = "sanctions.broadcast." + typeStr.toLowerCase() + (silent ? ".silent" : ".public");
+                        String template = langConfig.getString(path);
+                        if (template != null) {
+                            String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
+                            if (targetName == null) targetName = playerUuid.toString();
+
+                            String broadcastMsg = template
+                                    .replace("%target%", targetName)
+                                    .replace("%issuer%", issuerName)
+                                    .replace("%reason%", reason)
+                                    .replace("%time%", TimeUtil.formatTime(duration))
+                                    .replace("%server%", server);
+
+                            String formatted = MessageUtil.formatMessage(broadcastMsg);
+                            if (silent) {
+                                Bukkit.getOnlinePlayers().stream()
+                                        .filter(p -> p.hasPermission("lifemod.sanctions.see-silent"))
+                                        .forEach(p -> p.sendMessage(formatted));
+                                Bukkit.getConsoleSender().sendMessage(formatted);
+                            } else {
+                                Bukkit.broadcastMessage(formatted);
+                            }
+                        }
+                    });
+                } else if (action.equals("REMOVE")) {
+                    // REMOVE|TYPE|PLAYER_UUID|REMOVED_BY_NAME|REASON|SILENT
+                    if (parts.length < 5) return;
+                    String removedByName = parts[3];
+                    String reason = parts[4];
+                    boolean silent = parts.length > 5 && Boolean.parseBoolean(parts[5]);
+
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        String path = "sanctions.broadcast.un" + typeStr.toLowerCase() + (silent ? ".silent" : ".public");
+                        String template = langConfig.getString(path);
+                        if (template == null) {
+                            template = langConfig.getString("sanctions.broadcast.un" + typeStr.toLowerCase());
+                        }
+                        
+                        if (template != null) {
+                            String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
+                            if (targetName == null) targetName = playerUuid.toString();
+
+                            String broadcastMsg = template
+                                    .replace("%target%", targetName)
+                                    .replace("%issuer%", removedByName)
+                                    .replace("%reason%", reason);
+
+                            String formatted = MessageUtil.formatMessage(broadcastMsg);
+                            if (silent) {
+                                Bukkit.getOnlinePlayers().stream()
+                                        .filter(p -> p.hasPermission("lifemod.sanctions.see-silent"))
+                                        .forEach(p -> p.sendMessage(formatted));
+                                Bukkit.getConsoleSender().sendMessage(formatted);
+                            } else {
+                                Bukkit.broadcastMessage(formatted);
+                            }
+                        }
+                    });
+                }
+            });
         }
 
         PacketEvents.getAPI().init();
@@ -114,6 +215,11 @@ public class LifeMod extends JavaPlugin {
         registerEvents();
         registerCommands();
         setupMetrics();
+
+        // Cleanup task for expired sanctions
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
+        }, 20 * 60L, 20 * 60L);
         
         long elapsed = System.currentTimeMillis() - start;
         getLogger().info("Started in " + elapsed + "ms");
@@ -139,7 +245,7 @@ public class LifeMod extends JavaPlugin {
         freezeManager = new FreezeManager();
         playerManager = new VanishedManager();
         chatManager = new ChatManager(this);
-        databaseManager = new DatabaseManager(this);
+        databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
         guiManager = new GuiManager(this);
         noteInputManager = new NoteInputManager(this);
@@ -160,7 +266,6 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new Staffchatevent(this), this);
         pm.registerEvents(new PluginDisable(), this);
         pm.registerEvents(new PlayerQuit(), this);
-        pm.registerEvents(new FreezeGui(this), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
         pm.registerEvents(new CPSListener(cpsMap), this);
         pm.registerEvents(new GuiDetailListener(this), this);
@@ -179,12 +284,15 @@ public class LifeMod extends JavaPlugin {
         registerCommand(new FlyCmd(this));
         registerCommand(new BanCmd());
         registerCommand(new MuteCmd());
+        registerCommand(new KickCmd());
         registerCommand(new WarnCmd());
         registerCommand(new NoteCmd());
         registerCommand(new UnbanCmd());
         registerCommand(new UnmuteCmd());
         registerCommand(new HistoryCmd());
+        registerCommand(new CaseCmd());
         registerCommand(new AltsCmd());
+        registerCommand(new StaffHistoryCmd());
         
         registerCommand("freeze", new FreezeCmd(this));
         registerCommand("mod", new ModCmd(this));
@@ -248,11 +356,20 @@ public class LifeMod extends JavaPlugin {
     public FileConfiguration getLangConfig() { return langConfig; }
     public FileConfiguration getConfigConfig() { return configConfig; }
     public DatabaseManager getDatabaseManager() { return databaseManager; }
+    public ChatManager getChatManager() { return chatManager; }
     public GuiManager getGuiManager() { return guiManager; }
     public NoteInputManager getNoteInputManager() { return noteInputManager; }
     public PacketController getPacketController() { return packetController; }
     public FreezeManager getFreezeManager() { return freezeManager; }
     public VanishedManager getPlayerManager() { return playerManager; }
+    public DebugManager getDebugManager() { return debugManager; }
+    public SpectateManager getSpectateManager() { return spectateManager; }
+    public ModeratorSessionManager getModeratorSessionManager() { return moderatorSessionManager; }
+    public ModeratorAuthService getModeratorAuthService() { return moderatorAuthService; }
+    public boolean isChatEnabled() { return chatEnabled; }
+    public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
+    public Map<UUID, PlayerManager> getPlayers() { return players; }
+    public Set<UUID> getModerators() { return moderators; }
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }

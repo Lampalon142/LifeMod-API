@@ -38,6 +38,29 @@ debug:
 ## Change Prefix to your Prefix eg : "&7[&bMyBestServer&7] &f» "
 prefix: "&7[&6Moderation&7] &f» "
 
+## Hybrid Auto-Punish
+auto-punish:
+  enabled: true
+  mode: "CATEGORY" # GLOBAL or CATEGORY
+  global:
+    thresholds:
+      3: "kick %player% &cAuto-Punish: 3 avertissements accumulés."
+      5: "ban %player% 7d &cAuto-Punish: 5 avertissements accumulés."
+  categories:
+    Cheat:
+      1: "ban %player% 7d &cAuto-Punish: Triche (1er avertissement)"
+      2: "ban %player% permanent &cAuto-Punish: Triche (Récidive)"
+    Chat:
+      1: "mute %player% 30m &cAuto-Punish: Comportement Chat (1er avertissement)"
+      2: "mute %player% 2h &cAuto-Punish: Comportement Chat (2ème avertissement)"
+      3: "mute %player% 24h &cAuto-Punish: Comportement Chat (Récidive)"
+
+## Date Format
+date-format: "dd/MM/yyyy HH:mm:ss"
+
+## Server Name (for sanctions sync)
+server-name: "Survival"
+
 database:
   type: "sqlite"
   host: localhost
@@ -99,6 +122,7 @@ commands-enabled:
   hearts: true
   report: true
   reports: true
+  kick: true
   modlogin: true
   modregister: true
   modchangepass: true

@@ -87,6 +87,40 @@ commands:
   follow:
     description: follow a player with somes informations.
     usage: /<command>
+  ban:
+    description: Ban a player from the server.
+    usage: /ban <player> <reason> [duration] [-s]
+  kick:
+    description: Kick a player from the server.
+    usage: /kick <player> <reason> [-s]
+  mute:
+    description: Mute a player in the chat.
+    usage: /mute <player> <reason> [duration] [-s]
+  warn:
+    description: Warn a player.
+    usage: /warn <player> <reason> [-s]
+  note:
+    description: Add a private staff note to a player.
+    usage: /note <player> <content>
+  unban:
+    description: Unban a player.
+    usage: /unban <player> [reason]
+  unmute:
+    description: Unmute a player.
+    usage: /unmute <player> [reason]
+  history:
+    description: View a player's sanction history.
+    usage: /history <player>
+  case:
+    description: View a player's moderation case.
+    usage: /case <player>
+  alts:
+    description: View a player's alternative accounts.
+    usage: /alts <player/ip>
+  staffhistory:
+    description: View a moderator's sanction history.
+    usage: /staffhistory <player>
+    permission: lifemod.admin.staffhistory
 permissions:
   lifemod.*:
     default: op
@@ -126,3 +160,13 @@ permissions:
       - lifemod.report.join
       - lifemod.moderator
       - lifemod.admin
+      - lifemod.ban
+      - lifemod.kick
+      - lifemod.mute
+      - lifemod.warn
+      - lifemod.note
+      - lifemod.unban
+      - lifemod.unmute
+      - lifemod.history
+      - lifemod.case
+      - lifemod.alts
