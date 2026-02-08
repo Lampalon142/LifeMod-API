@@ -35,6 +35,7 @@ public class BungeeLifeMod extends Plugin {
 
     @Override
     public void onEnable() {
+        long start = System.currentTimeMillis();
         instance = this;
         loadConfigs();
 
@@ -59,7 +60,19 @@ public class BungeeLifeMod extends Plugin {
         getProxy().getPluginManager().registerListener(this, new BungeeConnectionListener());
         getProxy().getPluginManager().registerListener(this, new BungeeChatListener());
 
-        platform.logInfo("LifeMod Bungee (Central Point) enabled!");
+        long elapsed = System.currentTimeMillis() - start;
+
+        // Detailed Startup Message
+        ProxyServer.getInstance().getLogger().info("§8§m----------------------------------------");
+        ProxyServer.getInstance().getLogger().info("§6§lLifeMod §bBungee §7- §aSuccessfully Enabled");
+        ProxyServer.getInstance().getLogger().info(" ");
+        ProxyServer.getInstance().getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
+        ProxyServer.getInstance().getLogger().info("§e• §fPlatform: §aBungeeCord §7(" + ProxyServer.getInstance().getName() + " " + ProxyServer.getInstance().getVersion() + ")");
+        ProxyServer.getInstance().getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
+        ProxyServer.getInstance().getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
+        ProxyServer.getInstance().getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
+        ProxyServer.getInstance().getLogger().info(" ");
+        ProxyServer.getInstance().getLogger().info("§8§m----------------------------------------");
     }
 
     private void loadConfigs() {
