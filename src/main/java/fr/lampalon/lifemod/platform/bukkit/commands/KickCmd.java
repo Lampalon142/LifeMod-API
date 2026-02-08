@@ -20,13 +20,13 @@ public class KickCmd extends BaseSanctionCmd {
 
     @Override
     protected void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction) {
-        String successMsg = LifeMod.getInstance().getLangConfig().getString("kick.success", "&aPlayer &e%target% &ahas been kicked for: &f%reason%")
+        String successMsg = LifeMod.getInstance().getLangConfig().getString("sanctions.kick.success", "&aPlayer &e%target% &ahas been kicked for: &f%reason%")
                 .replace("%target%", target.getName())
                 .replace("%reason%", sanction.getReason());
         sender.sendMessage(MessageUtil.formatMessage(successMsg));
         if (target.isOnline()) {
             Bukkit.getScheduler().runTask(LifeMod.getInstance(), () -> {
-                String kickMsg = LifeMod.getInstance().getLangConfig().getString("kick.kick-message", "&cYou have been kicked! Reason: &f%reason%")
+                String kickMsg = LifeMod.getInstance().getLangConfig().getString("sanctions.kick.message", "&cYou have been kicked! Reason: &f%reason%")
                         .replace("%reason%", sanction.getReason())
                         .replace("%issuer%", sanction.getIssuerName());
                 target.getPlayer().kickPlayer(MessageUtil.formatMessage(kickMsg));

@@ -41,7 +41,7 @@ public class HistoryGui extends PagedAbstractGui {
 
     @Override
     protected String getTitle() {
-        return ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("history.gui.title", "%target%", targetName);
+        return ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("gui.history.title", "%target%", targetName);
     }
 
     @Override

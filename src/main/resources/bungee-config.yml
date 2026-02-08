@@ -1,25 +1,36 @@
 ## LifeMod Proxy Configuration
-server-name: "Proxy"
+## Central Synchronization Point
 
+# --- SERVER SETTINGS ---
+server:
+  name: "Proxy"
+  # Global prefix for network messages
+  prefix: "&7[&6Network&7] &f» "
+
+# --- DATABASE ---
 database:
-  type: "mysql"
-  host: localhost
+  type: "mysql" # Proxy usually uses MySQL for central sync
+  host: "localhost"
   port: 3306
-  name: lifemod
-  user: root
+  name: "lifemod"
+  user: "root"
   password: ""
   poolsize: 10
 
+# --- REDIS ---
 redis:
   enabled: false
   host: "localhost"
   port: 6379
   password: ""
 
-# Le proxy peut forcer certaines règles globalement
-auto-punish:
-  enabled: true
-  mode: "GLOBAL"
-  global:
-    thresholds:
-      3: "kick %player% &cAuto-Punish Global: 3 avertissements."
+# --- GLOBAL RULES ---
+modules:
+  auto-punish:
+    enabled: true
+    mode: "GLOBAL"
+    global:
+      thresholds:
+        3: "kick %player% &cAuto-Punish Global: 3 active warnings accumulated on network."
+
+version: 200

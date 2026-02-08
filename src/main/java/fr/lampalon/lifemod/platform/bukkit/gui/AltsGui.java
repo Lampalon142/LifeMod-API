@@ -40,7 +40,7 @@ public class AltsGui extends PagedAbstractGui {
 
     @Override
     protected String getTitle() {
-        return ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("alts.gui.title", "%ip%", ip);
+        return ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("gui.alts.title", "%ip%", ip);
     }
 
     @Override
@@ -65,24 +65,24 @@ public class AltsGui extends PagedAbstractGui {
             Sanction ban = ss.getActiveSanction(data.getUuid(), data.getLastName(), SanctionType.BAN).join();
             
             if (ban != null && !ban.isExpired()) {
-                status = lang.getMessage("alts.gui.status.banned");
+                status = lang.getMessage("gui.alts.status-banned");
                 material = Material.RED_TERRACOTTA;
             } else if (Bukkit.getPlayer(data.getUuid()) != null) {
-                status = lang.getMessage("alts.gui.status.online");
+                status = lang.getMessage("gui.alts.status-online");
                 material = Material.LIME_TERRACOTTA;
             } else {
-                status = lang.getMessage("alts.gui.status.offline");
+                status = lang.getMessage("gui.alts.status-offline");
                 material = Material.GRAY_TERRACOTTA;
             }
 
             return new ItemBuilder(material)
-                    .setDisplayName(MessageUtil.formatMessage(lang.getMessage("alts.gui.item.name", "%player%", data.getLastName())))
+                    .setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.alts.item-name", "%player%", data.getLastName())))
                     .addLoreLines(
-                            MessageUtil.formatMessage(lang.getMessage("alts.gui.item.status", "%status%", status)),
-                            MessageUtil.formatMessage(lang.getMessage("alts.gui.item.uuid", "%uuid%", data.getUuid().toString())),
+                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-status", "%status%", status)),
+                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-uuid", "%uuid%", data.getUuid().toString())),
                             "",
-                            MessageUtil.formatMessage(lang.getMessage("alts.gui.item.history")),
-                            MessageUtil.formatMessage(lang.getMessage("alts.gui.item.case"))
+                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-history")),
+                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-case"))
                     );
         }
 

@@ -44,38 +44,37 @@ public class SanctionItem extends AbstractItem {
         
         List<String> lore = new ArrayList<>();
         lore.add("&8&m--------------------------");
-        lore.add(lang.getMessage("sanctions.gui.item.target", "%target%", sanction.getPlayerName()));
-        lore.add(lang.getMessage("sanctions.gui.item.type", "%type%", sanction.getType().name()));
-        lore.add(lang.getMessage("sanctions.gui.item.reason", "%reason%", sanction.getReason()));
-        lore.add(lang.getMessage("sanctions.gui.item.issuer", "%issuer%", sanction.getIssuerName()));
-        lore.add(lang.getMessage("sanctions.gui.item.server", "%server%", sanction.getServerName()));
-        lore.add(lang.getMessage("sanctions.gui.item.date", "%date%", sdf.format(new Date(sanction.getCreatedAt()))));
+        lore.add(lang.getMessage("gui.history.item.target", "%target%", sanction.getPlayerName()));
+        lore.add(lang.getMessage("gui.history.item.type", "%type%", sanction.getType().name()));
+        lore.add(lang.getMessage("gui.history.item.reason", "%reason%", sanction.getReason()));
+        lore.add(lang.getMessage("gui.history.item.issuer", "%issuer%", sanction.getIssuerName()));
+        lore.add(lang.getMessage("gui.history.item.server", "%server%", sanction.getServerName()));
+        lore.add(lang.getMessage("gui.history.item.date", "%date%", sdf.format(new Date(sanction.getCreatedAt()))));
         
         lore.add("");
         if (sanction.isActive() && !sanction.isExpired()) {
-            lore.add(lang.getMessage("sanctions.gui.item.active"));
+            lore.add(lang.getMessage("gui.history.item.status-active"));
             if (!sanction.isPermanent()) {
-                lore.add(lang.getMessage("sanctions.gui.item.expire-date", "%date%", sdf.format(new Date(sanction.getExpirationTime()))));
+                lore.add(lang.getMessage("gui.history.item.expire-date", "%date%", sdf.format(new Date(sanction.getExpirationTime()))));
             } else {
-                lore.add(lang.getMessage("sanctions.gui.item.permanent"));
+                lore.add(lang.getMessage("gui.history.item.permanent"));
             }
         } else {
-            String status = !sanction.isActive() ? lang.getMessage("sanctions.gui.item.revoked") : lang.getMessage("sanctions.gui.item.expired");
+            String status = !sanction.isActive() ? lang.getMessage("gui.history.item.status-revoked") : lang.getMessage("gui.history.item.status-expired");
             lore.add(status);
             if (sanction.getRemovedByName() != null) {
-                lore.add(lang.getMessage("sanctions.gui.item.revoked-by", "%player%", sanction.getRemovedByName()));
-                lore.add(lang.getMessage("sanctions.gui.item.revoke-reason", "%reason%", sanction.getRemoveReason()));
+                lore.add(lang.getMessage("gui.history.item.revoked-by", "%player%", sanction.getRemovedByName()));
+                lore.add(lang.getMessage("gui.history.item.revoke-reason", "%reason%", sanction.getRemoveReason()));
             } else if (sanction.isActive() && sanction.isExpired()) {
-                lore.add(lang.getMessage("sanctions.gui.item.expired-date", "%date%", sdf.format(new Date(sanction.getExpirationTime()))));
+                lore.add(lang.getMessage("gui.history.item.expired-date", "%date%", sdf.format(new Date(sanction.getExpirationTime()))));
             }
         }
 
         lore.add("");
-        lore.add(lang.getMessage("sanctions.gui.item.id", "%id%", sanction.getUuid().toString().substring(0, 8)));
-        lore.add(lang.getMessage("sanctions.gui.item.delete"));
+        lore.add(lang.getMessage("gui.history.item.delete-info", "%id%", sanction.getUuid().toString().substring(0, 8)));
         lore.add("&8&m--------------------------");
 
-        String title = lang.getMessage("sanctions.gui.item.title", "%id%", sanction.getUuid().toString().substring(0, 8));
+        String title = lang.getMessage("gui.history.item.title", "%id%", sanction.getUuid().toString().substring(0, 8));
         ItemBuilder builder = new ItemBuilder(material).setDisplayName(MessageUtil.formatMessage(title));
         for (String line : lore) {
             builder.addLoreLines(MessageUtil.formatMessage(line));
@@ -88,7 +87,7 @@ public class SanctionItem extends AbstractItem {
     public void handleClick(@NotNull ClickType clickType, @NotNull Player player, @NotNull InventoryClickEvent event) {
         if (clickType.isRightClick()) {
             LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().deleteSanction(sanction.getUuid());
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("sanctions.gui.item.delete-success", "&aSanction supprimée !")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("gui.history.item.delete-success", "&aSanction deleted!")));
             if (onUpdate != null) onUpdate.run();
         }
     }

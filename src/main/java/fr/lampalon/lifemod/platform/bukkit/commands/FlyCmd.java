@@ -21,22 +21,23 @@ public class FlyCmd extends LifeCommand {
     public void execute(ICommandSender sender, String[] args) {
         Player target;
         boolean isSelf = false;
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
         if (args.length == 0) {
             if (!sender.isPlayer()) {
-                sender.sendMessage("general.onlyplayer");
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("system.player-only")));
                 return;
             }
             target = Bukkit.getPlayer(sender.getUniqueId());
             isSelf = true;
         } else {
             if (!sender.hasPermission("lifemod.fly.others")) {
-                sender.sendMessage("general.nopermission");
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("system.no-permission")));
                 return;
             }
             target = Bukkit.getPlayer(args[0]);
             if (target == null) {
-                sender.sendMessage("general.offlineplayer");
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("system.player-not-found")));
                 return;
             }
         }
@@ -46,18 +47,15 @@ public class FlyCmd extends LifeCommand {
         if (newState) target.setFlying(true);
 
         if (isSelf) {
-            String msgKey = newState ? "fly.enabled-self" : "fly.disabled-self";
-            sender.sendMessage(plugin.getLangConfig().getString(msgKey));
+            String msgKey = newState ? "commands.fly.enabled-self" : "commands.fly.disabled-self";
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage(msgKey)));
         } else {
-            String msgKeySender = newState ? "fly.enabled" : "fly.disabled";
-            String msgKeyTarget = newState ? "fly.enabled-self" : "fly.disabled-self";
+            String msgKeySender = newState ? "commands.fly.enabled" : "commands.fly.disabled";
+            String msgKeyTarget = newState ? "commands.fly.enabled-by" : "commands.fly.disabled-by";
             
-            sender.sendMessage(plugin.getLangConfig().getString(msgKeySender).replace("%player%", target.getName()));
-            target.sendMessage(plugin.getLangConfig().getString(msgKeyTarget).replace("%player%", sender.getName()));
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage(msgKeySender, "%player%", target.getName())));
+            target.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage(msgKeyTarget, "%player%", sender.getName())));
         }
-        
-        // Note: La logique Discord devrait idéalement être dans un Service (DiscordService)
-        // déclenché par un événement ou un appel direct au service.
     }
 
     @Override

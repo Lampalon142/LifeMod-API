@@ -24,7 +24,7 @@ public class StaffHistoryCmd extends LifeCommand {
     public void execute(ICommandSender sender, String[] args) {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         if (args.length < 1) {
-            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("staffhistory.usage", "&cUsage: /staffhistory [moderator]")));
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.staffhistory.usage", "&cUsage: /staffhistory <moderator>")));
             return;
         }
 
@@ -37,8 +37,7 @@ public class StaffHistoryCmd extends LifeCommand {
             java.util.List<Sanction> history = sanctionService.getSanctionsIssuedBy(mod.getName(), modUuid).join();
             
             if (history.isEmpty()) {
-                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                sender.sendMessage(lang.getMessage("staffhistory.no-sanctions"));
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.staffhistory.no-sanctions")));
                 return;
             }
 
@@ -46,8 +45,7 @@ public class StaffHistoryCmd extends LifeCommand {
                 if (sender.getHandle() instanceof org.bukkit.entity.Player) {
                     new fr.lampalon.lifemod.platform.bukkit.gui.StaffHistoryGui((org.bukkit.entity.Player) sender.getHandle(), history, mod.getName(), modUuid).open();
                 } else {
-                    fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("staffhistory.gui-only", "&cThis GUI command is reserved for players.")));
+                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.staffhistory.gui-only", "&cThis GUI command is reserved for players.")));
                 }
             });
         });

@@ -1,23 +1,30 @@
 ## LifeMod Proxy Language
+## Multi-Server Synchronization
+
+# --- SYSTEM ---
+system:
+  prefix: "&7[&6Network&7] &f» "
+
+# --- SANCTIONS ---
 sanctions:
+  # Network broadcasts
   broadcast:
     ban:
-      public: "&8&m----------------------------------------
-&6&lNetwork &8» &e%target% &aa été &c&lBAN &apar &e%issuer%&a.
-&7Raison: &f%reason%
-&7Serveur: &e%server%
-&8&m----------------------------------------"
-      silent: "&7[SILENT-NETWORK] &c%issuer% &7a banni &c%target% &7depuis &e%server%"
-    unban: "&6&lNetwork &8» &a%target% a été débanni par %issuer%."
+      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &c&lBANNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7banned &c%target% &7from &e%server%"
+    unban: "&6&lNetwork &8» &a%target% has been unbanned by %issuer%."
 
-ban:
-  kick-message: "&8&m----------------------------------------
+  ban:
+    kick-message: |
+      &8&m----------------------------------------
+      &6&lLifeMod Network
+      &cYou are banned from the entire network!
+      &7Reason: &f%reason%
+      &7By: &e%issuer%
+      &8&m----------------------------------------
 
-&6&lLifeMod Network
+  mute:
+    blocked-message: "&cYou are muted on the network!\n&7Reason: &f%reason%\n&7Expires in: &f%time%"
 
-&cVous êtes banni de tout le réseau !
-
-&7Raison: &f%reason%
-&7Par: &e%issuer%
-
-&8&m----------------------------------------"
+# Metadata
+version: 200

@@ -25,7 +25,7 @@ public abstract class BaseRevokeCmd extends LifeCommand {
         fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         
         if (args.length < 1) {
-            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("revoke.usage", "&cUsage: /%cmd% [player] <reason> <-s>").replace("%cmd%", getName())));
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("sanctions.cmd.revoke-usage", "&cUsage: /%cmd% <player> [reason] [-s]").replace("%cmd%", getName())));
             return;
         }
 
@@ -50,13 +50,13 @@ public abstract class BaseRevokeCmd extends LifeCommand {
         ).thenAccept(success -> {
             if (success) {
                 // Le broadcast est géré dans SanctionService
-                String msgKey = finalSilent ? "revoke.success-silent" : "revoke.success";
+                String msgKey = finalSilent ? "sanctions.cmd.revoke-silent" : "sanctions.cmd.revoke-success";
                 String msg = lang.getMessage(msgKey, "&aThe sanction (%type%) for &e%player% &ahas been revoked.")
                         .replace("%type%", type.name())
                         .replace("%player%", targetName);
                 sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(msg));
             } else {
-                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("revoke.none-active", "&cThis player has no active sanction of type %type%").replace("%type%", type.name())));
+                sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("sanctions.cmd.revoke-not-found", "&cThis player has no active sanction of type %type%").replace("%type%", type.name())));
             }
         });
     }

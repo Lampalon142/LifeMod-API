@@ -1,432 +1,177 @@
+## LifeMod - Main Configuration
 ## Created and Directed by Lampalon_
-## For help please come on : https://discord.gg/VndbGNgZ5R
+## Discord: https://discord.gg/VndbGNgZ5R
 
-debug:
-  enabled: false
-  log-level: INFO # DEBUG / INFO / WARNING / ERROR
-  modules:
-    commands: true
-    events: true
-    database: true
-    discord: true
-    vanish: true
-    freeze: true
-    spectate: true
-    chat: true
-  messages:
-    prefix: "&8[&bLifeMod&8] "
-    user-error: "&cOops! An error occurred: &e%context%"
-    user-help: "&7If this keeps happening, contact an admin or check your config."
-    admin-error: "&8[Debug] Error: %error% - %message%"
-    admin-location: "&8[Debug] At: %location%"
+# --- SERVER SETTINGS ---
+server:
+  name: "Survival"
+  # Format for dates in GUI and messages
+  date-format: "dd/MM/yyyy HH:mm:ss"
+  # Global prefix for all messages
+  prefix: "&7[&6Moderation&7] &f» "
 
-################################################
-#+--------------------------------------------+#
-#+------------------Notes---------------------+#
-#+--------------------------------------------+#
-################################################
-
-#- <> = optionnal
-#- [] = required
-
-################################################
-#+--------------------------------------------+#
-#+-----------------Settings-------------------+#
-#+--------------------------------------------+#
-################################################
-
-## Change Prefix to your Prefix eg : "&7[&bMyBestServer&7] &f» "
-prefix: "&7[&6Moderation&7] &f» "
-
-## Hybrid Auto-Punish
-auto-punish:
-  enabled: true
-  mode: "CATEGORY" # GLOBAL or CATEGORY
-  global:
-    thresholds:
-      3: "kick %player% &cAuto-Punish: 3 avertissements accumulés."
-      5: "ban %player% 7d &cAuto-Punish: 5 avertissements accumulés."
-  categories:
-    Cheat:
-      1: "ban %player% 7d &cAuto-Punish: Triche (1er avertissement)"
-      2: "ban %player% permanent &cAuto-Punish: Triche (Récidive)"
-    Chat:
-      1: "mute %player% 30m &cAuto-Punish: Comportement Chat (1er avertissement)"
-      2: "mute %player% 2h &cAuto-Punish: Comportement Chat (2ème avertissement)"
-      3: "mute %player% 24h &cAuto-Punish: Comportement Chat (Récidive)"
-
-## Date Format
-date-format: "dd/MM/yyyy HH:mm:ss"
-
-## Server Name (for sanctions sync)
-server-name: "Survival"
-
+# --- DATABASE ---
 database:
-  type: "sqlite"
-  host: localhost
+  type: "sqlite" # 'sqlite' or 'mysql'
+  host: "localhost"
   port: 3306
-  name: lifemod
-  user: root
+  name: "lifemod"
+  user: "root"
   password: ""
   poolsize: 10
-  sqlite:
-    file: "database.db"
+  sqlite-file: "database.db"
 
+# --- REDIS (Network Sync) ---
 redis:
   enabled: false
   host: "localhost"
   port: 6379
   password: ""
 
-UseLuckPerms: false
-
-## Chat Manager
-
-chatManager:
-  notification: "&c%player% attempted to send a forbidden word !"
-  enabled: true
-  blacklist:
-    - fuck
-    - bitch
-    - suck
-
-## For disable command turn true to false
-
-command-deactivate: "&cThis command is deactivate."
-commands-enabled:
-  gamemode: true
-  gm: true
-  vanish: true
-  feed: true
-  heal: true
-  mod: true
-  freeze: true
-  fly: true
-  broadcast: true
-  chatclear: true
-  clearinv: true
-  ecopen: true
-  invsee: true
-  staffchat: true
-  stafflist: true
-  godmode: true
-  teleport: true
-  weather: true
-  lifemod: true
-  speed: true
-  spectate: true
-  otp: true
-  oinvsee: true
-  settime: true
-  difficulty: true
-  hearts: true
-  report: true
-  reports: true
-  kick: true
-  modlogin: true
-  modregister: true
-  modchangepass: true
-  modreset: true
-
-moderation-items:
-  invSee:
+# --- MODULES ---
+modules:
+  # Hybrid Auto-Punish System
+  auto-punish:
     enabled: true
-    material: PAPER
-    slot: 0
-    name: "&bInventory Viewer"
-    description: "&7Right-click a player to view their inventory."
-    customModelData:
-      enabled: false
-      id: 0
-  freeze:
-    enabled: true
-    material: PACKED_ICE
-    slot: 1
-    name: "&bFreeze Player"
-    description: "&7Right-click a player to freeze or unfreeze them."
-    customModelData:
-      enabled: false
-      id: 0
-  tpRandom:
-    enabled: true
-    material: ENDER_PEARL
-    slot: 2
-    name: "&bRandom Teleport"
-    description: "&7Right-click to teleport to a random player."
-    customModelData:
-      enabled: false
-      id: 0
-  vanish:
-    enabled: true
-    material: BLAZE_POWDER
-    slot: 3
-    name: "&bVanish"
-    description: "&7Right-click to toggle vanish mode."
-    customModelData:
-      enabled: false
-      id: 0
-  killItem:
-    enabled: true
-    material: BLAZE_ROD
-    slot: 4
-    name: "&cKill Player"
-    description: "&7Right-click a player to instantly kill them."
-    customModelData:
-      enabled: false
-      id: 0
-  kbTester:
-    enabled: true
-    material: STICK
-    slot: 5
-    name: "&eKnockback Tester"
-    description: "&7Test knockback on players."
-    enchantments:
-      KNOCKBACK: 5
-    customModelData:
-      enabled: false
-      id: 0
-  cps-tester:
-    enabled: true
-    material: COMPASS
-    duration: 3
-    cooldown: 10
-    slot: 7
-    name: "&bCPS Tester"
-    description: "&7Clique sur un joueur pour tester ses CPS !"
-    customModelData:
-      enabled: false
-      id: 0
-    enchantments: { }
+    mode: "CATEGORY" # 'GLOBAL' or 'CATEGORY'
+    global:
+      thresholds:
+        3: "kick %player% &cAuto-Punish: 3 active warnings."
+        5: "ban %player% 7d &cAuto-Punish: 5 active warnings."
+    categories:
+      Cheat:
+        1: "ban %player% 7d &cAuto-Punish: Cheat (1st warning)"
+        2: "ban %player% permanent &cAuto-Punish: Cheat (Recidivism)"
+      Chat:
+        1: "mute %player% 30m &cAuto-Punish: Chat Behavior (1st warning)"
+        2: "mute %player% 2h &cAuto-Punish: Chat Behavior (2nd warning)"
+        3: "mute %player% 24h &cAuto-Punish: Chat Behavior (Recidivism)"
 
-## LifeMod config
+  # Chat Security & Management
+  chat-manager:
+    enabled: true
+    notification: "&c%player% attempted to send a forbidden word!"
+    blacklist:
+      - "fuck"
+      - "bitch"
+      - "suck"
 
-lifemod:
-  usage: "&cUsage: /lifemod [reload|info]"
-  help:
-    title: "&a&lHelp menu for usage and description of commands"
-    slots: 54
+  # Moderator Security System
+  moderator-auth:
+    enabled: false
+    max-attempts: 5
+    session-timeout-minutes: 30
+    require-ip-match: false
+
+  # Moderation Mode (Inventory & Tools)
+  mod-mode:
     items:
-      Lifemod:
-        id: PAPER
-        slot: 12
-        name: '&aLifeMod Command'
-        lore:
-          - '&7'
-  info:
-    - "§8§m--------------------------------------------------"
-    - "§6§lLifeMod §7§o- §fPlugin Info"
-    - " §e• §fPlugin version: §a%plugin_version%"
-    - " §e• §fServer version: §a%server_version% §7(%bukkit_version%)"
-    - " §e• §fAuthors: §b%authors%"
-    - " §e• §fDatabase: §d%database_type%"
-    - " §e• §fDiscord integration: %discord_status%"
-    - " §e• §fLuckPerms integration: %luckperms_status%"
-    - " §e• §fUpdate notifier: %update_status%"
-    - " §e• §fGithub: §9https://github.com/Lampalon/LifeMod"
-    - "§8§m--------------------------------------------------"
-  serverinfo:
-    - "&8&m--------------------------------------------------"
-    - "&6&lServer Info"
-    - " &e• &fVersion: &a%version%"
-    - " &e• &fType: &a%type%"
-    - " &e• &fMax players: &a%max_players%"
-    - " &e• &fDifficulty: &a%difficulty%"
-    - " &e• &fOnline players: &a%online_players%"
-    - " &e• &fVanished players: &a%vanished_players%"
-    - "&8&m--------------------------------------------------"
+      invSee:
+        enabled: true
+        material: "PAPER"
+        slot: 0
+        name: "&bInventory Viewer"
+        description: "&7Right-click a player to view their inventory."
+      freeze:
+        enabled: true
+        material: "PACKED_ICE"
+        slot: 1
+        name: "&bFreeze Player"
+        description: "&7Right-click a player to freeze or unfreeze them."
+      tpRandom:
+        enabled: true
+        material: "ENDER_PEARL"
+        slot: 2
+        name: "&bRandom Teleport"
+        description: "&7Right-click to teleport to a random player."
+      vanish:
+        enabled: true
+        material: "BLAZE_POWDER"
+        slot: 3
+        name: "&bVanish"
+        description: "&7Right-click to toggle vanish mode."
+      killItem:
+        enabled: true
+        material: "BLAZE_ROD"
+        slot: 4
+        name: "&cKill Player"
+        description: "&7Right-click a player to instantly kill them."
+      kbTester:
+        enabled: true
+        material: "STICK"
+        slot: 5
+        name: "&eKnockback Tester"
+        description: "&7Test knockback on players."
+        enchantments:
+          KNOCKBACK: 5
+      cps-tester:
+        enabled: true
+        material: "COMPASS"
+        slot: 7
+        duration: 3
+        cooldown: 10
+        name: "&bCPS Tester"
+        description: "&7Click a player to test their CPS!"
 
-discord:
-  enabled: false
-  ## For example :
-  ## https://discord.com/api/webhooks/XXXXXXXXXXXXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  webhookurl: "Insert your webhook here !"
-  broadcast:
-    title: "New Alert!"
-    description: "> %player% has execute broadcast command containing the message %message%!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  chatclear:
-    title: "New Alert!"
-    description: "> %player% has execute ChatClear command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  clearinv:
-    title: "New Alert!"
-    description: "> %player% has execute clearinv command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  lifemod:
-    title: "New Alert!"
-    description: "> %player% has execute lifemod command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  ecopen:
-    title: "New Alert!"
-    description: "> %player% has execute ecopen command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  feed:
-    title: "New Alert!"
-    description: "> %player% has execute feed command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  fly:
-    title: "New Alert!"
-    description: "> %player% has execute fly command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  freeze:
-    title: "New Alert!"
-    description: "> %player% has execute freeze command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  gamemode:
-    title: "New Alert!"
-    description: "> %player% has execute gamemode command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  god:
-    title: "New Alert!"
-    description: "> %player% has execute god command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  heal:
-    title: "New Alert!"
-    description: "> %player% has execute heal command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  invsee:
-    title: "New Alert!"
-    description: "> %player% has execute invsee command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  mod:
-    title: "New Alert!"
-    description: "> %player% has execute mod command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  speed:
-    title: "New Alert!"
-    description: "> %player% has execute speed command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  staffchat:
-    title: "New Alert!"
-    description: "> %player% has execute staffchat command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  stafflist:
-    title: "New Alert!"
-    description: "> %player% has execute stafflist command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  teleport:
-    title: "New Alert!"
-    description: "> %player% has execute teleport command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  vanish:
-    title: "New Alert!"
-    description: "> %player% has execute vanish command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  weather:
-    title: "New Alert!"
-    description: "> %player% has execute weather command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  spectate:
-    title: "New Alert!"
-    description: "> %player% has execute spectate command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  otp:
-    title: "New Alert!"
-    description: "> %player% has execute otp command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  oinvsee:
-    title: "New Alert!"
-    description: "> %player% has execute oinvsee command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  hearts:
-    title: "New Alert!"
-    description: "> %player% has execute hearts command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  title:
-    title: "New Alert!"
-    description: "> %player% has execute time command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  auth:
-    title: "New Alert!"
-    description: "> %player% has execute auth command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
-  report:
-    title: "New Alert!"
-    description: "> %player% has execute report command!"
-    footer:
-      title: "Powered By LifeGroup"
-      logo: "https://mc-heads.net/avatar/%player%/"
-    color: "#FF0000" ## insert your color here for example : #FF000 for RED...
+  # Discord Webhook Integration
+  discord:
+    enabled: false
+    webhook-url: "INSERT_YOUR_WEBHOOK_HERE"
+    alerts:
+      mod:
+        title: "Moderation Mode"
+        description: "> %player% has toggled moderation mode!"
+        color: "#FF0000"
+      report:
+        title: "New Report"
+        description: "> %player% has reported someone!"
+        color: "#FF0000"
+      ban:
+        title: "New Ban"
+        description: "> %player% has been banned by %issuer% for: %reason%"
+        color: "#FF0000"
+      hearts:
+        title: "Health Change"
+        description: "> %player% changed %target%'s hearts by %amount% (%action%)"
+        color: "#FF0000"
+      # generic for others
+      generic:
+        title: "Staff Alert"
+        description: "> %player% executed command: %message%"
+        color: "#FF0000"
+      footer:
+        text: "Powered By LifeMod"
+        logo: "https://mc-heads.net/avatar/%player%/"
 
-moderator-login:
-  enabled: false
-  max-attempts: 5
-  session-timeout-minutes: 30
-  require-ip-match: false
+# --- COMMANDS STATUS ---
+commands:
+  enabled:
+    ban: true
+    kick: true
+    mute: true
+    warn: true
+    history: true
+    case: true
+    report: true
+    reports: true
+    staffchat: true
+    vanish: true
+    freeze: true
+    fly: true
+    gamemode: true
+    invsee: true
+    oinvsee: true
+    otp: true
+    speed: true
+    spectate: true
+    hearts: true
+    difficulty: true
+    settime: true
+    weather: true
+    modlogin: true
+    modregister: true
+    modchangepass: true
+    modreset: true
 
-version: 170
+# Metadata
+version: 200

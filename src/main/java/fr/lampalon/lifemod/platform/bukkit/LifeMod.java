@@ -127,11 +127,11 @@ public class LifeMod extends JavaPlugin {
                         Player player = Bukkit.getPlayer(playerUuid);
                         if (player != null) {
                             if (typeStr.equals("BAN")) {
-                                String kickMsg = langConfig.getString("ban.kick-message", "&cVous avez été banni !\n\nRaison: &f%reason%")
+                                String kickMsg = langConfig.getString("sanctions.ban.login", "&cYou have been banned!\n\nReason: &f%reason%")
                                         .replace("%reason%", reason);
                                 player.kickPlayer(MessageUtil.formatMessage(kickMsg));
                             } else if (typeStr.equals("KICK")) {
-                                String kickMsg = langConfig.getString("kick.kick-message", "&cVous avez été expulsé !\n\nRaison: &f%reason%")
+                                String kickMsg = langConfig.getString("sanctions.kick.message", "&cYou have been kicked!\n\nReason: &f%reason%")
                                         .replace("%reason%", reason);
                                 player.kickPlayer(MessageUtil.formatMessage(kickMsg));
                             }
@@ -202,7 +202,7 @@ public class LifeMod extends JavaPlugin {
 
         PacketEvents.getAPI().init();
         
-        this.webHookUrl = getConfig().getString("discord.webhookurl");
+        this.webHookUrl = configConfig.getString("modules.discord.webhook-url");
         this.spectateManager = new SpectateManager();
         this.debugManager = new DebugManager(this);
         initializeManagers();
@@ -250,7 +250,7 @@ public class LifeMod extends JavaPlugin {
         guiManager = new GuiManager(this);
         noteInputManager = new NoteInputManager(this);
         moderatorAuthService = new ModeratorAuthService(this);
-        moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("moderator-login.max-attempts", 3));
+        moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
     }
 
     private void setupMetrics() {
@@ -275,7 +275,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new ModeratorAuthListener(), this);
         pm.registerEvents(new SanctionListener(), this);
         pm.registerEvents(new ConnectionListener(), this);
-        if (langConfig.getBoolean("general.update.enabled")) {
+        if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         }
     }
@@ -337,7 +337,7 @@ public class LifeMod extends JavaPlugin {
     }
 
     private void registerCommand(String commandName, CommandExecutor executor) {
-        if (getConfig().getBoolean("commands-enabled." + commandName, true)) {
+        if (configConfig.getBoolean("commands.enabled." + commandName, true)) {
             if (getCommand(commandName) != null) {
                 getCommand(commandName).setExecutor(executor);
                 if (executor instanceof TabCompleter) getCommand(commandName).setTabCompleter((TabCompleter) executor);
@@ -374,5 +374,11 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
     public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
+    
+    @Override
+    public String getServerName() {
+        return configConfig.getString("server.name", "Survival");
+    }
+}
 }
 

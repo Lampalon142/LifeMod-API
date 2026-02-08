@@ -153,10 +153,10 @@ public class SanctionService implements ISanctionService {
     @Override
     public void checkAutoPunish(UUID playerUuid, String category) {
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
-        if (!config.getBoolean("auto-punish.enabled", false)) return;
+        if (!config.getBoolean("modules.auto-punish.enabled", false)) return;
 
         getHistory(playerUuid).thenAccept(history -> {
-            String mode = config.getString("auto-punish.mode", "GLOBAL");
+            String mode = config.getString("modules.auto-punish.mode", "GLOBAL");
             long count;
             String command = null;
 
@@ -164,7 +164,7 @@ public class SanctionService implements ISanctionService {
                 count = history.stream()
                         .filter(s -> s.isActive() && !s.isExpired() && category.equalsIgnoreCase(s.getCategory()))
                         .count();
-                command = config.getString("auto-punish.categories." + category + "." + count, null);
+                command = config.getString("modules.auto-punish.categories." + category + "." + count, null);
             }
 
             // Fallback to GLOBAL if no category command found OR if mode is GLOBAL
@@ -173,7 +173,7 @@ public class SanctionService implements ISanctionService {
                 count = history.stream()
                         .filter(s -> s.getType() == SanctionType.WARN && s.isActive() && !s.isExpired())
                         .count();
-                command = config.getString("auto-punish.global.thresholds." + count, null);
+                command = config.getString("modules.auto-punish.global.thresholds." + count, null);
             }
 
             if (command != null) {

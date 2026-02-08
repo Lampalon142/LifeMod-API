@@ -23,7 +23,7 @@ public class AltsCmd extends LifeCommand {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
         if (args.length < 1) {
-            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("alts.usage", "&cUsage: /alts [player/ip]")));
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.usage", "&cUsage: /alts <player/ip>")));
             return;
         }
 
@@ -36,7 +36,7 @@ public class AltsCmd extends LifeCommand {
                 UUID uuid = Bukkit.getOfflinePlayer(input).getUniqueId();
                 PlayerData data = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().getPlayerData(uuid);
                 if (data == null) {
-                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("alts.not-found", "&cThis player has never been recorded.")));
+                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.not-found", "&cThis player has never been recorded.")));
                     return;
                 }
                 ip = data.getLastIp();
