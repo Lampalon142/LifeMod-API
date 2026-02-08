@@ -21,6 +21,11 @@ public class WarnCmd extends BaseSanctionCmd {
             String received = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("sanctions.warn.received", "&c&lWARNING! &7Reason: &f%reason%")
                     .replace("%reason%", sanction.getReason());
             target.getPlayer().sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(received));
+            
+            // Ultra complete visual warning
+            fr.lampalon.lifemod.integration.nms.PacketController pc = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getPacketController();
+            pc.sendTitle(target.getPlayer(), "&c&lWARNING", "&7" + sanction.getReason(), 10, 40, 10);
+            pc.sendActionBar(target.getPlayer(), received);
         }
     }
 }

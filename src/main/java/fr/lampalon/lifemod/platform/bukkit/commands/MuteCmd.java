@@ -21,6 +21,11 @@ public class MuteCmd extends BaseSanctionCmd {
             String received = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("sanctions.mute.received", "&cYou have been muted! Reason: &f%reason%")
                     .replace("%reason%", sanction.getReason());
             target.getPlayer().sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(received));
+
+            // Ultra complete visual mute
+            fr.lampalon.lifemod.integration.nms.PacketController pc = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getPacketController();
+            pc.sendTitle(target.getPlayer(), "&d&lMUTED", "&7" + sanction.getReason(), 10, 40, 10);
+            pc.sendActionBar(target.getPlayer(), received);
         }
     }
 }

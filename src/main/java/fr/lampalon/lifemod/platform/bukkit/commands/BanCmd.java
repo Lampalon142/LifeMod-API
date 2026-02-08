@@ -26,7 +26,8 @@ public class BanCmd extends BaseSanctionCmd {
                         .replace("%reason%", sanction.getReason())
                         .replace("%issuer%", sanction.getIssuerName())
                         .replace("%time%", fr.lampalon.lifemod.common.utils.TimeUtil.formatTime(sanction.getDuration()));
-                target.getPlayer().kickPlayer(MessageUtil.formatMessage(kickMsg));
+                
+                LifeMod.getInstance().getPacketController().kickPlayer(target.getPlayer(), kickMsg);
             });
         }
     }

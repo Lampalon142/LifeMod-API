@@ -29,7 +29,8 @@ public class KickCmd extends BaseSanctionCmd {
                 String kickMsg = LifeMod.getInstance().getLangConfig().getString("sanctions.kick.message", "&cYou have been kicked! Reason: &f%reason%")
                         .replace("%reason%", sanction.getReason())
                         .replace("%issuer%", sanction.getIssuerName());
-                target.getPlayer().kickPlayer(MessageUtil.formatMessage(kickMsg));
+                
+                LifeMod.getInstance().getPacketController().kickPlayer(target.getPlayer(), kickMsg);
             });
         }
     }
