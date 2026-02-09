@@ -67,7 +67,8 @@ public class BungeeLifeMod extends Plugin {
         ProxyServer.getInstance().getLogger().info("§6§lLifeMod §bBungee §7- §aSuccessfully Enabled");
         ProxyServer.getInstance().getLogger().info(" ");
         ProxyServer.getInstance().getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        ProxyServer.getInstance().getLogger().info("§e• §fPlatform: §aBungeeCord §7(" + ProxyServer.getInstance().getName() + " " + ProxyServer.getInstance().getVersion() + ")");
+        ProxyServer.getInstance().getLogger().info("§e• §fPlatform: §aBungeeCord");
+        ProxyServer.getInstance().getLogger().info("§e• §fInstance: §d" + ProxyServer.getInstance().getVersion());
         ProxyServer.getInstance().getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
         ProxyServer.getInstance().getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
         ProxyServer.getInstance().getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");

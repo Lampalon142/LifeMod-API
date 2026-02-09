@@ -45,19 +45,34 @@ public class PacketController implements PacketListener {
     }
 
     public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        // Send times
-        WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(fadeIn, stay, fadeOut);
+        Component titleComp = title != null ? Component.text(MessageUtil.formatMessage(title)) : null;
+        Component subtitleComp = subtitle != null ? Component.text(MessageUtil.formatMessage(subtitle)) : null;
+
+        // 1. Send times
+        WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(
+                WrapperPlayServerTitle.TitleAction.SET_TIMES_AND_DISPLAY,
+                (Component) null, (Component) null, (Component) null,
+                fadeIn, stay, fadeOut
+        );
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, timePacket);
 
-        // Send title
-        if (title != null) {
-            WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.TitleAction.TITLE, Component.text(MessageUtil.formatMessage(title)));
+        // 2. Send title
+        if (titleComp != null) {
+            WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(
+                    WrapperPlayServerTitle.TitleAction.SET_TITLE,
+                    titleComp, null, null,
+                    fadeIn, stay, fadeOut
+            );
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, titlePacket);
         }
 
-        // Send subtitle
-        if (subtitle != null) {
-            WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(WrapperPlayServerTitle.TitleAction.SUBTITLE, Component.text(MessageUtil.formatMessage(subtitle)));
+        // 3. Send subtitle
+        if (subtitleComp != null) {
+            WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(
+                    WrapperPlayServerTitle.TitleAction.SET_SUBTITLE,
+                    null, subtitleComp, null,
+                    fadeIn, stay, fadeOut
+            );
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, subtitlePacket);
         }
     }

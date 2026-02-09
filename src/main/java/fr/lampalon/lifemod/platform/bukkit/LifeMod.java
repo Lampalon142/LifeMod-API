@@ -228,8 +228,8 @@ public class LifeMod extends JavaPlugin {
         getLogger().info("§6§lLifeMod §7- §aSuccessfully Enabled");
         getLogger().info(" ");
         getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        getLogger().info("§e• §fPlatform: §aBukkit §7(" + Bukkit.getName() + " " + Bukkit.getVersion() + ")");
-        getLogger().info("§e• §fNMS Integration: §dPacketEvents v" + PacketEvents.getAPI().getVersion());
+        getLogger().info("§e• §fPlatform: §aBukkit §7(" + Bukkit.getName() + ")");
+        getLogger().info("§e• §fNMS Instance: §d" + Bukkit.getBukkitVersion());
         getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type", "sqlite").toUpperCase());
         getLogger().info("§e• §fRedis Sync: " + (configConfig.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
         getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
