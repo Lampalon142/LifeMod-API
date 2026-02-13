@@ -34,7 +34,7 @@ public class PlayerJoin implements Listener {
             updateChecker.checkForUpdates(result -> {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (updateChecker.getLatestVersionS() == null) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c[LifeMod] Failed to retrieve the latest version."));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getLangConfig().getString("system.update.failed")));
                         debug.log("update", "Failed to retrieve latest version for player " + player.getName());
                     } else if (result == UpdateChecker.UpdateCheckResult.OUT_DATED) {
                         String rawMessage = plugin.getLangConfig().getString("system.update.message");
@@ -53,13 +53,13 @@ public class PlayerJoin implements Listener {
                                         .replace("%latest_version%", updateChecker.getLatestVersionS())));
                         debug.log("update", "Notified player " + player.getName() + " about update.");
                     } else if (result == UpdateChecker.UpdateCheckResult.UP_TO_DATE) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&a[LifeMod] LifeMod is up to date."));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getLangConfig().getString("system.update.up-to-date")));
                         debug.log("update", "Player " + player.getName() + " has up-to-date plugin.");
                     } else if (result == UpdateChecker.UpdateCheckResult.UNRELEASED) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&e[LifeMod] You are using a version not yet released."));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getLangConfig().getString("system.update.unreleased")));
                         debug.log("update", "Player " + player.getName() + " is using unreleased version.");
                     } else if (result == UpdateChecker.UpdateCheckResult.NO_RESULT) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&c[LifeMod] Unable to check for updates."));
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getLangConfig().getString("system.update.error")));
                         debug.log("update", "Unable to check updates for player " + player.getName());
                     }
                 });

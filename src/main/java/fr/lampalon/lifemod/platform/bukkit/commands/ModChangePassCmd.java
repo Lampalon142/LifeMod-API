@@ -29,7 +29,7 @@ public class ModChangePassCmd implements CommandExecutor {
         }
 
         if (args.length != 2) {
-            player.sendMessage(MessageUtil.formatMessage("&cUsage: /modchangepass <old> <new>"));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.changepass-usage")));
             return true;
         }
 
@@ -37,7 +37,7 @@ public class ModChangePassCmd implements CommandExecutor {
         String newPass = args[1];
 
         if (!checkPassword(player.getUniqueId(), oldPass)) {
-            player.sendMessage(MessageUtil.formatMessage("&cIncorrect old password."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.incorrect-old-password")));
             return true;
         }
 
@@ -46,7 +46,7 @@ public class ModChangePassCmd implements CommandExecutor {
         }
 
         changePassword(player.getUniqueId(), newPass);
-        player.sendMessage(MessageUtil.formatMessage("&aPassword changed successfully."));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.password-changed")));
         return true;
     }
 

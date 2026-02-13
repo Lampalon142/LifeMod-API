@@ -12,21 +12,21 @@ public class MuteCmd extends BaseSanctionCmd {
 
     @Override
     protected void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction) {
-        String success = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("sanctions.mute.success", "&aPlayer &e%player% &ahas been muted for: &f%reason%")
+        String success = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getLangConfig().getString("sanctions.mute.success")
                 .replace("%player%", target.getName())
                 .replace("%reason%", sanction.getReason());
         sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(success));
         
         if (target.isOnline()) {
             fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-            String received = lang.getMessage("sanctions.mute.received", "&cYou have been muted! Reason: &f%reason%")
+            String received = lang.getMessage("sanctions.mute.received")
                     .replace("%reason%", sanction.getReason());
             target.getPlayer().sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(received));
 
             // Ultra complete visual mute
             fr.lampalon.lifemod.integration.nms.PacketController pc = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getPacketController();
-            String title = lang.getMessage("sanctions.mute.title", "&d&lMUTED");
-            String subtitle = lang.getMessage("sanctions.mute.subtitle", "&7%reason%").replace("%reason%", sanction.getReason());
+            String title = lang.getMessage("sanctions.mute.title");
+            String subtitle = lang.getMessage("sanctions.mute.subtitle").replace("%reason%", sanction.getReason());
             
             pc.sendTitle(target.getPlayer(), title, subtitle, 10, 40, 10);
             pc.sendActionBar(target.getPlayer(), received);

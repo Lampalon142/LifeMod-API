@@ -16,6 +16,6 @@ public class MountAction implements IStaffAction {
     public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
         Entity target = event.getRightClicked();
         target.addPassenger(player);
-        player.sendMessage(MessageUtil.formatMessage("&aMounted on &e" + target.getName()));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.mount.success").replace("%target%", target.getName())));
     }
 }

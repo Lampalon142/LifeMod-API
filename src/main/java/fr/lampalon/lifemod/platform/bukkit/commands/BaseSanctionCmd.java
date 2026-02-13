@@ -34,7 +34,7 @@ public abstract class BaseSanctionCmd extends LifeCommand {
     public void execute(ICommandSender sender, String[] args) {
         if (args.length < 1) {
             String key = supportsDuration() ? "sanctions.cmd.usage" : "sanctions.cmd.usage-no-time";
-            String usage = LifeMod.getInstance().getLangConfig().getString(key, "&cUsage: /" + getName() + " [player] [reason] <time> <-s>")
+            String usage = LifeMod.getInstance().getLangConfig().getString(key)
                     .replace("%cmd%", getName());
             sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(usage));
             return;
@@ -62,7 +62,7 @@ public abstract class BaseSanctionCmd extends LifeCommand {
 
         String reason = String.join(" ", reasonParts);
         if (reason.isEmpty() && type != SanctionType.NOTE) {
-            reason = LifeMod.getInstance().getLangConfig().getString("sanctions.cmd.default-reason", "No reason specified");
+            reason = LifeMod.getInstance().getLangConfig().getString("sanctions.cmd.default-reason");
         }
 
         String category = "Other";
@@ -79,7 +79,7 @@ public abstract class BaseSanctionCmd extends LifeCommand {
             }
         }
 
-        String serverName = LifeMod.getInstance().getConfigConfig().getString("server-name", "Survival");
+        String serverName = LifeMod.getInstance().getConfigConfig().getString("server-name");
 
         Sanction sanction = new Sanction(
                 targetUuid,

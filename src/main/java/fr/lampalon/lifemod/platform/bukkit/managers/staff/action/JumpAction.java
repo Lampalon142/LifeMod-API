@@ -16,7 +16,7 @@ public class JumpAction implements IStaffAction {
     public void onInteract(Player player, PlayerInteractEvent event) {
         Block target = player.getTargetBlock((Set<Material>) null, 100);
         if (target == null || target.getType() == Material.AIR) {
-            player.sendMessage(MessageUtil.formatMessage("&cNo target block found."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.no-target")));
             return;
         }
         
@@ -24,7 +24,7 @@ public class JumpAction implements IStaffAction {
         loc.setYaw(player.getLocation().getYaw());
         loc.setPitch(player.getLocation().getPitch());
         player.teleport(loc);
-        player.sendMessage(MessageUtil.formatMessage("&aJumped!"));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.jump")));
     }
 
     @Override

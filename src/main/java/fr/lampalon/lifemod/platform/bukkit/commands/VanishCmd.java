@@ -56,10 +56,10 @@ public class VanishCmd implements CommandExecutor {
                         vanishService.setVanished(targetPlayer, !isVanished, false);
                         if (!isVanished) {
                             targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("vanish.activate")));
-                            player.sendMessage(MessageUtil.formatMessage("&aYou vanished &e" + targetPlayer.getName()));
+                            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish-on")));
                         } else {
                             targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("vanish.deactivate")));
-                            player.sendMessage(MessageUtil.formatMessage("&aYou unvanished &e" + targetPlayer.getName()));
+                            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish-off")));
                         }
                     } else {
                         player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));

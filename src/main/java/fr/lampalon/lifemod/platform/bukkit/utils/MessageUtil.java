@@ -47,7 +47,7 @@ public class MessageUtil {
             return "";
         }
 
-        String prefix = LifeMod.getInstance().getConfigConfig().getString("prefix", "");
+        String prefix = LifeMod.getInstance().getConfigConfig().getString("prefix");
         if (prefix == null) {
             prefix = "";
         }

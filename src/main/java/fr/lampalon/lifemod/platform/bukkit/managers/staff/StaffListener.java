@@ -130,7 +130,7 @@ public class StaffListener implements Listener {
         if (clickedInventory != null && !clickedInventory.equals(player.getInventory())) {
             if (cursorItem != null && staffItemManager.getStaffItem(cursorItem) != null) {
                 event.setCancelled(true);
-                player.sendMessage(MessageUtil.formatMessage("&cYou cannot put staff tools in other inventories."));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.restrictions.no-external-put")));
                 return;
             }
         }
@@ -157,7 +157,7 @@ public class StaffListener implements Listener {
             ItemStack dropped = event.getItemDrop().getItemStack();
             if (staffItemManager.getStaffItem(dropped) != null) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(MessageUtil.formatMessage("&cYou cannot drop staff tools."));
+                event.getPlayer().sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.restrictions.no-drop")));
             }
         }
     }

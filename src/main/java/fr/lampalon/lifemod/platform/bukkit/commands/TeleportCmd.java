@@ -46,7 +46,7 @@ public class TeleportCmd implements CommandExecutor, TabCompleter {
                 return true;
             }
             player.teleport(target.getLocation());
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("tp.success").replace("%player%", target.getName())));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.teleport.success").replace("%player%", target.getName())));
             debug.log("tp", player.getName() + " teleported to " + target.getName());
         }
         else if (args.length == 2) {
@@ -70,7 +70,7 @@ public class TeleportCmd implements CommandExecutor, TabCompleter {
                 double z = Double.parseDouble(args[2]);
                 Location targetLocation = new Location(player.getWorld(), x, y, z);
                 player.teleport(targetLocation);
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("tp.success").replace("%player%", "coordinates")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.teleport.success").replace("%player%", "coordinates")));
                 debug.log("tp", player.getName() + " teleported to coordinates " + x + "," + y + "," + z);
             } catch (NumberFormatException e) {
                 player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("tp.invalidcoordinates")));

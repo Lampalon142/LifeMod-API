@@ -25,9 +25,9 @@ public class VanishAction implements IStaffAction {
         vanishService.setVanished(player, !currentState, false);
         
         if (currentState) {
-            player.sendMessage(MessageUtil.formatMessage("&cYou are now VISIBLE."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish.visible")));
         } else {
-            player.sendMessage(MessageUtil.formatMessage("&aYou are now VANISHED."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish.vanished")));
         }
     }
 }

@@ -42,7 +42,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
                     .map(Enum::name)
                     .map(String::toLowerCase)
                     .collect(Collectors.joining(", "));
-            String msg = plugin.getLangConfig().getString("commands.world.difficulty.current", "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)")
+            String msg = plugin.getLangConfig().getString("commands.world.difficulty.current")
                     .replace("%difficulty%", diff.name().toLowerCase())
                     .replace("%available%", available);
             sender.sendMessage(MessageUtil.formatMessage(msg));

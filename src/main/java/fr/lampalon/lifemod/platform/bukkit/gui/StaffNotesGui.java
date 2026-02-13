@@ -50,7 +50,7 @@ public class StaffNotesGui extends PagedAbstractGui {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
-                        builder.setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.previous", "&c« Previous Page")));
+                        builder.setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.pagination.previous")));
                         return builder;
                     }
                 })
@@ -58,14 +58,14 @@ public class StaffNotesGui extends PagedAbstractGui {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
-                        builder.setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.next", "&aNext Page »")));
+                        builder.setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.pagination.next")));
                         return builder;
                     }
                 })
-                .addIngredient('A', new SimpleItem(new ItemBuilder(Material.WRITABLE_BOOK).setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.notes.add", "&a✚ Add a note"))), click -> {
+                .addIngredient('A', new SimpleItem(new ItemBuilder(Material.WRITABLE_BOOK).setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.add"))), click -> {
                     player.closeInventory();
                     LifeMod.getInstance().getNoteInputManager().startNoteInput(player, report);
-                    player.sendMessage(MessageUtil.formatMessage(lang.getMessage("report.detail.notes.prompt", "&aType your note in chat (or 'cancel' to abort)")));
+                    player.sendMessage(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.prompt")));
                 }))
                 .setContent(getListItems())
                 .build();

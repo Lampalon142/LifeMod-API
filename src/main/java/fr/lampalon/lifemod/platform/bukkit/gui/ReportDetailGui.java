@@ -31,7 +31,7 @@ public class ReportDetailGui extends AbstractGui {
         String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
 
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+        String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format");
 
         return Gui.normal()
                 .setStructure(
@@ -44,10 +44,10 @@ public class ReportDetailGui extends AbstractGui {
                 .addIngredient('#', createBorder())
                 .addIngredient('R', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
                         .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.reporter", "%player%", reporterName)))
-                        .addLoreLines(MessageUtil.formatMessage("&7Status: " + (reporter != null && reporter.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (reporter != null && reporter.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
                 .addIngredient('T', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
                         .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.target", "%player%", targetName)))
-                        .addLoreLines(MessageUtil.formatMessage("&7Status: " + (target != null && target.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (target != null && target.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
                 .addIngredient('I', new SimpleItem(new ItemBuilder(Material.BOOK)
                         .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.info")))
                         .addLoreLines(
@@ -65,7 +65,7 @@ public class ReportDetailGui extends AbstractGui {
                 .addIngredient('C', new SimpleItem(new ItemBuilder(Material.RED_DYE)
                         .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.close")))
                         .addLoreLines(lang.getStringList("report.detail.close-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
-                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.back", "&7« Back"))), click -> {
+                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.back"))), click -> {
                     player.closeInventory();
                 }))
                 .build();
@@ -73,7 +73,7 @@ public class ReportDetailGui extends AbstractGui {
 
     @Override
     protected String getTitle() {
-        return MessageUtil.formatMessage("&dReport: &e#" + report.getUuid().toString().substring(0, 8));
+        return MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.title-prefix") + report.getUuid().toString().substring(0, 8));
     }
 
     @Override

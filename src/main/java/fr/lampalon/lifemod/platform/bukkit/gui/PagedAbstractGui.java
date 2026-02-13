@@ -37,8 +37,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
                         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.previous", "&c« Previous Page")));
-                        if (!gui.hasPreviousPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.already-first", "&8You are already on the first page.")));
+                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.previous")));
+                        if (!gui.hasPreviousPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.first-page")));
                         return builder;
                     }
                 })
@@ -47,8 +47,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
                         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.next", "&aNext Page »")));
-                        if (!gui.hasNextPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.already-last", "&8You are already on the last page.")));
+                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.next")));
+                        if (!gui.hasNextPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.last-page")));
                         return builder;
                     }
                 })

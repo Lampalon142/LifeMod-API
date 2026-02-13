@@ -55,7 +55,7 @@ public class ReportItem extends AbstractItem {
                 .collect(Collectors.toList());
 
         String displayName = LifeMod.getInstance().getLangConfig()
-                .getString("report.gui.name", "&eReport: %uuid%")
+                .getString("report.gui.name")
                 .replace("%uuid%", report.getUuid().toString().substring(0, 8));
 
         ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(MessageUtil.formatMessage(displayName));

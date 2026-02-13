@@ -20,7 +20,7 @@ public class HistoryCmd extends LifeCommand {
     @Override
     public void execute(ICommandSender sender, String[] args) {
         if (args.length < 1) {
-            String usage = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("gui.history.usage", "&cUsage: /history <player>");
+            String usage = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("gui.history.usage");
             sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(usage));
             return;
         }

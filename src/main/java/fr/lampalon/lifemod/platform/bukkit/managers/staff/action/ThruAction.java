@@ -27,11 +27,11 @@ public class ThruAction implements IStaffAction {
                 loc.setYaw(player.getLocation().getYaw());
                 loc.setPitch(player.getLocation().getPitch());
                 player.teleport(loc);
-                player.sendMessage(MessageUtil.formatMessage("&aThru!"));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.thru")));
                 return;
             }
         }
-        player.sendMessage(MessageUtil.formatMessage("&cNo safe spot found to pass through."));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.no-safe-spot")));
     }
 
     @Override

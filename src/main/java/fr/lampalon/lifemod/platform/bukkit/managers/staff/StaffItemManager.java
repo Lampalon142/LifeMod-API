@@ -45,7 +45,7 @@ public class StaffItemManager {
 
             try {
                 // Build ItemStack
-                Material material = Material.valueOf(itemSec.getString("material", "STONE"));
+                Material material = Material.valueOf(itemSec.getString("material"));
                 int slot = itemSec.getInt("slot", 0);
                 String name = MessageUtil.formatMessage(itemSec.getString("name", key));
                 List<String> loreRaw = itemSec.getStringList("lore");

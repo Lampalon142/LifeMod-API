@@ -29,12 +29,12 @@ public class ModLoginCmd implements CommandExecutor {
         }
 
         if (isAuthenticated(player)) {
-            player.sendMessage(MessageUtil.formatMessage("&cYou are already authenticated."));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.already-authenticated")));
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage("&cUsage: /modlogin <password>"));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.login-usage")));
             return true;
         }
 
@@ -53,7 +53,7 @@ public class ModLoginCmd implements CommandExecutor {
                 lockModerator(player);
                 player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.login-locked")));
             } else {
-                String rawMsg = plugin.getLangConfig().getString("commands.auth.login-failed", "&cIncorrect password! Attempts left: &e%attempts%");
+                String rawMsg = plugin.getLangConfig().getString("commands.auth.login-failed");
                 String msg = rawMsg.replace("%attempts%", String.valueOf(attemptsLeft));
                 player.sendMessage(MessageUtil.formatMessage(msg));
             }

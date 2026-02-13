@@ -111,7 +111,7 @@ public class VanishService implements IVanishService {
     }
 
     private void broadcastFakeQuit(Player player) {
-        String msg = plugin.getLangConfig().getString("vanish.fake-quit", "&e%player% left the game");
+        String msg = plugin.getLangConfig().getString("vanish.fake-quit");
         String formatted = MessageUtil.formatMessage(msg.replace("%player%", player.getName()));
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))
@@ -119,7 +119,7 @@ public class VanishService implements IVanishService {
     }
 
     private void broadcastFakeJoin(Player player) {
-        String msg = plugin.getLangConfig().getString("vanish.fake-join", "&e%player% joined the game");
+        String msg = plugin.getLangConfig().getString("vanish.fake-join");
         String formatted = MessageUtil.formatMessage(msg.replace("%player%", player.getName()));
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))

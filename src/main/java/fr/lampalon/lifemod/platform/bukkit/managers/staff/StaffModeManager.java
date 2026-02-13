@@ -57,11 +57,11 @@ public class StaffModeManager {
         plugin.getModerators().add(player.getUniqueId()); // Keep legacy compatibility if needed
         
         // NMS Visual Feedback
-        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.enable-title", "&6Staff Mode"), 
-                plugin.getLangConfig().getString("mod.enable-subtitle", "&aActivated"), 10, 40, 10);
-        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled", "&6Staff Mode: &aON"));
+        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"), 
+                plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
+        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
 
-        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.enable", "&aStaff Mode Enabled.")));
+        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.enable")));
         debug.log("mod", player.getName() + " enabled staff mode (New System).");
     }
 
@@ -86,11 +86,11 @@ public class StaffModeManager {
         plugin.getModerators().remove(player.getUniqueId()); // Legacy compatibility
 
         // NMS Visual Feedback
-        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.disable-title", "&6Staff Mode"), 
-                plugin.getLangConfig().getString("mod.disable-subtitle", "&cDeactivated"), 10, 40, 10);
-        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled", "&6Staff Mode: &cOFF"));
+        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.disable-title"), 
+                plugin.getLangConfig().getString("mod.disable-subtitle"), 10, 40, 10);
+        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled"));
 
-        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.disable", "&cStaff Mode Disabled.")));
+        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.disable")));
         debug.log("mod", player.getName() + " disabled staff mode (New System).");
     }
 

@@ -43,7 +43,7 @@ public class BroadcastCmd implements CommandExecutor, TabCompleter {
         }
 
         String message = String.join(" ", args).replace("\\n", "\n");
-        String broadcast = MessageUtil.parseColors(plugin.getLangConfig().getString("commands.broadcast.prefix", "") + message);
+        String broadcast = MessageUtil.parseColors(plugin.getLangConfig().getString("commands.broadcast.prefix") + message);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage(broadcast);

@@ -36,7 +36,7 @@ public class SanctionListener implements Listener {
                     return;
                 }
 
-                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format");
                 String expiration = ban.isPermanent() ? "Permanent" : new SimpleDateFormat(dateFormat).format(new Date(ban.getExpirationTime()));
                 
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
@@ -60,7 +60,7 @@ public class SanctionListener implements Listener {
             Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), event.getPlayer().getName(), SanctionType.MUTE).get();
             if (mute != null && !mute.isExpired()) {
                 event.setCancelled(true);
-                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format", "dd/MM/yyyy HH:mm");
+                String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format");
                 String expiration = mute.isPermanent() ? "Jamais" : new SimpleDateFormat(dateFormat).format(new Date(mute.getExpirationTime()));
                 
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);

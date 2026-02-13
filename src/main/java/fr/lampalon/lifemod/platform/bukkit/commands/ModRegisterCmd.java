@@ -30,12 +30,12 @@ public class ModRegisterCmd implements CommandExecutor {
         }
 
         if (isRegistered(player.getUniqueId())) {
-            player.sendMessage(MessageUtil.formatMessage("&cYou are already registered."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.already-registered")));
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage("&cUsage: /modregister <password>"));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.register-usage")));
             return true;
         }
 

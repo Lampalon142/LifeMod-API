@@ -11,6 +11,10 @@ system:
   date-format: "dd/MM/yyyy HH:mm:ss" # Optional override
   update:
     enabled: true
+    failed: "&c[LifeMod] Failed to retrieve the latest version."
+    up-to-date: "&a[LifeMod] LifeMod is up to date."
+    unreleased: "&e[LifeMod] You are using a version not yet released."
+    error: "&c[LifeMod] Unable to check for updates."
     message: |
       &dHello %player%
       &bLifeMod has an available update!
@@ -50,6 +54,12 @@ sanctions:
       &7Reason: &f%reason%
       &7Expires on: &e%expiration%
       &7Sanction ID: &8#%id%
+      &8&m----------------------------------------
+    kick-message: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cYou have been banned!
+      &7Reason: &f%reason%
       &8&m----------------------------------------
 
   mute:
@@ -147,6 +157,8 @@ reports:
       info-server: "&7Server: &a%server%"
       info-status: "&7Status: &e%status%"
       info-date: "&7Date: &f%date%"
+      status-prefix: "&7Status: "
+      title-prefix: "&dReport: &e#"
       teleport: "&dTeleport to Location"
       teleport-lore: [ "&7Click to teleport to where", "&7the report was created." ]
       assign: "&aAssign to Me"
@@ -154,6 +166,7 @@ reports:
       close: "&cClose Report"
       close-lore: [ "&7Click to resolve and", "&7close this report." ]
       back: "&7« Back"
+      teleport-success: "&aTeleported to report location."
 
     notes:
       title: "&6Notes: &e#%id%"
@@ -205,6 +218,7 @@ gui:
       revoke-reason: "&7 Reason: &f%reason%"
       delete-info: "&c ⤷ Right-click to delete"
       delete-success: "&aSanction deleted!"
+      separator: "&8&m--------------------------"
 
   case:
     usage: "&cUsage: /case <player>"
@@ -226,6 +240,9 @@ gui:
     status-online: "&a&lONLINE"
     status-offline: "&7OFFLINE"
     status-banned: "&c&lBANNED"
+    status-online-color: "&a"
+    status-offline-color: "&7"
+    status-banned-color: "&c"
     evasion-alert: |
       &8&m----------------------------------------
       &c&lEVASION ALERT
@@ -274,6 +291,48 @@ mod:
     kill: "&cYou killed &e%player%"
     vanish-on: "&aVanish enabled"
     vanish-off: "&cVanish disabled"
+    no-target: "&cYou must click on a player!"
+    cps:
+      already-active: "&cYou already have an active CPS test."
+      start: "&aStarting &e%duration%s &aCPS test on &e%target%&a..."
+      finish-none: "&cTest finished for &e%target%&c: &60 CPS &7(No clicks detected)"
+      result-header: "&8&m----------------------------------------"
+      result-title: "&6&lCPS Test Result &7- &e%target%"
+      result-avg: "&e• &fAverage CPS: &b%cps%"
+      result-total: "&e• &fTotal Clicks: &b%clicks%"
+      result-autoclicker: "&e• &fAuto-Clicker: %result%"
+      result-footer: "&8&m----------------------------------------"
+    info:
+      usage: "&bRight-click a player to view their info."
+      header: "&8&m----------------------------------------"
+      title: "&6&lInformation Viewer &7- &e%target%"
+      ping: "&e• &fPing: &b%ping%ms"
+      cps: "&e• &fCPS: &b%cps%"
+      gamemode: "&e• &fGamemode: &b%gamemode%"
+      location: "&e• &fLocation: &b%world% %x%,%y%,%z%"
+      footer: "&8&m----------------------------------------"
+    inspector:
+      silent-open: "&bOpening %block% silently..."
+      silent-title: "&7Silent: %block%"
+      inspect-player: "&bInspecting inventory of &e%target%"
+    navigation:
+      jump: "&aJumped!"
+      thru: "&aThru!"
+      no-target: "&cNo target block found."
+      no-safe-spot: "&cNo safe spot found to pass through."
+    kb-tester:
+      applied: "&eApplied Knockback to %target%"
+    mount:
+      success: "&aMounted on &e%target%"
+    random-tp:
+      no-players: "&cNo other players online."
+      success: "&aTeleported to &e%target%&a."
+    vanish:
+      visible: "&cYou are now VISIBLE."
+      vanished: "&aYou are now VANISHED."
+    restrictions:
+      no-external-put: "&cYou cannot put staff tools in other inventories."
+      no-drop: "&cYou cannot drop staff tools."
 
 vanish:
   activate: "&aVanish activated."
@@ -407,6 +466,14 @@ commands:
     reset-success: "&aPassword for &e%player% &areset."
     blocked-action: "&cYou must be logged in to do this!"
     blocked-chat: "&cYou must be logged in to chat!"
+    changepass-usage: "&cUsage: /modchangepass <old> <new>"
+    incorrect-old-password: "&cIncorrect old password."
+    password-changed: "&aPassword changed successfully."
+    already-authenticated: "&cYou are already authenticated."
+    login-usage: "&cUsage: /modlogin <password>"
+    already-registered: "&cYou are already registered."
+    register-usage: "&cUsage: /modregister <password>"
+    reset-usage: "&cUsage: /modreset <player>"
 
   staffchat:
     usage: "%prefix%&cUsage: /staffchat <message>"

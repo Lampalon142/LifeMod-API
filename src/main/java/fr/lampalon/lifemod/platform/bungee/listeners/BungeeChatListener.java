@@ -27,7 +27,7 @@ public class BungeeChatListener implements Listener {
         Sanction activeMute = sanctionService.getActiveSanction(player.getUniqueId(), player.getName(), SanctionType.MUTE).join();
 
         if (activeMute != null) {
-            String message = lang.getMessage("sanctions.mute.blocked", "&cYou are muted!\n&7Reason: &f%reason%\n&7Expires in: &f%time%");
+            String message = lang.getMessage("sanctions.mute.blocked");
             message = message
                     .replace("%reason%", activeMute.getReason())
                     .replace("%time%", TimeUtil.formatTime(activeMute.getExpirationTime() - System.currentTimeMillis()));

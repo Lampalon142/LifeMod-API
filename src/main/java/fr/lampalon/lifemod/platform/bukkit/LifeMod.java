@@ -103,9 +103,9 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         
         if (configConfig.getBoolean("redis.enabled", false)) {
-            String host = configConfig.getString("redis.host", "localhost");
+            String host = configConfig.getString("redis.host");
             int port = configConfig.getInt("redis.port", 6379);
-            String password = configConfig.getString("redis.password", "");
+            String password = configConfig.getString("redis.password");
             IMessagingService redis = new RedisMessagingService(host, port, password);
             ServiceRegistry.register(IMessagingService.class, redis);
             
@@ -131,11 +131,11 @@ public class LifeMod extends JavaPlugin {
                         Player player = Bukkit.getPlayer(playerUuid);
                         if (player != null) {
                             if (typeStr.equals("BAN")) {
-                                String kickMsg = langConfig.getString("sanctions.ban.login", "&cYou have been banned!\n\nReason: &f%reason%")
+                                String kickMsg = langConfig.getString("sanctions.ban.login")
                                         .replace("%reason%", reason);
                                 player.kickPlayer(MessageUtil.formatMessage(kickMsg));
                             } else if (typeStr.equals("KICK")) {
-                                String kickMsg = langConfig.getString("sanctions.kick.message", "&cYou have been kicked!\n\nReason: &f%reason%")
+                                String kickMsg = langConfig.getString("sanctions.kick.message")
                                         .replace("%reason%", reason);
                                 player.kickPlayer(MessageUtil.formatMessage(kickMsg));
                             }
@@ -234,7 +234,7 @@ public class LifeMod extends JavaPlugin {
         getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
         getLogger().info("§e• §fPlatform: §aBukkit §7(" + Bukkit.getName() + ")");
         getLogger().info("§e• §fNMS Instance: §d" + Bukkit.getBukkitVersion());
-        getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type", "sqlite").toUpperCase());
+        getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type").toUpperCase());
         getLogger().info("§e• §fRedis Sync: " + (configConfig.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
         getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
         getLogger().info(" ");
@@ -413,6 +413,6 @@ public class LifeMod extends JavaPlugin {
     public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
 
     public String getServerName() {
-        return configConfig.getString("server.name", "Survival");
+        return configConfig.getString("server.name");
     }
 }

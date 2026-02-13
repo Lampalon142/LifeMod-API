@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -23,13 +24,11 @@ public class InspectorAction implements IStaffAction {
             Inventory realInv = container.getInventory();
             
             // Create a virtual inventory to be truly silent
-            // Or open the real one but we need to prevent the animation packet
-            // Using a virtual inventory is safer for "Silent"
-            Inventory virtualInv = Bukkit.createInventory(null, realInv.getSize(), MessageUtil.formatMessage("&7Silent: " + block.getType().name()));
+            Inventory virtualInv = Bukkit.createInventory(null, realInv.getSize(), MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.silent-title").replace("%block%", block.getType().name())));
             virtualInv.setContents(realInv.getContents());
             
             player.openInventory(virtualInv);
-            player.sendMessage(MessageUtil.formatMessage("&bOpening " + block.getType().name() + " silently..."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.silent-open").replace("%block%", block.getType().name())));
         }
     }
 
@@ -39,11 +38,7 @@ public class InspectorAction implements IStaffAction {
             Player target = (Player) event.getRightClicked();
             // Open real inventory for real-time interaction
             player.openInventory(target.getInventory());
-            player.sendMessage(MessageUtil.formatMessage("&bInspecting inventory of &e" + target.getName()));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.inspect-player").replace("%target%", target.getName())));
         }
     }
-    
-    // Note: To make virtual inventory sync back to real one, 
-    // we would need an InventoryCloseEvent listener. 
-    // I'll add that to StaffListener for completeness.
 }

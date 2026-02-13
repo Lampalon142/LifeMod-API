@@ -29,7 +29,7 @@ public class KnockbackAction implements IStaffAction {
     private void applyKnockback(Player player, Player target) {
         // Simulating Knockback
         target.setVelocity(player.getLocation().getDirection().multiply(0.5).setY(0.4));
-        player.sendMessage(MessageUtil.formatMessage("&eApplied Knockback to " + target.getName()));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.kb-tester.applied").replace("%target%", target.getName())));
     }
 }
 

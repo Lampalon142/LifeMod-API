@@ -25,7 +25,7 @@ public class ModResetCmd implements CommandExecutor {
         }
 
         if (args.length != 1) {
-            sender.sendMessage(MessageUtil.formatMessage("&cUsage: /modreset <player>"));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.reset-usage")));
             return true;
         }
 
@@ -33,7 +33,7 @@ public class ModResetCmd implements CommandExecutor {
         UUID targetUUID = getUUIDByName(targetName);
 
         if (targetUUID == null || !isRegistered(targetUUID)) {
-            sender.sendMessage(MessageUtil.formatMessage("&cPlayer not found or not registered."));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
 
@@ -43,7 +43,7 @@ public class ModResetCmd implements CommandExecutor {
 
         resetModeratorPassword(targetUUID);
 
-        String rawMsg = plugin.getLangConfig().getString("commands.auth.reset-success", "&aPassword for &e%player% &areset.");
+        String rawMsg = plugin.getLangConfig().getString("commands.auth.reset-success");
         String msg = rawMsg.replace("%player%", targetName);
         sender.sendMessage(MessageUtil.formatMessage(msg));
         return true;

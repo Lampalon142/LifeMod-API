@@ -27,7 +27,7 @@ public class BukkitConfigurationService implements IConfigurationService {
 
     @Override
     public String getPrefix() {
-        return config.getString("prefix", "");
+        return config.getString("prefix");
     }
 }
 

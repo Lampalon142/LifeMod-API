@@ -68,7 +68,7 @@ public class ChatManager implements Listener {
     private void notifyViewers(Player sender, String word) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("lifemod.chat.views")) {
-                String notificationMessage = plugin.getConfigConfig().getString("chatManager.notification", "");
+                String notificationMessage = plugin.getConfigConfig().getString("chatManager.notification");
                 player.sendMessage(MessageUtil.formatMessage("%prefix%" + notificationMessage.replace("%player%", sender.getName()).replace("%word%", word)));
             }
         }

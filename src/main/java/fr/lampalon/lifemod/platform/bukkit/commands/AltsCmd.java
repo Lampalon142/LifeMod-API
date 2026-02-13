@@ -23,7 +23,7 @@ public class AltsCmd extends LifeCommand {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
         if (args.length < 1) {
-            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.usage", "&cUsage: /alts <player/ip>")));
+            sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.usage")));
             return;
         }
 
@@ -36,7 +36,7 @@ public class AltsCmd extends LifeCommand {
                 UUID uuid = Bukkit.getOfflinePlayer(input).getUniqueId();
                 PlayerData data = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().getPlayerData(uuid);
                 if (data == null) {
-                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.not-found", "&cThis player has never been recorded.")));
+                    sender.sendMessage(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.alts.not-found")));
                     return;
                 }
                 ip = data.getLastIp();
@@ -57,15 +57,15 @@ public class AltsCmd extends LifeCommand {
             fr.lampalon.lifemod.common.service.ISanctionService sanctionService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ISanctionService.class);
 
             for (PlayerData alt : alts) {
-                String color = "&7"; // Offline by default
+                String color = lang.getMessage("gui.alts.status-offline-color"); // Offline by default
                 if (Bukkit.getPlayer(alt.getUuid()) != null) {
-                    color = "&a"; // Online
+                    color = lang.getMessage("gui.alts.status-online-color"); // Online
                 }
                 
                 // Check if banned
                 fr.lampalon.lifemod.common.model.Sanction ban = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), fr.lampalon.lifemod.common.model.SanctionType.BAN).join();
                 if (ban != null) {
-                    color = "&c"; // Banned
+                    color = lang.getMessage("gui.alts.status-banned-color"); // Banned
                 }
 
                 sender.sendMessage(lang.getMessage("alts.entry", 

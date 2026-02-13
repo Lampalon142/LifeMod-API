@@ -35,7 +35,7 @@ public class TicketJoinListener implements Listener {
 
         String msg = plugin.getLangConfig().getString(
                 "report.join-message",
-                "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports."
+                LifeMod.getInstance().getLangConfig().getString("reports.join-alert")
         );
         msg = msg.replace("%open%", String.valueOf(openCount))
                 .replace("%pending%", String.valueOf(pendingCount))

@@ -15,14 +15,14 @@ public class BanCmd extends BaseSanctionCmd {
 
     @Override
     protected void onSanctionApplied(ICommandSender sender, OfflinePlayer target, Sanction sanction) {
-        String success = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.success", "&aPlayer &e%player% &ahas been banned for: &f%reason%")
+        String success = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.success")
                 .replace("%player%", target.getName())
                 .replace("%reason%", sanction.getReason());
         sender.sendMessage(MessageUtil.formatMessage(success));
         
         if (target.isOnline()) {
             Bukkit.getScheduler().runTask(Bukkit.getPluginManager().getPlugin("LifeMod"), () -> {
-                String kickMsg = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.received", "&cYou have been banned!\n\nReason: &f%reason%")
+                String kickMsg = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.received")
                         .replace("%reason%", sanction.getReason())
                         .replace("%issuer%", sanction.getIssuerName())
                         .replace("%time%", fr.lampalon.lifemod.common.utils.TimeUtil.formatTime(sanction.getDuration()));

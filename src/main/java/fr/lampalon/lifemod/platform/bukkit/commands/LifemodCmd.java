@@ -31,7 +31,7 @@ public class LifemodCmd implements CommandExecutor {
             }
             plugin.reloadPluginConfig();
             plugin.reloadLangConfig();
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.reload", "&aConfiguration reloaded!")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.reload")));
             return true;
         }
 
@@ -46,8 +46,8 @@ public class LifemodCmd implements CommandExecutor {
     }
 
     private void sendHelp(CommandSender sender) {
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.header", "&6&lLifeMod &7- Help")));
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.reload", "&e/lifemod reload &7- Reload config")));
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.info", "&e/lifemod info &7- Show info")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.header")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.reload")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.lifemod.help.info")));
     }
 }

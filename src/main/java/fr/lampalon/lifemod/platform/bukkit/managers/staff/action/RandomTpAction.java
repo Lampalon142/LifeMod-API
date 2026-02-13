@@ -18,13 +18,13 @@ public class RandomTpAction implements IStaffAction {
         online.remove(player);
         
         if (online.isEmpty()) {
-            player.sendMessage(MessageUtil.formatMessage("&cNo other players online."));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.random-tp.no-players")));
             return;
         }
         
         Player target = online.get(new Random().nextInt(online.size()));
         player.teleport(target.getLocation());
-        player.sendMessage(MessageUtil.formatMessage("&aTeleported to &e" + target.getName()));
+        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.random-tp.success").replace("%target%", target.getName())));
     }
 
     @Override
