@@ -248,6 +248,12 @@ gui:
 mod:
   enable: "%prefix%&aModeration mode enabled."
   disable: "%prefix%&cModeration mode disabled."
+  enable-title: "&6Staff Mode"
+  enable-subtitle: "&aActivated"
+  actionbar-enabled: "&6Staff Mode: &aON"
+  disable-title: "&6Staff Mode"
+  disable-subtitle: "&cDeactivated"
+  actionbar-disabled: "&6Staff Mode: &cOFF"
   items:
     cooldown: "&cTool cooldown active..."
     cps-start: "&aCPS test started on &e%player%"
@@ -257,6 +263,13 @@ mod:
     kill: "&cYou killed &e%player%"
     vanish-on: "&aVanish enabled"
     vanish-off: "&cVanish disabled"
+
+vanish:
+  activate: "&aVanish activated."
+  deactivate: "&cVanish deactivated."
+  usage: "&cUsage: /vanish [player]"
+  fake-join: "&e%player% joined the game"
+  fake-quit: "&e%player% left the game"
 
 # --- OTHER COMMANDS ---
 commands:

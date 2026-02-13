@@ -27,7 +27,7 @@ public class PacketController implements PacketListener {
         if (event.getUser() == null) return;
         UUID uuid = event.getUser().getUUID();
         if (plugin.getFreezeManager().isPlayerFrozen(uuid)) {
-            if (isMovementPacket(event.getPacketType())) {
+            if (isMovementPacket(event.getPacketType()) || isInteractionPacket(event.getPacketType())) {
                 event.setCancelled(true);
             }
         }
@@ -39,6 +39,13 @@ public class PacketController implements PacketListener {
                type == PacketType.Play.Client.PLAYER_ROTATION;
     }
 
+    private boolean isInteractionPacket(com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type) {
+        return type == PacketType.Play.Client.INTERACT_ENTITY ||
+               type == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT ||
+               type == PacketType.Play.Client.PLAYER_DIGGING ||
+               type == PacketType.Play.Client.ANIMATION;
+    }
+
     public void sendActionBar(Player player, String message) {
         WrapperPlayServerActionBar packet = new WrapperPlayServerActionBar(Component.text(MessageUtil.formatMessage(message)));
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
@@ -48,7 +55,6 @@ public class PacketController implements PacketListener {
         Component titleComp = title != null ? Component.text(MessageUtil.formatMessage(title)) : null;
         Component subtitleComp = subtitle != null ? Component.text(MessageUtil.formatMessage(subtitle)) : null;
 
-        // 1. Send times
         WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(
                 WrapperPlayServerTitle.TitleAction.SET_TIMES_AND_DISPLAY,
                 (Component) null, (Component) null, (Component) null,
@@ -56,7 +62,6 @@ public class PacketController implements PacketListener {
         );
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, timePacket);
 
-        // 2. Send title
         if (titleComp != null) {
             WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(
                     WrapperPlayServerTitle.TitleAction.SET_TITLE,
@@ -66,7 +71,6 @@ public class PacketController implements PacketListener {
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, titlePacket);
         }
 
-        // 3. Send subtitle
         if (subtitleComp != null) {
             WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(
                     WrapperPlayServerTitle.TitleAction.SET_SUBTITLE,
