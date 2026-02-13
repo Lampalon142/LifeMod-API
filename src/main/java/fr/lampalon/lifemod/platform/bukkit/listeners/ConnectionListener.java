@@ -34,7 +34,7 @@ public class ConnectionListener implements Listener {
         Sanction activeBan = sanctionService.getActiveSanction(uuid, name, SanctionType.BAN).join();
 
         if (activeBan != null) {
-            String message = LifeMod.getInstance().getLangConfig().getString("ban.kick-message", "&cYou have been banned!\n\nReason: &f%reason%");
+            String message = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.login", "&cYou have been banned!\n\nReason: &f%reason%");
             message = message
                     .replace("%reason%", activeBan.getReason())
                     .replace("%issuer%", activeBan.getIssuerName())

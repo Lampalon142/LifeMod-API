@@ -31,7 +31,7 @@ public class WeatherCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("weather")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             debug.log("weather", "Console tried to use /weather");
             return true;
         }
@@ -40,13 +40,13 @@ public class WeatherCmd implements CommandExecutor, TabCompleter {
         World world = player.getWorld();
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("weather.usage")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.weather.usage")));
             debug.log("weather", "Invalid usage by " + player.getName());
             return false;
         }
 
         if (!player.hasPermission("lifemod.weather")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("weather", "Permission denied for /weather by " + player.getName());
             return false;
         }
@@ -79,20 +79,20 @@ public class WeatherCmd implements CommandExecutor, TabCompleter {
             case "sun":
                 world.setStorm(false);
                 world.setThundering(false);
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("weather.sun")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.weather.sun")));
                 break;
             case "rain":
                 world.setStorm(true);
                 world.setThundering(false);
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("weather.rain")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.weather.rain")));
                 break;
             case "storm":
                 world.setStorm(true);
                 world.setThundering(true);
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("weather.storm")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.weather.storm")));
                 break;
             default:
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("weather.usage")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.weather.usage")));
                 debug.log("weather", player.getName() + " entered unknown weather type: " + weatherType);
                 break;
         }

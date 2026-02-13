@@ -34,49 +34,49 @@ public class FreezeCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("freeze")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.freeze")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /freeze by " + player.getName());
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("freeze.usage")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.freeze.usage")));
             return true;
         }
 
         Player target = Bukkit.getPlayer(args[0]);
         if (target == null) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
 
         if (target.equals(player)) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("freeze.yourself")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.freeze.yourself")));
             return true;
         }
 
         if (freezeManager.isPlayerFrozen(target.getUniqueId())) {
             freezeManager.unfreezePlayer(player, target);
             target.sendMessage(MessageUtil.formatMessage(
-                    plugin.getLangConfig().getString("freeze.messages.unfreeze.target")
+                    plugin.getLangConfig().getString("commands.freeze.messages.unfreeze.target")
                             .replace("%player%", player.getName())));
             player.sendMessage(MessageUtil.formatMessage(
-                    plugin.getLangConfig().getString("freeze.messages.unfreeze.mod")
+                    plugin.getLangConfig().getString("commands.freeze.messages.unfreeze.mod")
                             .replace("%target%", target.getName())));
             debug.log("freeze", player.getName() + " unfroze " + target.getName());
         } else {
             freezeManager.freezePlayer(player, target);
-            plugin.getLangConfig().getStringList("freeze.messages.onfreeze")
+            plugin.getLangConfig().getStringList("commands.freeze.messages.freeze.onfreeze")
                     .forEach(msg -> target.sendMessage(MessageUtil.formatMessage(msg)));
             player.sendMessage(MessageUtil.formatMessage(
-                    plugin.getLangConfig().getString("freeze.messages.freeze.mod")
+                    plugin.getLangConfig().getString("commands.freeze.messages.freeze.mod")
                             .replace("%target%", target.getName())));
             debug.log("freeze", player.getName() + " froze " + target.getName());
         }

@@ -27,7 +27,7 @@ public class ModeratorAuthListener implements Listener {
         String msg = event.getMessage().toLowerCase();
         if (needsAuth(player)
                 && !(msg.startsWith("/modlogin") || msg.startsWith("/modregister"))) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.login-required")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.login-required")));
             event.setCancelled(true);
         }
     }
@@ -36,7 +36,7 @@ public class ModeratorAuthListener implements Listener {
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-action")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-action")));
             event.setCancelled(true);
         }
     }
@@ -46,7 +46,7 @@ public class ModeratorAuthListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-action")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-action")));
             event.setCancelled(true);
         }
     }
@@ -56,7 +56,7 @@ public class ModeratorAuthListener implements Listener {
         if (!(event.getPlayer() instanceof Player)) return;
         Player player = (Player) event.getPlayer();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-action")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-action")));
             event.setCancelled(true);
         }
     }
@@ -65,7 +65,7 @@ public class ModeratorAuthListener implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-chat")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-chat")));
             event.setCancelled(true);
         }
     }
@@ -74,7 +74,7 @@ public class ModeratorAuthListener implements Listener {
     public void onDrop(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-action")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-action")));
             event.setCancelled(true);
         }
     }
@@ -84,7 +84,7 @@ public class ModeratorAuthListener implements Listener {
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
         if (needsAuth(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.blocked-action")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.auth.blocked-action")));
             event.setCancelled(true);
         }
     }

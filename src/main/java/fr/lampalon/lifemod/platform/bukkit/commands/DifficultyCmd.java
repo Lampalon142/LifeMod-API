@@ -32,7 +32,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("lifemod.difficulty")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
@@ -42,7 +42,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
                     .map(Enum::name)
                     .map(String::toLowerCase)
                     .collect(Collectors.joining(", "));
-            String msg = plugin.getLangConfig().getString("difficulty.current", "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)")
+            String msg = plugin.getLangConfig().getString("commands.world.difficulty.current", "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)")
                     .replace("%difficulty%", diff.name().toLowerCase())
                     .replace("%available%", available);
             sender.sendMessage(MessageUtil.formatMessage(msg));
@@ -50,7 +50,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
         }
 
         if (args.length != 1) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("difficulty.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.difficulty.usage")));
             return true;
         }
 
@@ -60,7 +60,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
             for (World world : Bukkit.getWorlds()) {
                 world.setDifficulty(difficulty);
             }
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("difficulty.success")
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.difficulty.success")
                     .replace("%difficulty%", difficulty.name().toLowerCase())));
             // Discord Webhook
             if (plugin.getConfigConfig().getBoolean("discord.enabled")) {
@@ -82,7 +82,7 @@ public class DifficultyCmd implements CommandExecutor, TabCompleter {
                 }
             }
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("difficulty.invalid")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.difficulty.invalid")));
         }
 
         return true;

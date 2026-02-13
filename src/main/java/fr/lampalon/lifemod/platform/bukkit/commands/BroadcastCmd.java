@@ -32,18 +32,18 @@ public class BroadcastCmd implements CommandExecutor, TabCompleter {
         if (!cmd.getName().equalsIgnoreCase("broadcast") && !cmd.getName().equalsIgnoreCase("bc")) return false;
 
         if (!sender.hasPermission("lifemod.bc")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /broadcast by " + sender.getName());
             return true;
         }
 
         if (args.length < 1) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("bc.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.broadcast.usage")));
             return true;
         }
 
         String message = String.join(" ", args).replace("\\n", "\n");
-        String broadcast = MessageUtil.parseColors(plugin.getLangConfig().getString("bc.prefix", "") + message);
+        String broadcast = MessageUtil.parseColors(plugin.getLangConfig().getString("commands.broadcast.prefix", "") + message);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage(broadcast);

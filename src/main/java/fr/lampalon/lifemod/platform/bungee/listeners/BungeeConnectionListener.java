@@ -37,7 +37,7 @@ public class BungeeConnectionListener implements Listener {
 
                 if (activeBan != null) {
                     ProxyServer.getInstance().getLogger().info("[LifeMod-Debug] " + name + " is BANNED. Reason: " + activeBan.getReason());
-                    String message = lang.getMessage("ban.kick-message", "&cYou have been banned!\n\nReason: &f%reason%");
+                    String message = lang.getMessage("sanctions.ban.login", "&cYou have been banned!\n\nReason: &f%reason%");
                     message = message
                             .replace("%reason%", activeBan.getReason())
                             .replace("%issuer%", activeBan.getIssuerName())

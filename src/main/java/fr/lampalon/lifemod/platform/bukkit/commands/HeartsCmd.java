@@ -31,20 +31,20 @@ public class HeartsCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("lifemod.hearts")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (args.length < 3) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.usage")));
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.unit-info")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.unit-info")));
             return true;
         }
 
         String action = args[0].toLowerCase();
         Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
 
@@ -52,19 +52,19 @@ public class HeartsCmd implements CommandExecutor, TabCompleter {
         try {
             hearts = Double.parseDouble(args[2]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.invalid-amount")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.invalid-amount")));
             return true;
         }
 
         hearts = Math.round(hearts * 2.0) / 2.0;
 
         if (hearts <= 0) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.invalid-amount")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.invalid-amount")));
             return true;
         }
 
         if (hearts > MAX_HEARTS) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.max-reached")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.max-reached")));
             return true;
         }
 
@@ -75,19 +75,19 @@ public class HeartsCmd implements CommandExecutor, TabCompleter {
         } else if ("add".equals(action)) {
             newMaxHealth = Math.min(target.getMaxHealth() + healthPoints, MAX_HEARTS * 2.0);
         } else {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.usage")));
             return true;
         }
 
         newMaxHealth = Math.round(newMaxHealth * 2.0) / 2.0;
 
         if (newMaxHealth > MAX_HEARTS * 2.0) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.max-reached")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.max-reached")));
             return true;
         }
 
         if (newMaxHealth % 1 != 0) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.half-heart-warning")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.half-heart-warning")));
         }
 
         target.setMaxHealth(newMaxHealth);
@@ -114,12 +114,12 @@ public class HeartsCmd implements CommandExecutor, TabCompleter {
             }
         }
 
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.success")
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.success")
                 .replace("%action%", action)
                 .replace("%target%", target.getName())
                 .replace("%amount%", String.valueOf(hearts))));
 
-        target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("hearts.changed")
+        target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.hearts.changed")
                 .replace("%amount%", String.valueOf(newMaxHealth / 2.0))));
 
         return true;

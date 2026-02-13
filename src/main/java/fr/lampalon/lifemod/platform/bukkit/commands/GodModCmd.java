@@ -30,7 +30,7 @@ public class GodModCmd implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
         if (!(sender instanceof Player) && args.length == 0) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
@@ -38,7 +38,7 @@ public class GodModCmd implements CommandExecutor, TabCompleter {
         if (args.length > 0) {
             targetPlayer = Bukkit.getPlayer(args[0]);
             if (targetPlayer == null) {
-                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
                 return true;
             }
         } else {
@@ -46,7 +46,7 @@ public class GodModCmd implements CommandExecutor, TabCompleter {
         }
 
         if (!sender.hasPermission("lifemod.god")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /god by " + sender.getName());
             return true;
         }
@@ -74,16 +74,16 @@ public class GodModCmd implements CommandExecutor, TabCompleter {
 
         if (targetPlayer.isInvulnerable()) {
             targetPlayer.setInvulnerable(false);
-            targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("god.deactivate.own")));
+            targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.god.deactivate.own")));
             if (!targetPlayer.equals(sender)) {
-                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("god.deactivate.other").replace("%player%", targetPlayer.getName())));
+                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.god.deactivate.other").replace("%player%", targetPlayer.getName())));
             }
             debug.log("god", "God mode disabled for " + targetPlayer.getName() + " by " + sender.getName());
         } else {
             targetPlayer.setInvulnerable(true);
-            targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("god.activate.own")));
+            targetPlayer.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.god.activate.own")));
             if (!targetPlayer.equals(sender)) {
-                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("god.activate.other").replace("%player%", targetPlayer.getName())));
+                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.god.activate.other").replace("%player%", targetPlayer.getName())));
             }
             debug.log("god", "God mode enabled for " + targetPlayer.getName() + " by " + sender.getName());
         }

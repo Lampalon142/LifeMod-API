@@ -32,31 +32,31 @@ public class FollowCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("follow")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.follow")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /follow by " + player.getName());
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("follow.usage")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.follow.usage")));
             return true;
         }
 
         Player targetPlayer = Bukkit.getPlayer(args[0]);
         if (targetPlayer == null) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
 
         if (targetPlayer == player) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("follow.yourself")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.follow.yourself")));
             return true;
         }
 
@@ -66,7 +66,7 @@ public class FollowCmd implements CommandExecutor, TabCompleter {
 
         following.put(player.getUniqueId(), targetPlayer.getUniqueId());
         player.sendMessage(MessageUtil.formatMessage(
-                plugin.getLangConfig().getString("follow.success")
+                plugin.getLangConfig().getString("commands.follow.success")
                         .replace("%target%", targetPlayer.getName())
         ));
         debug.log("follow", player.getName() + " suit " + targetPlayer.getName());
@@ -87,7 +87,7 @@ public class FollowCmd implements CommandExecutor, TabCompleter {
                 int cps = getCPS(targetPlayer);
 
                 String msg = MessageUtil.formatMessage(
-                        plugin.getLangConfig().getString("follow.actionbar")
+                        plugin.getLangConfig().getString("commands.follow.actionbar")
                                 .replace("%target%", targetPlayer.getName())
                                 .replace("%distance%", String.format("%.1f", distance))
                                 .replace("%cps%", String.valueOf(cps))

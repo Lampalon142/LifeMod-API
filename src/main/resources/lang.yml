@@ -3,6 +3,7 @@
 
 # --- SYSTEM MESSAGES ---
 system:
+  prefix: "&7[&6Moderation&7] &f» "
   no-permission: "%prefix%&cYou don't have permission for this."
   player-only: "%prefix%&cThis command can only be executed by a player."
   player-not-found: "%prefix%&cThis player is not connected to the server."
@@ -109,6 +110,7 @@ reports:
   yourself: "&cYou cannot report yourself!"
   join-alert: "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports."
   not-found: "&cReport not found."
+  no-reports: "&cNo reports found matching your criteria."
   
   status:
     open: "&aOpen"
@@ -164,6 +166,15 @@ reports:
       delete-success: "&aNote deleted!"
       chat-cancelled: "&eNote action cancelled."
       chat-saved: "&aNote saved successfully!"
+      errors:
+        empty: "&cYour note cannot be empty."
+      menu:
+        edit:
+          cancelled: "&eEdit cancelled."
+          saved: "&aNote updated!"
+        chat:
+          cancelled: "&eNote creation cancelled."
+          saved: "&aNote added!"
 
 # --- TOOLS & GUIS ---
 gui:
@@ -311,17 +322,80 @@ commands:
     god-off: "%prefix%&cGod mode disabled!"
     speed-success: "%prefix%&aSpeed set to &e%speed%&a."
     speed-invalid: "%prefix%&cProvide a valid speed (1-10)."
+    feed:
+      yourself: "%prefix%&aYour appetite has been satisfied!"
+      player: "%prefix%&aYour appetite has been satisfied by a moderator!"
+      mod: "%prefix%&aYou fed &e%target%&a."
+      usage: "%prefix%&cUsage: /feed [player]"
+    heal:
+      player: "%prefix%&aYou have been healed!"
+      mod: "%prefix%&aYou healed &e%player%&a."
+      usage: "%prefix%&cUsage: /heal [player]"
+    god:
+      activate:
+        own: "%prefix%&aGod mode enabled!"
+        other: "%prefix%&aGod mode enabled for &e%player%&a."
+      deactivate:
+        own: "%prefix%&cGod mode disabled!"
+        other: "%prefix%&cGod mode disabled for &e%player%&a."
 
   hearts:
     usage: "%prefix%&cUsage: /hearts <set|add> <player> <amount>"
     success: "%prefix%&a%action% %amount% hearts to %target%!"
     max-reached: "%prefix%&cPlayer already has max hearts!"
     invalid: "%prefix%&cInvalid amount!"
+    unit-info: "%prefix%&7Note: 2 units = 1 heart."
+    invalid-amount: "%prefix%&cInvalid amount!"
+    half-heart-warning: "%prefix%&eWarning: Using odd numbers results in half-hearts."
+    changed: "%prefix%&aYour max health was changed to &e%amount% &aby a moderator!"
 
   world:
     time-set: "%prefix%&aTime set to &e%time%&a."
     difficulty-set: "%prefix%&aDifficulty set to &e%difficulty%&a."
     weather-set: "%prefix%&aWeather set to &e%weather%&a."
+    difficulty:
+      usage: "%prefix%&cUsage: /difficulty <difficulty>"
+      success: "%prefix%&aDifficulty set to &e%difficulty%&a."
+      invalid: "%prefix%&cInvalid difficulty!"
+      current: "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)"
+    time:
+      usage: "%prefix%&cUsage: /settime <time|day|night>"
+      success: "%prefix%&aTime set to &e%time%&a."
+      invalid: "%prefix%&cInvalid time format!"
+    weather:
+      usage: "%prefix%&cUsage: /weather <sun|rain|storm>"
+      sun: "%prefix%&aWeather set to SUN."
+      rain: "%prefix%&aWeather set to RAIN."
+      storm: "%prefix%&aWeather set to STORM."
+
+  chatclear:
+    message: "%prefix%&cThe chat has been cleared."
+
+  freeze:
+    usage: "%prefix%&cUsage: /freeze <player>"
+    yourself: "%prefix%&cYou cannot freeze yourself!"
+    messages:
+      freeze:
+        mod: "%prefix%&cYou froze &e%player%"
+        onfreeze:
+          - "&8&m----------------------------------------"
+          - "&c&lYOU HAVE BEEN FROZEN!"
+          - "&7Please do not disconnect."
+          - "&7Follow instructions from the moderator."
+          - "&8&m----------------------------------------"
+      unfreeze:
+        mod: "%prefix%&aYou unfroze &e%player%"
+        target: "%prefix%&aYou have been unfrozen by &e%player%&a."
+
+  invsee:
+    usage: "%prefix%&cUsage: /invsee <player>"
+    name: "&6Inventory: &e%player%"
+
+  oinvsee:
+    usage: "%prefix%&cUsage: /oinvsee <player>"
+    name: "&cOffline Inventory: &e%target%"
+    no-inventory: "&cNo saved inventory for %target%."
+    success: "&aViewing offline inventory of %target%."
 
   auth:
     login-required: "&cAuthenticate with &e/modlogin <password>&c."
@@ -331,11 +405,69 @@ commands:
     not-registered: "&cNo password set. Use &e/modregister <password>&c."
     registered: "&aPassword set. Use &e/modlogin&a to enter."
     reset-success: "&aPassword for &e%player% &areset."
+    blocked-action: "&cYou must be logged in to do this!"
+    blocked-chat: "&cYou must be logged in to chat!"
+
+  staffchat:
+    usage: "%prefix%&cUsage: /staffchat <message>"
+    success: "%prefix%&aMessage sent to staff chat."
+    message: "&7[&cStaffChat&7] &e%player%&f: %message%"
+
+  stafflist:
+    online: "&6Staff online: &f"
+    none: "&cNone"
 
   follow:
     usage: "&cUsage: /follow <player>"
     success: "&aNow following &e%target%&a."
     actionbar: "&eFollowing &6%target% &7| &bDistance: &f%distance%m &7| &cCPS: &f%cps%"
+    yourself: "%prefix%&cYou cannot follow yourself!"
+
+  broadcast:
+    usage: "%prefix%&cUsage: /broadcast <message>"
+    prefix: "&7[&6Broadcast&7] &f» "
+
+  clearinv:
+    usage: "%prefix%&cUsage: /clearinv [player]"
+    message: "%prefix%&aInventory cleared for &e%target%&a."
+
+  ec:
+    usage: "%prefix%&cUsage: /ec [player]"
+    yourself: "%prefix%&cYou cannot open your own enderchest with this command."
+
+  lifemod:
+    reload: "%prefix%&aConfiguration reloaded!"
+    help:
+      header: "&6&lLifeMod &7- Help"
+      reload: "&e/lifemod reload &7- Reload config"
+      info: "&e/lifemod info &7- Show info"
+
+  otp:
+    usage: "%prefix%&cUsage: /otp <player>"
+    player-not-found: "%prefix%&cPlayer %target% doesn't exist or has never connected."
+    no-position: "%prefix%&cNo saved position for %target%."
+    teleported: "%prefix%&aYou have been teleported to %target%'s last position."
+
+  spectate:
+    usage: "%prefix%&cUsage: /spectate <player|leave|fp|random|back|list>"
+    player-not-found: "%prefix%&cPlayer &e%target% &cnot found."
+    start: "%prefix%&aYou are now spectating &e%target%&a."
+    stop: "%prefix%&cYou are no longer spectating."
+    freecam: "%prefix%&aFreecam enabled."
+    back: "%prefix%&aTeleported back to your previous location."
+    self: "%prefix%&cYou cannot spectate yourself!"
+    already: "%prefix%&cYou are already spectating someone."
+    not-spectating: "%prefix%&cYou are not spectating."
+    spectate-start: "&aNow spectating &e%target%&a."
+    freecam-start: "&aFreecam mode activated."
+    spectate-leave: "&cYou have left spectate mode."
+    spectate-leave-no-pos: "&cLeft spectate mode, but could not return to previous position."
+    random-error: "&cNo suitable players found to spectate."
+    random-success: "&aNow spectating random player: &e%target%&a."
+    back-error: "&cNo previous position recorded."
+    back-success: "&aTeleported back to where you were before spectating &e%target%&a."
+    list-header: "&6Spectating Players:"
+    list-player: "&7 - &e%player%"
 
 # Metadata
 version: 200

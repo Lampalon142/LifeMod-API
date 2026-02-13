@@ -66,52 +66,85 @@ modules:
   # Moderation Mode (Inventory & Tools)
   mod-mode:
     items:
-      invSee:
+      navigation:
         enabled: true
-        material: "PAPER"
         slot: 0
-        name: "&bInventory Viewer"
-        description: "&7Right-click a player to view their inventory."
+        material: COMPASS
+        name: "&6Navigation Tool"
+        lore:
+          - "&7Left-Click: &eThru"
+          - "&7Right-Click: &eJump"
+        actions:
+          LEFT_CLICK: THRU
+          RIGHT_CLICK: JUMP
+      inspector:
+        enabled: true
+        slot: 1
+        material: BOOK
+        name: "&bInspector"
+        lore:
+          - "&7Right-Click Player: &eInvSee"
+          - "&7Right-Click Block: &eSilent Open"
+        actions:
+          RIGHT_CLICK: INSPECT_INVENTORY
       freeze:
         enabled: true
-        material: "PACKED_ICE"
-        slot: 1
-        name: "&bFreeze Player"
-        description: "&7Right-click a player to freeze or unfreeze them."
-      tpRandom:
-        enabled: true
-        material: "ENDER_PEARL"
         slot: 2
-        name: "&bRandom Teleport"
-        description: "&7Right-click to teleport to a random player."
+        material: PACKED_ICE
+        name: "&bFreeze Tool"
+        lore:
+          - "&7Right-Click: &eFreeze/Unfreeze"
+        actions:
+          RIGHT_CLICK: FREEZE
+      randomtp:
+        enabled: true
+        slot: 3
+        material: ENDER_PEARL
+        name: "&bRandom TP"
+        lore:
+          - "&7Right-Click: &eTeleport"
+        actions:
+          RIGHT_CLICK: RANDOM_TP
       vanish:
         enabled: true
-        material: "BLAZE_POWDER"
-        slot: 3
-        name: "&bVanish"
-        description: "&7Right-click to toggle vanish mode."
-      killItem:
+        slot: 8
+        material: GRAY_DYE
+        name: "&aVanish Toggle"
+        lore:
+          - "&7Right-Click: &eToggle Vanish"
+        actions:
+          RIGHT_CLICK: VANISH
+      cpstester:
         enabled: true
-        material: "BLAZE_ROD"
         slot: 4
-        name: "&cKill Player"
-        description: "&7Right-click a player to instantly kill them."
-      kbTester:
+        material: CLOCK
+        duration: 10
+        name: "&eCPS Tester"
+        lore:
+          - "&7Right-Click Player: &eCheck CPS"
+        actions:
+          RIGHT_CLICK: CPS_TESTER
+      kbtester:
         enabled: true
-        material: "STICK"
         slot: 5
-        name: "&eKnockback Tester"
-        description: "&7Test knockback on players."
+        material: STICK
+        name: "&cKnockback Tester"
+        lore:
+          - "&7Attack: &eTest KB"
         enchantments:
-          KNOCKBACK: 5
-      cps-tester:
+          KNOCKBACK: 2
+        actions:
+          LEFT_CLICK: KNOCKBACK_TESTER
+          RIGHT_CLICK: KNOCKBACK_TESTER
+      infoviewer:
         enabled: true
-        material: "COMPASS"
-        slot: 7
-        duration: 3
-        cooldown: 10
-        name: "&bCPS Tester"
-        description: "&7Click a player to test their CPS!"
+        slot: 6
+        material: BLAZE_ROD
+        name: "&6Information Viewer"
+        lore:
+          - "&7Right-Click Player: &eView Details"
+        actions:
+          RIGHT_CLICK: INFO_VIEWER
 
   # Discord Webhook Integration
   discord:

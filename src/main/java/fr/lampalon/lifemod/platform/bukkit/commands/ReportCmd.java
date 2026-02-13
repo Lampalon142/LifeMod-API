@@ -29,21 +29,21 @@ public class ReportCmd implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("report.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.reports.usage")));
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[0]);
         Player player = (Player) sender;
         if (target == null || !target.isOnline()) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
         if (target.getUniqueId().equals(player.getUniqueId())) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("report.yourself")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.reports.yourself")));
             return true;
         }
 
@@ -89,7 +89,7 @@ public class ReportCmd implements CommandExecutor {
             LifeMod.getInstance().getDebugManager().log("report", player.getName() + " was executed report command");
         }
 
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("report.submitted").replace("%target%", target.getName()).replace("%reason%", reason)).replace("%server%", plugin.getServer().getName()));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.reports.submitted").replace("%target%", target.getName()).replace("%reason%", reason)).replace("%server%", plugin.getServer().getName()));
         return true;
     }
 }

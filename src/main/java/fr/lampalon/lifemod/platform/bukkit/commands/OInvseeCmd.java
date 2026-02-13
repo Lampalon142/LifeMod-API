@@ -38,34 +38,34 @@ public class OInvseeCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("general.onlyplayer", "&cYou can't execute this command on the console.")));
+            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("system.player-only")));
             debug.log("oinvsee", "Console tried to use /oinvsee");
             return true;
         }
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.oinvsee")) {
-            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("general.nopermission", "&cYou don't have permission for this.")));
+            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("system.no-permission")));
             debug.log("oinvsee", "Permission denied for /oinvsee by " + player.getName());
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("oinvsee.usage", "&cUsage : /oinvsee <player>")));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.oinvsee.usage")));
             debug.log("oinvsee", "Invalid usage by " + player.getName());
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         if (!target.hasPlayedBefore()) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("general.offlineplayer", "&cThis person is not connected to the server.")));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("system.player-not-found")));
             debug.log("oinvsee", "Target never played: " + args[0]);
             return true;
         }
 
         ItemStack[] savedInventory = BukkitDatabaseUtil.deserializeInventory(databaseManager.getDatabaseProvider().getRawInventory(target.getUniqueId()));
         if (savedInventory == null) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("oinvsee.no-inventory", "&cNo saved inventory for %target%.").replace("%target%", args[0])));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.oinvsee.no-inventory").replace("%target%", args[0])));
             debug.log("oinvsee", "No saved inventory for " + args[0]);
             return true;
         }
@@ -91,12 +91,12 @@ public class OInvseeCmd implements CommandExecutor, TabCompleter {
             debug.log("oinvsee", player.getName() + " opened offline inventory of " + args[0]);
         }
 
-        String inventoryTitle = MessageUtil.formatMessage(langConfig.getString("oinvsee.name", "&cPlayer inventory %target%").replace("%target%", args[0]));
+        String inventoryTitle = MessageUtil.formatMessage(langConfig.getString("commands.oinvsee.name").replace("%target%", args[0]));
         Inventory inv = Bukkit.createInventory(null, 45, inventoryTitle);
         inv.setContents(savedInventory);
         player.openInventory(inv);
 
-        player.sendMessage(MessageUtil.formatMessage(langConfig.getString("oinvsee.success", "&aYou are now viewing %target%'s inventory.").replace("%target%", args[0])));
+        player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.oinvsee.success").replace("%target%", args[0])));
         return true;
     }
 

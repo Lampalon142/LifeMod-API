@@ -3,7 +3,7 @@ package fr.lampalon.lifemod.platform.bukkit.commands;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
-import fr.lampalon.lifemod.platform.bukkit.managers.PlayerManager;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffModeManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,10 +16,12 @@ import java.util.Objects;
 
 public class ModCmd implements CommandExecutor {
     private final LifeMod plugin;
+    private final StaffModeManager staffModeManager;
     private final DebugManager debug;
 
-    public ModCmd(LifeMod plugin) {
+    public ModCmd(LifeMod plugin, StaffModeManager staffModeManager) {
         this.plugin = plugin;
+        this.staffModeManager = staffModeManager;
         this.debug = plugin.getDebugManager();
     }
 
@@ -27,7 +29,7 @@ public class ModCmd implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             debug.log("mod", "Console tried to use /mod");
             return false;
         }
@@ -37,11 +39,12 @@ public class ModCmd implements CommandExecutor {
         if (label.equalsIgnoreCase("mod") || label.equalsIgnoreCase("staff")) {
 
             if (!player.hasPermission("lifemod.mod")) {
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
                 debug.log("mod", "Permission denied for /mod by " + player.getName());
                 return false;
             }
 
+            // Discord Webhook Logic (Preserved but could be moved to manager event later)
             if (plugin.getConfigConfig().getBoolean("discord.enabled")) {
                 try {
                     DiscordWebhook webhook = new DiscordWebhook(plugin.webHookUrl);
@@ -52,23 +55,15 @@ public class ModCmd implements CommandExecutor {
                                     plugin.getConfigConfig().getString("discord.mod.footer.logo").replace("%player%", sender.getName()))
                             .setColor(Color.decode(Objects.requireNonNull(plugin.getConfigConfig().getString("discord.mod.color")))));
                     webhook.execute();
-                    debug.log("mod", player.getName() + " toggled mod mode (Discord notified)");
-                } catch (IOException e) {
-                    debug.userError(sender, "Failed to send Discord mod alert", e);
-                    debug.log("discord", "Webhook error: " + e.getMessage());
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    debug.log("discord", "Webhook error: " + e.getMessage());
                 }
-            } else {
-                debug.log("mod", player.getName() + " toggled mod mode");
             }
 
-            if (PlayerManager.isInModerationMod(player)) {
-                PlayerManager.getFromPlayer(player).destroy();
-                debug.log("mod", player.getName() + " disabled moderation mode");
+            if (staffModeManager.isMod(player)) {
+                staffModeManager.disableStaffMode(player);
             } else {
-                (new PlayerManager(player)).init();
-                debug.log("mod", player.getName() + " enabled moderation mode");
+                staffModeManager.enableStaffMode(player);
             }
         }
         return false;

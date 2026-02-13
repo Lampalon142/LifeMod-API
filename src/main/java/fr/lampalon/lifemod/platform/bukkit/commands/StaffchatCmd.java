@@ -23,18 +23,18 @@ public class StaffchatCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-only")));
             debug.log("staffchat", "Console tried to use /staffchat");
             return true;
         }
 
         Player player = (Player) sender;
-        String playermsg = LifeMod.getInstance().getLangConfig().getString("staffchat.message");
+        String playermsg = LifeMod.getInstance().getLangConfig().getString("commands.staffchat.message");
 
         if (cmd.getName().equalsIgnoreCase("staffchat")) {
             if (player.hasPermission("lifemod.staffchat")) {
                 if (args.length == 0) {
-                    player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("staffchat.usage")));
+                    player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.staffchat.usage")));
                     debug.log("staffchat", "No message provided by " + player.getName());
                     return true;
                 }
@@ -69,10 +69,10 @@ public class StaffchatCmd implements CommandExecutor, TabCompleter {
                     debug.log("staffchat", player.getName() + " sent staffchat message");
                 }
 
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("staffchat.success")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.staffchat.success")));
                 return true;
             } else {
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.no-permission")));
                 debug.log("staffchat", "Permission denied for /staffchat by " + player.getName());
                 return true;
             }

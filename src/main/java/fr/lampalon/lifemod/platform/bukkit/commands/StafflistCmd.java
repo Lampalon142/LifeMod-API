@@ -3,7 +3,6 @@ package fr.lampalon.lifemod.platform.bukkit.commands;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
-import fr.lampalon.lifemod.platform.bukkit.managers.VanishedManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -26,23 +25,24 @@ public class StafflistCmd implements CommandExecutor {
             Player player = (Player) sender;
 
             if (!player.hasPermission("lifemod.stafflist")){
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.no-permission")));
                 debug.log("stafflist", "Permission denied for /stafflist by " + player.getName());
                 return true;
             }
 
-            StringBuilder modList = new StringBuilder(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("modlist.online")));
+            StringBuilder modList = new StringBuilder(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.stafflist.online")));
+            LifeMod plugin = LifeMod.getInstance();
 
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                if (onlinePlayer.hasPermission("lifemod.stafflist") && !VanishedManager.isVanished(onlinePlayer)) {
+                if (onlinePlayer.hasPermission("lifemod.stafflist") && !plugin.getVanishService().isVanished(onlinePlayer.getUniqueId())) {
                     modList.append(onlinePlayer.getName()).append(", ");
                 }
             }
 
-            if (modList.length() > LifeMod.getInstance().getLangConfig().getString("modlist.online").length()) {
+            if (modList.length() > LifeMod.getInstance().getLangConfig().getString("commands.stafflist.online").length()) {
                 modList.delete(modList.length() - 2, modList.length());
             } else {
-                modList.append(MessageUtil.formatMessage(LifeMod.getInstance().getConfigConfig().getString("modlist.none")));
+                modList.append(MessageUtil.formatMessage(LifeMod.getInstance().getConfigConfig().getString("commands.stafflist.none")));
             }
 
             if (LifeMod.getInstance().getConfigConfig().getBoolean("discord.enabled")){
@@ -69,7 +69,7 @@ public class StafflistCmd implements CommandExecutor {
             player.sendMessage(modList.toString());
             return true;
         } else {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-only")));
             debug.log("stafflist", "Console tried to use /stafflist");
             return true;
         }

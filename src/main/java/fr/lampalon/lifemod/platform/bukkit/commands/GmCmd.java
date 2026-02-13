@@ -47,13 +47,13 @@ public class GmCmd implements CommandExecutor, TabCompleter {
     if (!label.equalsIgnoreCase("gm") && !label.equalsIgnoreCase("gamemode")) return false;
 
     if (!sender.hasPermission("lifemod.gm")) {
-      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
       debug.log("commands", "Permission denied for /gm by " + sender.getName());
       return true;
     }
 
     if (args.length < 1 || args.length > 2) {
-      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("gamemode.invalid")));
+      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.gamemode.invalid")));
       debug.log("gm", "Invalid usage by " + sender.getName());
       return true;
     }
@@ -65,13 +65,13 @@ public class GmCmd implements CommandExecutor, TabCompleter {
       targetPlayerName = args[1];
       targetPlayer = Bukkit.getPlayer(targetPlayerName);
       if (targetPlayer == null) {
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
         debug.log("gm", "Target player offline: " + args[1]);
         return true;
       }
     } else {
       if (!(sender instanceof Player)) {
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
         debug.log("gm", "Console tried to use /gm without player argument");
         return true;
       }
@@ -80,7 +80,7 @@ public class GmCmd implements CommandExecutor, TabCompleter {
 
     GameMode gameMode = parseGameMode(args[0]);
     if (gameMode == null) {
-      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("gamemode.invalid")));
+      sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.gamemode.invalid")));
       debug.log("gm", "Invalid gamemode: " + args[0]);
       return true;
     }
@@ -110,8 +110,8 @@ public class GmCmd implements CommandExecutor, TabCompleter {
 
     targetPlayer.setGameMode(gameMode);
     String message = targetPlayerName != null
-            ? plugin.getLangConfig().getString("gamemode.other")
-            : plugin.getLangConfig().getString("gamemode.own");
+            ? plugin.getLangConfig().getString("commands.gamemode.other")
+            : plugin.getLangConfig().getString("commands.gamemode.own");
 
     sender.sendMessage(MessageUtil.formatMessage(
             message.replace("%gamemode%", gameMode.name())

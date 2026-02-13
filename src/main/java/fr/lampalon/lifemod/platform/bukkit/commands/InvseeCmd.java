@@ -35,26 +35,26 @@ public class InvseeCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("invsee")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             debug.log("invsee", "Console tried to use /invsee");
             return true;
         }
 
         if (!sender.hasPermission("lifemod.invsee")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("invsee", "Permission denied for /invsee by " + sender.getName());
             return true;
         }
 
         if (args.length != 1) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("invsee.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.invsee.usage")));
             debug.log("invsee", "Invalid usage by " + sender.getName());
             return true;
         }
 
         Player targetPlayer = Bukkit.getPlayer(args[0]);
         if (targetPlayer == null || !targetPlayer.isOnline()) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             debug.log("invsee", "Target offline: " + args[0]);
             return true;
         }
@@ -89,7 +89,7 @@ public class InvseeCmd implements CommandExecutor, TabCompleter {
     }
 
     private Inventory openTargetInventory(Player player, Player target) {
-        String invTitle = LifeMod.getInstance().getLangConfig().getString("invsee.name");
+        String invTitle = LifeMod.getInstance().getLangConfig().getString("commands.invsee.name");
         Inventory targetInventory = Bukkit.createInventory(null, 45, MessageUtil.formatMessage(invTitle.replace("%player%", target.getName())));
         PlayerInventory targetPlayerInventory = target.getInventory();
 

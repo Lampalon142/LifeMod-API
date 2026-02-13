@@ -1,30 +1,112 @@
 ## LifeMod Proxy Language
 ## Multi-Server Synchronization
 
-# --- SYSTEM ---
+# --- SYSTEM MESSAGES ---
 system:
   prefix: "&7[&6Network&7] &f» "
+  no-permission: "%prefix%&cYou don't have permission for this."
+  player-only: "%prefix%&cThis command can only be executed by a player."
+  player-not-found: "%prefix%&cThis player is not connected to the network."
+  config-reloaded: "%prefix%&aProxy configuration reloaded successfully!"
+  date-format: "dd/MM/yyyy HH:mm:ss"
 
 # --- SANCTIONS ---
 sanctions:
-  # Network broadcasts
-  broadcast:
-    ban:
-      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &c&lBANNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
-      silent: "&7[SILENT-NETWORK] &c%issuer% &7banned &c%target% &7from &e%server%"
-    unban: "&6&lNetwork &8» &a%target% has been unbanned by %issuer%."
+  # Command logic
+  cmd:
+    usage: "&cUsage: /%cmd% <player> [reason] <time> [-s]"
+    usage-no-time: "&cUsage: /%cmd% <player> [reason] [-s]"
+    default-reason: "No reason specified"
+    revoke-usage: "&cUsage: /%cmd% <player> [reason] [-s]"
+    revoke-success: "&aThe sanction (%type%) for &e%player% &ahas been revoked on the network."
+    revoke-silent: "&7[SILENT] &aThe sanction (%type%) for &e%player% &ahas been revoked."
+    revoke-not-found: "&cThis player has no active network sanction of type %type%."
 
+  # Specific Sanctions
   ban:
-    kick-message: |
+    success: "&aPlayer &e%player% &ahas been banned from the network for: &f%reason%"
+    received: |
+      &8&m----------------------------------------
+      &6&lLifeMod Network
+      &cYou have been banned!
+      &7Reason: &f%reason%
+      &7Banned by: &e%issuer%
+      &7Time remaining: &f%time%
+      &8&m----------------------------------------
+    login: |
       &8&m----------------------------------------
       &6&lLifeMod Network
       &cYou are banned from the entire network!
       &7Reason: &f%reason%
-      &7By: &e%issuer%
+      &7Expires on: &e%expiration%
+      &7Sanction ID: &8#%id%
       &8&m----------------------------------------
 
   mute:
-    blocked-message: "&cYou are muted on the network!\n&7Reason: &f%reason%\n&7Expires in: &f%time%"
+    success: "&aPlayer &e%player% &ahas been muted on the network for: &f%reason%"
+    received: "&cYou have been muted on the network! Reason: &f%reason%"
+    title: "&d&lMUTED"
+    subtitle: "&7%reason%"
+    blocked: |
+      &cYou are muted!
+      &7Reason: &f%reason%
+      &7Expires in: &f%time%
+    chat-blocked: |
+      &cYou are reduced to silence on the network!
+      &7Reason: &f%reason%
+      &7Expires on: &e%expiration%
+
+  kick:
+    success: "&aPlayer &e%player% &ahas been kicked from the network for: &f%reason%"
+    message: |
+      &8&m----------------------------------------
+      &6&lLifeMod Network
+      &cYou have been kicked!
+      &7Reason: &f%reason%
+      &7By: &e%issuer%
+      &8&m----------------------------------------
+
+  warn:
+    success: "&aWarning sent to &e%player% on the network for: &f%reason%"
+    received: "&c&lNETWORK WARNING! &7Reason: &f%reason%"
+    title: "&c&lWARNING"
+    subtitle: "&7%reason%"
+
+  # Broadcasts (Local & Network)
+  broadcast:
+    ban:
+      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &c&lBANNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7banned &c%target% &7from &e%server% for: &f%reason%"
+    mute:
+      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &d&lMUTED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7muted &c%target% &7on &e%server% for: &f%reason%"
+    kick:
+      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &c&lKICKED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7kicked &c%target% &7from &e%server% for: &f%reason%"
+    warn:
+      public: "&8&m----------------------------------------\n&6&lNetwork &8» &e%target% &ahas been &e&lWARNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Server: &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENT-NETWORK] &c%issuer% &7warned &c%target% &7on &e%server% for: &f%reason%"
+    unban:
+      public: "&6&lNetwork &8» &a%target% has been unbanned by %issuer%. Reason: %reason%"
+      silent: "&7[SILENT-NETWORK] &a%target% has been unbanned by %issuer%. Reason: %reason%"
+    unmute:
+      public: "&6&lNetwork &8» &a%target% has been unmuted by %issuer%. Reason: %reason%"
+      silent: "&7[SILENT-NETWORK] &a%target% has been unmuted by %issuer%. Reason: %reason%"
+
+# --- REPORTS ---
+reports:
+  submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
+  usage: "&eUsage: /report <player> <reason>"
+  yourself: "&cYou cannot report yourself!"
+  join-alert: "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports across the network."
+  not-found: "&cReport not found."
+
+# --- OTHER COMMANDS ---
+commands:
+  staffchat:
+    usage: "%prefix%&cUsage: /staffchat <message>"
+    success: "%prefix%&aMessage sent to network staff chat."
+    message: "&7[&cNetwork-SC&7] &e%player%&f: %message%"
 
 # Metadata
 version: 200

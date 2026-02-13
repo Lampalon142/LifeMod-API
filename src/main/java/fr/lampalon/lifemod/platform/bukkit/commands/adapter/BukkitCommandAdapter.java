@@ -23,12 +23,12 @@ public class BukkitCommandAdapter implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (command.getPermission() != null && !sender.hasPermission(command.getPermission())) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (command.isPlayerOnly() && !(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-only")));
             return true;
         }
 

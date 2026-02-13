@@ -21,14 +21,14 @@ public class TeleportCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-only")));
             debug.log("tp", "Console tried to use /tp");
             return true;
         }
 
         Player player = (Player) sender;
         if (!player.hasPermission("lifemod.tp")) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.no-permission")));
             debug.log("tp", "Permission denied for /tp by " + player.getName());
             return true;
         }
@@ -36,7 +36,7 @@ public class TeleportCmd implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             Player target = Bukkit.getPlayer(args[0]);
             if (target == null) {
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.offlineplayer")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-not-found")));
                 debug.log("tp", "Target offline: " + args[0]);
                 return true;
             }
@@ -53,7 +53,7 @@ public class TeleportCmd implements CommandExecutor, TabCompleter {
             Player target1 = Bukkit.getPlayer(args[0]);
             Player target2 = Bukkit.getPlayer(args[1]);
             if (target1 == null || target2 == null) {
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.offlineplayer")));
+                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-not-found")));
                 debug.log("tp", "At least one target offline: " + args[0] + ", " + args[1]);
                 return true;
             }

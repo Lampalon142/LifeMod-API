@@ -23,14 +23,14 @@ public class SpeedCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("speed")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.player-only")));
             debug.log("speed", "Console tried to use /speed");
             return false;
         }
 
         Player player = (Player) sender;
         if (!player.hasPermission("speed.use")) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("system.no-permission")));
             debug.log("speed", "Permission denied for /speed by " + player.getName());
             return false;
         }

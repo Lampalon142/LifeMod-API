@@ -36,34 +36,34 @@ public class OtpCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("general.onlyplayer", "&cThis command must be executed by a player.")));
+            sender.sendMessage(MessageUtil.formatMessage(langConfig.getString("system.player-only", "&cThis command must be executed by a player.")));
             debug.log("otp", "Console tried to use /otp");
             return true;
         }
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.otp")) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("general.nopermission", "&cYou don't have permission to use this command.")));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("system.no-permission", "&cYou don't have permission to use this command.")));
             debug.log("otp", "Permission denied for /otp by " + player.getName());
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("otp.usage", "&cUsage: /otp <player>")));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.otp.usage", "&cUsage: /otp <player>")));
             debug.log("otp", "Invalid usage by " + player.getName());
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         if (!target.hasPlayedBefore()) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("otp.player-not-found", "&cPlayer %target% doesn't exist or has never connected.").replace("%target%", args[0])));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.otp.player-not-found", "&cPlayer %target% doesn't exist or has never connected.").replace("%target%", args[0])));
             debug.log("otp", "Target never played: " + args[0]);
             return true;
         }
 
         Location location = BukkitDatabaseUtil.fromStoredLocation(databaseManager.getDatabaseProvider().getCoords(target.getUniqueId()));
         if (location == null) {
-            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("otp.no-position", "&cNo saved position for %target%.").replace("%target%", args[0])));
+            player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.otp.no-position", "&cNo saved position for %target%.").replace("%target%", args[0])));
             debug.log("otp", "No saved position for " + args[0]);
             return true;
         }
@@ -90,7 +90,7 @@ public class OtpCmd implements CommandExecutor, TabCompleter {
         }
 
         player.teleport(location);
-        player.sendMessage(MessageUtil.formatMessage(langConfig.getString("otp.teleported", "&aYou have been teleported to %target%'s last position.").replace("%target%", args[0])));
+        player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.otp.teleported", "&aYou have been teleported to %target%'s last position.").replace("%target%", args[0])));
         return true;
     }
 

@@ -31,32 +31,32 @@ public class ClearinvCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("clearinv")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.clearinv")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /clearinv by " + player.getName());
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("clearinv.usage")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.clearinv.usage")));
             return true;
         }
 
         Player targetPlayer = Bukkit.getPlayer(args[0]);
         if (targetPlayer == null) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             return true;
         }
 
         targetPlayer.getInventory().clear();
         player.sendMessage(MessageUtil.formatMessage(
-                plugin.getLangConfig().getString("clearinv.message").replace("%target%", targetPlayer.getName())
+                plugin.getLangConfig().getString("commands.clearinv.message").replace("%target%", targetPlayer.getName())
         ));
         debug.log("clearinv", player.getName() + " cleared inventory of " + targetPlayer.getName());
 

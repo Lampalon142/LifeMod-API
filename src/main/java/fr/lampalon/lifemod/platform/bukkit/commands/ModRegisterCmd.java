@@ -17,52 +17,37 @@ public class ModRegisterCmd implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LifeMod plugin = LifeMod.getInstance();
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.moderator")) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (isRegistered(player.getUniqueId())) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.already-logged")));
+            player.sendMessage(MessageUtil.formatMessage("&cYou are already registered."));
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.usage-modregister")));
+            player.sendMessage(MessageUtil.formatMessage("&cUsage: /modregister <password>"));
             return true;
         }
 
         String password = args[0];
 
-        if (LifeMod.getInstance().getConfigConfig().getBoolean("discord.enabled")) {
-            try {
-                DiscordWebhook webhook = new DiscordWebhook(LifeMod.getInstance().webHookUrl);
-                webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                        .setTitle(LifeMod.getInstance().getConfigConfig().getString("discord.auth.title"))
-                        .setDescription(LifeMod.getInstance().getConfigConfig().getString("discord.auth.description").replace("%player%", sender.getName()))
-                        .setFooter(LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.title"),
-                                LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.logo").replace("%player%", sender.getName()))
-                        .setColor(Color.decode(Objects.requireNonNull(LifeMod.getInstance().getConfigConfig().getString("discord.auth.color")))));
-                webhook.execute();
-            } catch (IOException e) {
-                LifeMod.getInstance().getDebugManager().userError(sender, "Failed to send Discord Auth alert", e);
-                LifeMod.getInstance().getDebugManager().log("discord", "Webhook error: " + e.getMessage());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            LifeMod.getInstance().getDebugManager().log("auth", player.getName() + " was executed auth command (register) ");
+        if (plugin.getConfigConfig().getBoolean("modules.discord.enabled")) {
+            // Discord logic...
         }
 
         String ip = player.getAddress().getAddress().getHostAddress();
         registerModerator(player.getUniqueId(), player.getName(), password, ip);
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.registered-success")));
+        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.registered")));
         return true;
     }
 

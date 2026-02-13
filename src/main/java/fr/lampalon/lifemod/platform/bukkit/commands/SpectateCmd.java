@@ -28,19 +28,19 @@ public class SpectateCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(getLang("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(getLang("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.spectate")) {
-            player.sendMessage(MessageUtil.formatMessage(getLang("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(getLang("system.no-permission")));
             return true;
         }
 
         if (args.length == 0) {
-            player.sendMessage(MessageUtil.formatMessage(getLang("spectate.usage")));
+            player.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.usage")));
             return true;
         }
 
@@ -66,7 +66,7 @@ public class SpectateCmd implements CommandExecutor, TabCompleter {
                 Player target = Bukkit.getPlayer(arg);
                 if (target == null || !target.isOnline()) {
                     player.sendMessage(MessageUtil.formatMessage(
-                            getLang("spectate.player-not-found").replace("%target%", arg)));
+                            getLang("commands.spectate.player-not-found").replace("%target%", arg)));
                     return true;
                 }
                 spectateManager.startSpectate(player, target);

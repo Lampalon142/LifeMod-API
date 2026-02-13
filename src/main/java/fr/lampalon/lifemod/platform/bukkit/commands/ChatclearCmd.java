@@ -26,7 +26,7 @@ public class ChatclearCmd implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("lifemod.chatclear")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /chatclear by " + sender.getName());
             return true;
         }
@@ -35,7 +35,7 @@ public class ChatclearCmd implements CommandExecutor {
             for (int i = 0; i < 100; i++) {
                 player.sendMessage("");
             }
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("chatclear.message")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.chatclear.message")));
         }
         debug.log("chatclear", "Chat cleared by " + sender.getName());
 

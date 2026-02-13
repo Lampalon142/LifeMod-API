@@ -31,14 +31,14 @@ public class HealCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("heal")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.heal")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /heal by " + player.getName());
             return true;
         }
@@ -68,7 +68,7 @@ public class HealCmd implements CommandExecutor, TabCompleter {
             double maxHealth = player.getMaxHealth();
             player.setHealth(maxHealth);
             player.setFoodLevel(player.getFoodLevel());
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("heal.player")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.heal.player")));
             debug.log("heal", player.getName() + " healed himself");
         } else if (args.length == 1) {
             Player target = Bukkit.getPlayer(args[0]);
@@ -76,14 +76,14 @@ public class HealCmd implements CommandExecutor, TabCompleter {
                 double maxHealth = target.getMaxHealth();
                 target.setHealth(maxHealth);
                 target.setFoodLevel(target.getFoodLevel());
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("heal.mod").replace("%player%", target.getName())));
-                target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("heal.player")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.heal.mod").replace("%player%", target.getName())));
+                target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.heal.player")));
                 debug.log("heal", player.getName() + " healed " + target.getName());
             } else {
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
             }
         } else {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("heal.usage")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.heal.usage")));
         }
 
         return true;

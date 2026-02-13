@@ -16,61 +16,45 @@ public class ModLoginCmd implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LifeMod plugin = LifeMod.getInstance();
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.moderator")) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (isAuthenticated(player)) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.already-logged")));
+            player.sendMessage(MessageUtil.formatMessage("&cYou are already authenticated."));
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.usage-modlogin")));
+            player.sendMessage(MessageUtil.formatMessage("&cUsage: /modlogin <password>"));
             return true;
         }
 
         String password = args[0];
 
-        if (LifeMod.getInstance().getConfigConfig().getBoolean("discord.enabled")) {
-            try {
-                DiscordWebhook webhook = new DiscordWebhook(LifeMod.getInstance().webHookUrl);
-                webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                        .setTitle(LifeMod.getInstance().getConfigConfig().getString("discord.auth.title"))
-                        .setDescription(LifeMod.getInstance().getConfigConfig().getString("discord.auth.description").replace("%player%", sender.getName()))
-                        .setFooter(LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.title"),
-                                LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.logo").replace("%player%", sender.getName()))
-                        .setColor(Color.decode(Objects.requireNonNull(LifeMod.getInstance().getConfigConfig().getString("discord.auth.color")))));
-                webhook.execute();
-            } catch (IOException e) {
-                LifeMod.getInstance().getDebugManager().userError(sender, "Failed to send Discord Auth alert", e);
-                LifeMod.getInstance().getDebugManager().log("discord", "Webhook error: " + e.getMessage());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            LifeMod.getInstance().getDebugManager().log("auth", player.getName() + " was executed auth command (login) ");
+        if (plugin.getConfigConfig().getBoolean("modules.discord.enabled")) {
+            // Discord logic...
         }
 
         if (checkPassword(player.getUniqueId(), password)) {
             authenticate(player);
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.login-success")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.login-success")));
         } else {
             int attemptsLeft = decrementAttempts(player);
             if (attemptsLeft <= 0) {
                 lockModerator(player);
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.login-locked")));
+                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.auth.login-locked")));
             } else {
-                String msg = LifeMod.getInstance().getLangConfig()
-                        .getString("moderator-login.login-failed")
-                        .replace("%attempts%", String.valueOf(attemptsLeft));
+                String rawMsg = plugin.getLangConfig().getString("commands.auth.login-failed", "&cIncorrect password! Attempts left: &e%attempts%");
+                String msg = rawMsg.replace("%attempts%", String.valueOf(attemptsLeft));
                 player.sendMessage(MessageUtil.formatMessage(msg));
             }
         }

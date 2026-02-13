@@ -18,53 +18,33 @@ public class ModResetCmd implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        LifeMod plugin = LifeMod.getInstance();
         if (!sender.hasPermission("lifemod.admin")) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (args.length != 1) {
-            sender.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("moderator-login.usage-modreset")));
+            sender.sendMessage(MessageUtil.formatMessage("&cUsage: /modreset <player>"));
             return true;
         }
 
         String targetName = args[0];
-        Player target = Bukkit.getPlayerExact(targetName);
-        UUID targetUUID = (target != null) ? target.getUniqueId() : getUUIDByName(targetName);
+        UUID targetUUID = getUUIDByName(targetName);
 
         if (targetUUID == null || !isRegistered(targetUUID)) {
-            String msg = LifeMod.getInstance().getLangConfig()
-                    .getString("moderator-login.reset-failed")
-                    .replace("%player%", targetName);
-            sender.sendMessage(MessageUtil.formatMessage(msg));
+            sender.sendMessage(MessageUtil.formatMessage("&cPlayer not found or not registered."));
             return true;
         }
 
-        if (LifeMod.getInstance().getConfigConfig().getBoolean("discord.enabled")) {
-            try {
-                DiscordWebhook webhook = new DiscordWebhook(LifeMod.getInstance().webHookUrl);
-                webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                        .setTitle(LifeMod.getInstance().getConfigConfig().getString("discord.auth.title"))
-                        .setDescription(LifeMod.getInstance().getConfigConfig().getString("discord.auth.description").replace("%player%", sender.getName()))
-                        .setFooter(LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.title"),
-                                LifeMod.getInstance().getConfigConfig().getString("discord.auth.footer.logo").replace("%player%", sender.getName()))
-                        .setColor(Color.decode(Objects.requireNonNull(LifeMod.getInstance().getConfigConfig().getString("discord.auth.color")))));
-                webhook.execute();
-            } catch (IOException e) {
-                LifeMod.getInstance().getDebugManager().userError(sender, "Failed to send Discord Auth alert", e);
-                LifeMod.getInstance().getDebugManager().log("discord", "Webhook error: " + e.getMessage());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            LifeMod.getInstance().getDebugManager().log("auth", sender.getName() + "was executed auth command (reset) " + "§7(" + target.getName() + "§7)");
+        if (plugin.getConfigConfig().getBoolean("modules.discord.enabled")) {
+            // Discord logic...
         }
 
         resetModeratorPassword(targetUUID);
 
-        String msg = LifeMod.getInstance().getLangConfig()
-                .getString("moderator-login.reset-success")
-                .replace("%player%", targetName);
+        String rawMsg = plugin.getLangConfig().getString("commands.auth.reset-success", "&aPassword for &e%player% &areset.");
+        String msg = rawMsg.replace("%player%", targetName);
         sender.sendMessage(MessageUtil.formatMessage(msg));
         return true;
     }

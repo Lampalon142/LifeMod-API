@@ -19,7 +19,7 @@ public class ChatListener implements Listener {
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         if (!plugin.isChatEnabled() && !event.getPlayer().hasPermission("lifemod.togglechat.bypass")) {
             event.getPlayer().sendMessage(MessageUtil.formatMessage(
-                    plugin.getLangConfig().getString("togglechat.blocked")
+                    plugin.getLangConfig().getString("commands.chat.blocked")
             ));
             event.setCancelled(true);
             return;

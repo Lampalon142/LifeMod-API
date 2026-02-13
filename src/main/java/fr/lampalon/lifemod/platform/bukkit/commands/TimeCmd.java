@@ -29,12 +29,12 @@ public class TimeCmd implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("lifemod.time")) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
         if (args.length != 1) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("time.usage")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.time.usage")));
             return true;
         }
 
@@ -59,12 +59,12 @@ public class TimeCmd implements CommandExecutor, TabCompleter {
         }
 
         if (ticks == -1) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("time.invalid")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.time.invalid")));
             return true;
         }
 
         Bukkit.getWorlds().forEach(world -> world.setTime(ticks));
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("time.success").replace("%time%", time)));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.world.time.success").replace("%time%", time)));
 
         if (plugin.getConfigConfig().getBoolean("discord.enabled")) {
             try {

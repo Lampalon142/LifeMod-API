@@ -54,15 +54,15 @@ public class NoteInputManager {
 
         if (message.equalsIgnoreCase("cancel")) {
             String cancelMsg = context.isEditMode()
-                    ? MessageUtil.formatMessage(lang.getString("report.detail.notes.menu.edit.cancelled", "&eEdit cancelled."))
-                    : MessageUtil.formatMessage(lang.getString("report.detail.notes.menu.chat.cancelled", "&eNote creation cancelled."));
+                    ? MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.edit.cancelled", "&eEdit cancelled."))
+                    : MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.chat.cancelled", "&eNote creation cancelled."));
             player.sendMessage(cancelMsg);
             plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());
             return;
         }
 
         if (message.trim().isEmpty()) {
-            player.sendMessage(MessageUtil.formatMessage(lang.getString("report.detail.notes.menu.errors.empty", "&cYour note cannot be empty.")));
+            player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.errors.empty", "&cYour note cannot be empty.")));
             plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());
             return;
         }
@@ -71,12 +71,12 @@ public class NoteInputManager {
             context.getNote().setContent(message);
             context.getNote().setUpdatedAt(System.currentTimeMillis());
             plugin.getDatabaseManager().getDatabaseProvider().updateStaffNote(context.getNote());
-            player.sendMessage(MessageUtil.formatMessage(lang.getString("report.detail.notes.menu.edit.saved", "&aNote updated!")));
+            player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.edit.saved", "&aNote updated!")));
         } else {
             StaffNote newNote = new StaffNote(player.getUniqueId(), message);
             context.getReport().addStaffNote(newNote);
             plugin.getDatabaseManager().getDatabaseProvider().addStaffNote(context.getReport().getUuid(), newNote);
-            player.sendMessage(MessageUtil.formatMessage(lang.getString("report.detail.notes.menu.chat.saved", "&aNote added!")));
+            player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.chat.saved", "&aNote added!")));
         }
         plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());
     }

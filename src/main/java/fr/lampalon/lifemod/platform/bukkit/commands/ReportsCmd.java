@@ -30,14 +30,14 @@ public class ReportsCmd implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.reports")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             return true;
         }
 
@@ -85,7 +85,7 @@ public class ReportsCmd implements CommandExecutor {
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (reports.isEmpty()) {
-                        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("report.no-reports")));
+                        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.reports.no-reports")));
                         return;
                     }
                     new ReportMainMenu(player, reports).open();

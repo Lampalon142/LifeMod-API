@@ -31,14 +31,14 @@ public class FeedCmd implements CommandExecutor, TabCompleter {
         if (!label.equalsIgnoreCase("feed")) return false;
 
         if (!(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.onlyplayer")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("lifemod.feed")) {
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.nopermission")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
             debug.log("commands", "Permission denied for /feed by " + player.getName());
             return true;
         }
@@ -69,23 +69,23 @@ public class FeedCmd implements CommandExecutor, TabCompleter {
 
         if (args.length == 0) {
             player.setFoodLevel(20);
-            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("feed.yourself")));
+            player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.feed.yourself")));
             return true;
         }
 
         if (args.length == 1) {
             Player target = Bukkit.getPlayer(args[0]);
             if (target == null) {
-                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("general.offlineplayer")));
+                sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-not-found")));
                 return true;
             }
             target.setFoodLevel(20);
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("feed.mod").replace("%target%", target.getName())));
-            target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("feed.player")));
+            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.feed.mod").replace("%target%", target.getName())));
+            target.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.feed.player")));
             return true;
         }
 
-        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("feed.usage")));
+        sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("commands.utility.feed.usage")));
         return true;
     }
 

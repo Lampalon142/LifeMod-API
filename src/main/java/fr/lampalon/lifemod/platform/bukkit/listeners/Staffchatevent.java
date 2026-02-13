@@ -20,7 +20,7 @@ public class Staffchatevent implements Listener {
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        String playermsg = plugin.getLangConfig().getString("staffchat.message");
+        String playermsg = plugin.getLangConfig().getString("commands.staffchat.message");
         String prefix = MessageUtil.parseColors(plugin.getConfigConfig().getString("prefix"));
 
         if (player.hasPermission("lifemod.staffchat")) {
