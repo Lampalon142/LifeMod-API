@@ -24,6 +24,7 @@ import fr.lampalon.lifemod.platform.bukkit.commands.adapter.BukkitCommandAdapter
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.platform.bukkit.utils.ConfigUpdater;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
@@ -61,17 +62,20 @@ public class LifeMod extends JavaPlugin {
     private UpdateChecker updateChecker;
     private DebugManager debugManager;
     private ChatManager chatManager;
-    private VanishedManager playerManager;
     private GuiManager guiManager;
     private NoteInputManager noteInputManager;
     private ModeratorSessionManager moderatorSessionManager;
     private ModeratorAuthService moderatorAuthService;
     private PacketController packetController;
+    private StaffItemManager staffItemManager;
+    private StaffModeManager staffModeManager;
+    private InvseeManager invseeManager;
+    private StaffActionManager staffActionManager;
+    private IVanishService vanishService;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
     private Set<UUID> moderators = new HashSet<>();
-    private Map<UUID, PlayerManager> players = new HashMap<>();
     private final Map<UUID, Deque<Long>> cpsMap = new HashMap<>();
     public String webHookUrl;
 
@@ -255,7 +259,6 @@ public class LifeMod extends JavaPlugin {
 
     private void initializeManagers() {
         freezeManager = new FreezeManager();
-        playerManager = new VanishedManager();
         chatManager = new ChatManager(this);
         databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
@@ -263,6 +266,19 @@ public class LifeMod extends JavaPlugin {
         noteInputManager = new NoteInputManager(this);
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
+        
+        // Staff System
+        staffItemManager = new StaffItemManager(this);
+        staffModeManager = new StaffModeManager(this, staffItemManager);
+        invseeManager = new InvseeManager();
+        staffActionManager = new StaffActionManager();
+        
+        // Vanish System
+        vanishService = new VanishService(this);
+        PacketEvents.getAPI().getEventManager().registerListener(
+            new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService), 
+            PacketListenerPriority.HIGH
+        );
     }
 
     private void setupMetrics() {
@@ -274,12 +290,18 @@ public class LifeMod extends JavaPlugin {
         PluginManager pm = Bukkit.getPluginManager();
         updateChecker = new UpdateChecker(this, 112381);
         pm.registerEvents(new ModCancels(), this);
-        pm.registerEvents(new ModItemsInteract(), this);
+        // pm.registerEvents(new ModItemsInteract(), this); // Deprecated
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffListener(staffModeManager, staffItemManager, staffActionManager), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffPhysicalListener(staffModeManager), this);
         pm.registerEvents(new Staffchatevent(this), this);
         pm.registerEvents(new PluginDisable(), this);
         pm.registerEvents(new PlayerQuit(), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
-        pm.registerEvents(new CPSListener(cpsMap), this);
+        
+        CPSListener cpsListener = new CPSListener(cpsMap);
+        pm.registerEvents(cpsListener, this);
+        PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
+        
         pm.registerEvents(new GuiDetailListener(this), this);
         pm.registerEvents(new ChatAsyncListener(this), this);
         pm.registerEvents(new TicketJoinListener(this, updateChecker), this);
@@ -287,6 +309,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new ModeratorAuthListener(), this);
         pm.registerEvents(new SanctionListener(), this);
         pm.registerEvents(new ConnectionListener(), this);
+        pm.registerEvents(new InvseeListener(this), this);
         if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         }
@@ -307,14 +330,14 @@ public class LifeMod extends JavaPlugin {
         registerCommand(new StaffHistoryCmd());
         
         registerCommand("freeze", new FreezeCmd(this));
-        registerCommand("mod", new ModCmd(this));
-        registerCommand("staff", new ModCmd(this));
+        registerCommand("mod", new ModCmd(this, staffModeManager));
+        registerCommand("staff", new ModCmd(this, staffModeManager));
         registerCommand("broadcast", new BroadcastCmd(this));
         registerCommand("bc", new BroadcastCmd(this));
         registerCommand("gamemode", new GmCmd(this));
         registerCommand("gm", new GmCmd(this));
         registerCommand("ecopen", new EcopenCmd(this));
-        registerCommand("vanish", new VanishCmd(playerManager));
+        registerCommand("vanish", new VanishCmd(this));
         registerCommand("clearinv", new ClearinvCmd(this));
         registerCommand("stafflist", new StafflistCmd());
         registerCommand("staffchat", new StaffchatCmd());
@@ -373,14 +396,16 @@ public class LifeMod extends JavaPlugin {
     public NoteInputManager getNoteInputManager() { return noteInputManager; }
     public PacketController getPacketController() { return packetController; }
     public FreezeManager getFreezeManager() { return freezeManager; }
-    public VanishedManager getPlayerManager() { return playerManager; }
+    public IVanishService getVanishService() { return vanishService; }
     public DebugManager getDebugManager() { return debugManager; }
     public SpectateManager getSpectateManager() { return spectateManager; }
     public ModeratorSessionManager getModeratorSessionManager() { return moderatorSessionManager; }
     public ModeratorAuthService getModeratorAuthService() { return moderatorAuthService; }
+    public Map<UUID, Deque<Long>> getCpsMap() { return cpsMap; }
+    public StaffModeManager getStaffModeManager() { return staffModeManager; }
+    public InvseeManager getInvseeManager() { return invseeManager; }
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
-    public Map<UUID, PlayerManager> getPlayers() { return players; }
     public Set<UUID> getModerators() { return moderators; }
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }

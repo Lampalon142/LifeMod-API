@@ -2,7 +2,6 @@ package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import fr.lampalon.lifemod.platform.bukkit.managers.PlayerManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,7 +21,8 @@ public class ModCancels implements Listener {
   private final DebugManager debug = LifeMod.getInstance().getDebugManager();
 
   private boolean isRestricted(Player player) {
-    return PlayerManager.isInModerationMod(player) || LifeMod.getInstance().isFreeze(player);
+    LifeMod plugin = LifeMod.getInstance();
+    return plugin.getStaffModeManager().isMod(player) || plugin.isFreeze(player);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
@@ -91,9 +91,16 @@ public class ModCancels implements Listener {
 
     Player player = (Player) event.getWhoClicked();
 
-    if (isRestricted(player)) {
+    if (LifeMod.getInstance().isFreeze(player)) {
       event.setCancelled(true);
-      debug.log("mod", player.getName() + " tried to click inventory in mod/freeze mode");
+      debug.log("mod", player.getName() + " tried to click inventory while frozen");
+      return;
+    }
+
+    if (LifeMod.getInstance().getStaffModeManager().isMod(player)) {
+      // Allow staff to interact with inventories.
+      // StaffListener will handle restrictions regarding staff items and external inventories.
+      return;
     }
   }
 

@@ -82,7 +82,9 @@ public class InvseeCmd implements CommandExecutor, TabCompleter {
             debug.log("invsee", sender.getName() + " opened inventory of " + targetPlayer.getName());
         }
 
-        player.openInventory(openTargetInventory(player, targetPlayer));
+        Inventory inv = openTargetInventory(player, targetPlayer);
+        plugin.getInvseeManager().startViewing(player, targetPlayer);
+        player.openInventory(inv);
         return true;
     }
 
@@ -94,7 +96,7 @@ public class InvseeCmd implements CommandExecutor, TabCompleter {
         for (int i = 0; i < 36; i++) {
             ItemStack item = targetPlayerInventory.getItem(i);
             if (item != null) {
-                targetInventory.setItem(i, item.clone());
+                targetInventory.setItem(i, item);
             }
         }
         targetInventory.setItem(36, targetPlayerInventory.getHelmet());
@@ -102,7 +104,6 @@ public class InvseeCmd implements CommandExecutor, TabCompleter {
         targetInventory.setItem(38, targetPlayerInventory.getLeggings());
         targetInventory.setItem(39, targetPlayerInventory.getBoots());
 
-        player.openInventory(targetInventory);
         debug.log("mod", player.getName() + " opened inventory of " + target.getName());
         return targetInventory;
     }
