@@ -46,6 +46,15 @@ public class MySQLManager implements DatabaseProvider {
                         // Mise à jour auto des colonnes si elles manquent
                         try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN in_staff_mode BOOLEAN DEFAULT FALSE;"); } catch (SQLException ignored) {}
                         try { stmt.executeUpdate("ALTER TABLE sanctions ADD COLUMN player_name VARCHAR(32) AFTER player_uuid;"); } catch (SQLException ignored) {}
+                        
+                        try {
+                            // On tente d'ajouter la colonne server_name
+                            stmt.executeUpdate("ALTER TABLE player_inventories ADD COLUMN server_name VARCHAR(64) AFTER uuid;");
+                            // Si l'ajout a réussi, on doit mettre à jour la clé primaire pour inclure le serveur
+                            stmt.executeUpdate("ALTER TABLE player_inventories DROP PRIMARY KEY, ADD PRIMARY KEY (uuid, server_name);");
+                        } catch (SQLException ignored) {
+                            // La colonne existe probablement déjà ou la table est vide
+                        }
             
         } catch (SQLException e) {
             e.printStackTrace();
