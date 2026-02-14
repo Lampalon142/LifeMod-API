@@ -202,6 +202,32 @@ public class LifeMod extends JavaPlugin {
                     });
                 }
             });
+
+            redis.subscribe("lifemod:staff", message -> {
+                String[] parts = message.split("\\|");
+                if (parts.length < 4) return;
+
+                String action = parts[0];
+                if (!action.equals("UPDATE")) return;
+
+                UUID uuid = UUID.fromString(parts[1]);
+                boolean state = Boolean.parseBoolean(parts[2]);
+                String originServer = parts[3];
+
+                // If the message comes from THIS server, ignore it
+                if (originServer.equals(getServerName())) return;
+
+                Bukkit.getScheduler().runTask(this, () -> {
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player != null) {
+                        if (state) {
+                            staffModeManager.enableStaffMode(player);
+                        } else {
+                            staffModeManager.disableStaffMode(player);
+                        }
+                    }
+                });
+            });
         }
 
         PacketEvents.getAPI().init();

@@ -40,6 +40,12 @@ public class StaffModeManager {
                 data.setInStaffMode(state);
                 plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
             }
+
+            // Publish to Redis
+            IMessagingService messaging = fr.lampalon.lifemod.common.core.ServiceRegistry.get(IMessagingService.class);
+            if (messaging != null) {
+                messaging.publish("lifemod:staff", "UPDATE|" + player.getUniqueId() + "|" + state + "|" + plugin.getServerName());
+            }
         });
     }
 
