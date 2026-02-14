@@ -1,25 +1,36 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.IStaffAction;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.model.StaffItem;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class StaffListener implements Listener {
 
     private final StaffModeManager staffModeManager;
     private final StaffItemManager staffItemManager;
     private final StaffActionManager staffActionManager;
+    
+    // Utilisation d'un cache d'interaction par tick pour bloquer les doublons (NMS/Bukkit)
+    private final Map<UUID, Long> lastActionTick = new HashMap<>();
 
     public StaffListener(StaffModeManager staffModeManager, StaffItemManager staffItemManager, StaffActionManager staffActionManager) {
         this.staffModeManager = staffModeManager;
@@ -27,8 +38,25 @@ public class StaffListener implements Listener {
         this.staffActionManager = staffActionManager;
     }
 
-    @EventHandler
+    /**
+     * Vérifie si une action a déjà été traitée pour ce joueur dans ce tick.
+     * Compatible avec toutes les versions via l'API de base tout en étant ultra précis.
+     */
+    private boolean canInteract(Player player) {
+        long currentTick = Bukkit.getServer().getWorlds().get(0).getFullTime(); // Plus stable que getCurrentTick sur certaines versions
+        if (lastActionTick.containsKey(player.getUniqueId()) && lastActionTick.get(player.getUniqueId()) == currentTick) {
+            return false;
+        }
+        lastActionTick.put(player.getUniqueId(), currentTick);
+        return true;
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
     public void onInteract(PlayerInteractEvent event) {
+        try {
+            if (event.getHand() == EquipmentSlot.OFF_HAND) return;
+        } catch (NoSuchMethodError ignored) {}
+
         Player player = event.getPlayer();
         if (!staffModeManager.isMod(player)) return;
 
@@ -40,9 +68,58 @@ public class StaffListener implements Listener {
 
         event.setCancelled(true);
 
+        if (!canInteract(player)) return;
+
         String clickType = getClickType(event.getAction());
         if (clickType == null) return;
 
+        handleStaffAction(player, staffItem, clickType, event, null);
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onInteractEntity(PlayerInteractEntityEvent event) {
+        try {
+            if (event.getHand() == EquipmentSlot.OFF_HAND) return;
+        } catch (NoSuchMethodError ignored) {}
+
+        Player player = event.getPlayer();
+        if (!staffModeManager.isMod(player)) return;
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+        StaffItem staffItem = staffItemManager.getStaffItem(item);
+        if (staffItem == null) return;
+
+        event.setCancelled(true);
+
+        if (!canInteract(player)) return;
+
+        handleStaffAction(player, staffItem, "RIGHT_CLICK", null, event);
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onEntityDamage(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+        Player player = (Player) event.getDamager();
+        
+        if (!staffModeManager.isMod(player)) return;
+        
+        ItemStack item = player.getInventory().getItemInMainHand();
+        StaffItem staffItem = staffItemManager.getStaffItem(item);
+        if (staffItem == null) return;
+
+        if (!canInteract(player)) return;
+
+        StaffActionType actionType = staffItem.getAction("LEFT_CLICK");
+        if (actionType != null) {
+            event.setCancelled(true);
+            IStaffAction action = staffActionManager.getAction(actionType);
+            if (action != null) {
+                action.onAttack(player, event.getEntity());
+            }
+        }
+    }
+
+    private void handleStaffAction(Player player, StaffItem staffItem, String clickType, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityEvent) {
         // Execute Command
         String command = staffItem.getCommand(clickType);
         if (command != null) {
@@ -54,61 +131,10 @@ public class StaffListener implements Listener {
         if (actionType != null) {
             IStaffAction action = staffActionManager.getAction(actionType);
             if (action != null) {
-                action.onInteract(player, event);
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInteractEntity(PlayerInteractEntityEvent event) {
-        Player player = event.getPlayer();
-        handleEntityInteract(player, event.getRightClicked(), "RIGHT_CLICK", event);
-    }
-
-    @EventHandler
-    public void onEntityDamage(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player)) return;
-        Player player = (Player) event.getDamager();
-        
-        // Check if player is mod
-        if (!staffModeManager.isMod(player)) return;
-        
-        ItemStack item = player.getInventory().getItemInMainHand();
-        StaffItem staffItem = staffItemManager.getStaffItem(item);
-        if (staffItem == null) return;
-        
-        // If it's a staff item, likely we want to cancel real damage?
-        // Depends on action. But usually yes.
-        // Let's cancel by default if an action is found.
-        
-        String clickType = "LEFT_CLICK";
-        StaffActionType actionType = staffItem.getAction(clickType);
-        
-        if (actionType != null) {
-            event.setCancelled(true); // Prevent damage
-            IStaffAction action = staffActionManager.getAction(actionType);
-            if (action != null) {
-                action.onAttack(player, event.getEntity());
-            }
-        }
-    }
-
-    private void handleEntityInteract(Player player, org.bukkit.entity.Entity target, String clickType, org.bukkit.event.Cancellable event) {
-        if (!staffModeManager.isMod(player)) return;
-
-        ItemStack item = player.getInventory().getItemInMainHand();
-        StaffItem staffItem = staffItemManager.getStaffItem(item);
-        if (staffItem == null) return;
-
-        event.setCancelled(true);
-
-        StaffActionType actionType = staffItem.getAction(clickType);
-        if (actionType != null) {
-            IStaffAction action = staffActionManager.getAction(actionType);
-            if (action != null) {
-                // Safe cast or change signature
-                if (event instanceof PlayerInteractEntityEvent) {
-                    action.onInteractEntity(player, (PlayerInteractEntityEvent) event);
+                if (entityEvent != null) {
+                    action.onInteractEntity(player, entityEvent);
+                } else if (interactEvent != null) {
+                    action.onInteract(player, interactEvent);
                 }
             }
         }
@@ -123,10 +149,8 @@ public class StaffListener implements Listener {
 
         ItemStack clickedItem = event.getCurrentItem();
         ItemStack cursorItem = event.getCursor();
-        Inventory topInventory = event.getView().getTopInventory();
         Inventory clickedInventory = event.getClickedInventory();
 
-        // 1. Prevent putting staff items into external inventories (Chests, Players, etc.)
         if (clickedInventory != null && !clickedInventory.equals(player.getInventory())) {
             if (cursorItem != null && staffItemManager.getStaffItem(cursorItem) != null) {
                 event.setCancelled(true);
@@ -135,7 +159,6 @@ public class StaffListener implements Listener {
             }
         }
 
-        // 2. Prevent Shift-Clicking staff items into external inventories
         if (event.getClick().isShiftClick() && clickedInventory != null && clickedInventory.equals(player.getInventory())) {
             if (clickedItem != null && staffItemManager.getStaffItem(clickedItem) != null) {
                 Inventory topInv = event.getView().getTopInventory();
@@ -145,10 +168,6 @@ public class StaffListener implements Listener {
                 }
             }
         }
-
-        // 3. Allow staff to take items FROM other inventories (like InvSee)
-        // This is allowed by default if we don't cancel it here.
-        // We only restrict staff items.
     }
 
     @EventHandler
