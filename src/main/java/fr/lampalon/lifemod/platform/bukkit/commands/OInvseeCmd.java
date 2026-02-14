@@ -63,7 +63,8 @@ public class OInvseeCmd implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        ItemStack[] savedInventory = BukkitDatabaseUtil.deserializeInventory(databaseManager.getDatabaseProvider().getRawInventory(target.getUniqueId()));
+        String serverName = LifeMod.getInstance().getServerName();
+        ItemStack[] savedInventory = BukkitDatabaseUtil.deserializeInventory(databaseManager.getDatabaseProvider().getRawInventory(target.getUniqueId(), serverName));
         if (savedInventory == null) {
             player.sendMessage(MessageUtil.formatMessage(langConfig.getString("commands.oinvsee.no-inventory").replace("%target%", args[0])));
             debug.log("oinvsee", "No saved inventory for " + args[0]);
