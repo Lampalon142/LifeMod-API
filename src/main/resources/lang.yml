@@ -302,6 +302,9 @@ mod:
       result-total: "&e• &fTotal Clicks: &b%clicks%"
       result-autoclicker: "&e• &fAuto-Clicker: %result%"
       result-footer: "&8&m----------------------------------------"
+      status:
+        suspected: "&c&lSUSPECTED"
+        unlikely: "&aUnlikely"
     info:
       usage: "&bRight-click a player to view their info."
       header: "&8&m----------------------------------------"
@@ -309,6 +312,11 @@ mod:
       ping: "&e• &fPing: &b%ping%ms"
       cps: "&e• &fCPS: &b%cps%"
       gamemode: "&e• &fGamemode: &b%gamemode%"
+      gamemodes:
+        survival: "Survival"
+        creative: "Creative"
+        adventure: "Adventure"
+        spectator: "Spectator"
       location: "&e• &fLocation: &b%world% %x%,%y%,%z%"
       footer: "&8&m----------------------------------------"
     inspector:

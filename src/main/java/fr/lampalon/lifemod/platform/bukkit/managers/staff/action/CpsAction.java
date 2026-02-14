@@ -57,12 +57,15 @@ public class CpsAction implements IStaffAction {
             double cps = (double) clicksDuringTest.size() / duration;
             boolean suspectedAutoClicker = cps > 15.0; // Simple threshold
 
+            String statusKey = suspectedAutoClicker ? "mod.items.cps.status.suspected" : "mod.items.cps.status.unlikely";
+            String resultStatus = MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString(statusKey));
+
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-header")));
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-title").replace("%target%", target.getName())));
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-avg").replace("%cps%", String.format("%.2f", cps))));
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-total").replace("%clicks%", String.valueOf(clicksDuringTest.size()))));
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-autoclicker")
-                    .replace("%result%", suspectedAutoClicker ? "&c&lSUSPECTED" : "&aUnlikely")));
+                    .replace("%result%", resultStatus)));
             player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-footer")));
 
         }, duration * 20L);
