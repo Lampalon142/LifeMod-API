@@ -11,7 +11,6 @@ public class Report {
     private final String reason;
     private final String serverName;
     private final List<StaffNote> staffNotes = new ArrayList<>();
-    // Pour l'instant on garde une chaîne ou on passera par un adaptateur pour la Location Bukkit
     private String locationWorld;
     private double x, y, z;
     private ReportStatus status;

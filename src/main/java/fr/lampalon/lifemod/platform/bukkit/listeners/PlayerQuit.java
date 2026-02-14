@@ -37,6 +37,9 @@ public class PlayerQuit implements Listener {
 
         db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
         
+        // Remove from local memory so the server doesn't "remember" them as staff next time they join
+        plugin.getStaffModeManager().cleanupMemoryOnQuit(uuid);
+
         // Remove from vanished list (Internal cleanup)
         plugin.getVanishService().getVanishedPlayers().remove(uuid);
 

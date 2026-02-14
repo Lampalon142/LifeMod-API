@@ -71,11 +71,11 @@ modules:
         slot: 0
         material: COMPASS
         custom-model-data: 1001
-        name: "&6&lOUTIL DE NAVIGATION"
+        name: "&6&lNavigation"
         lore:
           - "&7--------------------------"
-          - "&eClic-Gauche &8» &fTraverser (Thru)"
-          - "&eClic-Droit &8» &fSauter (Jump)"
+          - "&eLeft-Click &8» &fThru"
+          - "&eRight-Click &8» &fJump"
           - "&7--------------------------"
         actions:
           LEFT_CLICK:
@@ -84,7 +84,7 @@ modules:
           RIGHT_CLICK:
             - "[NATIVE] JUMP"
             - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
-            - "[MESSAGE] &8&l» &7Téléportation effectuée."
+            - "[MESSAGE] &8&l» &7Teleportation Success."
       inspector:
         enabled: true
         slot: 1
