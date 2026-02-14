@@ -120,6 +120,20 @@ public class StaffModeManager {
         String serverName = plugin.getServerName();
         UUID uuid = player.getUniqueId();
 
+        // Check if we have survival items (at least one non-null item that isn't a staff item)
+        boolean hasSurvivalItems = false;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() != org.bukkit.Material.AIR && itemManager.getStaffItem(item) == null) {
+                hasSurvivalItems = true;
+                break;
+            }
+        }
+
+        if (!hasSurvivalItems) {
+            debug.log("mod", "Skipping inventory save for " + player.getName() + " because no survival items detected.");
+            return;
+        }
+
         // Important: Si on a déjà des items de staff, on NE SAUVEGARDE PAS
         if (hasStaffItems(player)) {
             debug.log("mod", "Skipping inventory save for " + player.getName() + " because staff items detected.");
@@ -136,6 +150,7 @@ public class StaffModeManager {
             try {
                 byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
                 plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
+                debug.log("mod", "Successfully saved survival inventory for " + player.getName() + " on " + serverName);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -163,6 +178,7 @@ public class StaffModeManager {
                         try {
                             fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                            debug.log("mod", "Restored " + player.getName() + " inventory from database for server: " + serverName);
                         } catch (Exception e) { e.printStackTrace(); }
                     });
                 }
