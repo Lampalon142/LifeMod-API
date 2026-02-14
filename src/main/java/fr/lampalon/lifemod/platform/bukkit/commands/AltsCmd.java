@@ -47,7 +47,9 @@ public class AltsCmd extends LifeCommand {
             if (sender.isPlayer()) {
                 org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(sender.getUniqueId());
                 if (player != null) {
-                    new fr.lampalon.lifemod.platform.bukkit.gui.AltsGui(player, alts, ip).open();
+                    org.bukkit.Bukkit.getScheduler().runTask(LifeMod.getInstance(), () -> {
+                        new fr.lampalon.lifemod.platform.bukkit.gui.AltsGui(player, alts, ip).open();
+                    });
                     return;
                 }
             }
