@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
