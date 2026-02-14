@@ -193,6 +193,24 @@ public class SQLiteManager implements DatabaseProvider {
     }
 
     @Override
+    public void deleteRawInventory(UUID uuid, String serverName) {
+        try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM player_inventories WHERE uuid = ? AND server_name = ?")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, serverName);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void deleteRawInventory(UUID uuid, String serverName) {
+        try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM player_inventories WHERE uuid = ? AND server_name = ?")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, serverName);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
     public void saveCoords(UUID uuid, String world, double x, double y, double z, float yaw, float pitch) {
         try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_coords (uuid, world, x, y, z, yaw, pitch, saved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
