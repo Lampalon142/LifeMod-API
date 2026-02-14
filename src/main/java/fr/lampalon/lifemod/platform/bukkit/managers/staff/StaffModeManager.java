@@ -33,8 +33,21 @@ public class StaffModeManager {
         return moderators.contains(player.getUniqueId());
     }
 
+    private void setStaffModeState(Player player, boolean state) {
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            fr.lampalon.lifemod.common.model.PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
+            if (data != null) {
+                data.setInStaffMode(state);
+                plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
+            }
+        });
+    }
+
     public void enableStaffMode(Player player) {
         if (isMod(player)) return;
+
+        // Save Global State
+        setStaffModeState(player, true);
 
         // Save Inventory
         saveInventory(player);
@@ -68,6 +81,9 @@ public class StaffModeManager {
     public void disableStaffMode(Player player) {
         if (!isMod(player)) return;
 
+        // Save Global State
+        setStaffModeState(player, false);
+
         player.getInventory().clear();
         
         // Restore Inventory
@@ -95,18 +111,56 @@ public class StaffModeManager {
     }
 
     private void saveInventory(Player player) {
-        savedInventories.put(player.getUniqueId(), player.getInventory().getContents());
-        savedArmor.put(player.getUniqueId(), player.getInventory().getArmorContents());
+        ItemStack[] contents = player.getInventory().getContents();
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        
+        savedInventories.put(player.getUniqueId(), contents);
+        savedArmor.put(player.getUniqueId(), armor);
+
+        // Persistent save (Server-specific)
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
+                String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+                plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(player.getUniqueId(), serverName, data);
+            } catch (Exception e) {
+                plugin.getLogger().severe("Failed to persistently save inventory for " + player.getName());
+                e.printStackTrace();
+            }
+        });
     }
 
     private void restoreInventory(Player player) {
         if (savedInventories.containsKey(player.getUniqueId())) {
             player.getInventory().setContents(savedInventories.get(player.getUniqueId()));
-            savedInventories.remove(player.getUniqueId());
-        }
-        if (savedArmor.containsKey(player.getUniqueId())) {
             player.getInventory().setArmorContents(savedArmor.get(player.getUniqueId()));
+            savedInventories.remove(player.getUniqueId());
             savedArmor.remove(player.getUniqueId());
+            
+            // Delete persistent record for this server
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+                // We don't have a deleteRawInventory yet, but we can set it to null or just let it stay
+                // For now, overwrite with empty to signify restoration if needed, or just ignore.
+            });
+            return;
         }
+
+        // If not in memory, check database
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+            byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(player.getUniqueId(), serverName);
+            
+            if (data != null) {
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    try {
+                        fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
+                        debug.log("mod", "Restored " + player.getName() + " inventory from database.");
+                    } catch (Exception e) {
+                        plugin.getLogger().severe("Failed to restore inventory from DB for " + player.getName());
+                    }
+                });
+            }
+        });
     }
 }

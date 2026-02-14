@@ -38,12 +38,13 @@ public class MySQLManager implements DatabaseProvider {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reports (uuid VARCHAR(36) PRIMARY KEY, reporter_uuid VARCHAR(36), target_uuid VARCHAR(36), reason TEXT, server_name VARCHAR(64), status VARCHAR(32), assigned_to VARCHAR(36), created_at BIGINT, updated_at BIGINT, closed_at BIGINT, close_reason TEXT, location_world VARCHAR(64), location_x DOUBLE, location_y DOUBLE, location_z DOUBLE, location_yaw FLOAT, location_pitch FLOAT, last_updated_by VARCHAR(36));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS report_staff_notes (note_id VARCHAR(36) PRIMARY KEY, report_id VARCHAR(36) NOT NULL, author VARCHAR(36) NOT NULL, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, content TEXT NOT NULL, FOREIGN KEY (report_id) REFERENCES reports(uuid));");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid VARCHAR(36) PRIMARY KEY, inventory_data LONGBLOB NOT NULL, saved_at BIGINT);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid VARCHAR(36), server_name VARCHAR(64), inventory_data LONGBLOB NOT NULL, saved_at BIGINT, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid VARCHAR(36) PRIMARY KEY, world VARCHAR(64), x DOUBLE, y DOUBLE, z DOUBLE, yaw FLOAT, pitch FLOAT, saved_at BIGINT);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36), player_name VARCHAR(32), issuer_uuid VARCHAR(36), issuer_name VARCHAR(32), server_name VARCHAR(64), category VARCHAR(32), type VARCHAR(16), reason TEXT, created_at BIGINT, duration BIGINT, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid VARCHAR(36), removed_by_name VARCHAR(32), remove_reason TEXT, removed_at BIGINT);");
-                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, last_name VARCHAR(32), last_ip VARCHAR(45), last_seen BIGINT);");
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, last_name VARCHAR(32), last_ip VARCHAR(45), last_seen BIGINT, in_staff_mode BOOLEAN DEFAULT FALSE);");
                         
                         // Mise à jour auto des colonnes si elles manquent
+                        try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN in_staff_mode BOOLEAN DEFAULT FALSE;"); } catch (SQLException ignored) {}
                         try { stmt.executeUpdate("ALTER TABLE sanctions ADD COLUMN player_name VARCHAR(32) AFTER player_uuid;"); } catch (SQLException ignored) {}
             
         } catch (SQLException e) {
@@ -174,19 +175,21 @@ public class MySQLManager implements DatabaseProvider {
     }
 
     @Override
-    public void saveRawInventory(UUID uuid, byte[] data) {
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("REPLACE INTO player_inventories (uuid, inventory_data, saved_at) VALUES (?, ?, ?)")) {
+    public void saveRawInventory(UUID uuid, String serverName, byte[] data) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("REPLACE INTO player_inventories (uuid, server_name, inventory_data, saved_at) VALUES (?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
-            ps.setBytes(2, data);
-            ps.setLong(3, System.currentTimeMillis());
+            ps.setString(2, serverName);
+            ps.setBytes(3, data);
+            ps.setLong(4, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override
-    public byte[] getRawInventory(UUID uuid) {
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT inventory_data FROM player_inventories WHERE uuid = ?")) {
+    public byte[] getRawInventory(UUID uuid, String serverName) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT inventory_data FROM player_inventories WHERE uuid = ? AND server_name = ?")) {
             ps.setString(1, uuid.toString());
+            ps.setString(2, serverName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getBytes("inventory_data");
             }
@@ -324,11 +327,12 @@ public class MySQLManager implements DatabaseProvider {
 
     @Override
     public void savePlayerData(PlayerData data) {
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO player_data (uuid, last_name, last_ip, last_seen) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_name=VALUES(last_name), last_ip=VALUES(last_ip), last_seen=VALUES(last_seen)")) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO player_data (uuid, last_name, last_ip, last_seen, in_staff_mode) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_name=VALUES(last_name), last_ip=VALUES(last_ip), last_seen=VALUES(last_seen), in_staff_mode=VALUES(in_staff_mode)")) {
             ps.setString(1, data.getUuid().toString());
             ps.setString(2, data.getLastName());
             ps.setString(3, data.getLastIp());
             ps.setLong(4, data.getLastSeen());
+            ps.setBoolean(5, data.isInStaffMode());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
@@ -338,7 +342,7 @@ public class MySQLManager implements DatabaseProvider {
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_data WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"));
+                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode"));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
@@ -350,7 +354,7 @@ public class MySQLManager implements DatabaseProvider {
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_data WHERE last_ip = ?")) {
             ps.setString(1, ip);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen")));
+                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode")));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;

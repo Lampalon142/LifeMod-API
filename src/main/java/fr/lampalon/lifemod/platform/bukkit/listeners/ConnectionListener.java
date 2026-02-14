@@ -26,8 +26,12 @@ public class ConnectionListener implements Listener {
         String ip = event.getAddress().getHostAddress();
 
         // Enregistrement async des données du joueur
-        PlayerData data = new PlayerData(uuid, name, ip, System.currentTimeMillis());
-        LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().savePlayerData(data);
+        DatabaseProvider db = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider();
+        PlayerData existing = db.getPlayerData(uuid);
+        boolean inStaffMode = existing != null && existing.isInStaffMode();
+
+        PlayerData data = new PlayerData(uuid, name, ip, System.currentTimeMillis(), inStaffMode);
+        db.savePlayerData(data);
 
         // Vérification des bans
         ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);

@@ -28,8 +28,8 @@ public interface DatabaseProvider {
     void deleteStaffNote(UUID noteId);
     void updateStaffNote(StaffNote note);
 
-    void saveRawInventory(UUID uuid, byte[] data);
-    byte[] getRawInventory(UUID uuid);
+    void saveRawInventory(UUID uuid, String serverName, byte[] data);
+    byte[] getRawInventory(UUID uuid, String serverName);
     
     // Simple coordinate storage
     void saveCoords(UUID uuid, String world, double x, double y, double z, float yaw, float pitch);

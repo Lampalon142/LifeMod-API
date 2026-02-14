@@ -22,16 +22,20 @@ public class PlayerQuit implements Listener {
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
         LifeMod plugin = LifeMod.getInstance();
-
-        // Disable Staff Mode if active
-        if (plugin.getStaffModeManager().isMod(player)) {
-            plugin.getStaffModeManager().disableStaffMode(player);
-        }
+        boolean isMod = plugin.getStaffModeManager().isMod(player);
 
         // Save data
         DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
+        
+        // Update PlayerData with current staff status
+        fr.lampalon.lifemod.common.model.PlayerData data = db.getPlayerData(uuid);
+        if (data != null) {
+            data.setInStaffMode(isMod);
+            data.setLastSeen(System.currentTimeMillis());
+            db.savePlayerData(data);
+        }
+
         db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        db.saveRawInventory(uuid, BukkitDatabaseUtil.serializeInventory(player.getInventory()));
         
         // Remove from vanished list (Internal cleanup)
         plugin.getVanishService().getVanishedPlayers().remove(uuid);

@@ -69,6 +69,14 @@ public class PlayerJoin implements Listener {
         // Ban Evasion Check
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             String ip = player.getAddress().getAddress().getHostAddress();
+            fr.lampalon.lifemod.common.model.PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
+            
+            if (data != null && data.isInStaffMode()) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    plugin.getStaffModeManager().enableStaffMode(player);
+                });
+            }
+
             List<fr.lampalon.lifemod.common.model.PlayerData> alts = plugin.getDatabaseManager().getDatabaseProvider().getAlts(ip);
             boolean evasion = false;
             StringBuilder accounts = new StringBuilder();

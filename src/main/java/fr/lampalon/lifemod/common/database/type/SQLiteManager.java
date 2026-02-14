@@ -33,10 +33,10 @@ public class SQLiteManager implements DatabaseProvider {
         try (Statement stmt = getConnection().createStatement()) {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reports (uuid TEXT PRIMARY KEY, reporter_uuid TEXT, target_uuid TEXT, reason TEXT, server_name TEXT, status TEXT, assigned_to TEXT, created_at INTEGER, updated_at INTEGER, closed_at INTEGER, close_reason TEXT, location_world TEXT, location_x REAL, location_y REAL, location_z REAL, location_yaw REAL, location_pitch REAL, last_updated_by TEXT);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS report_staff_notes (note_id TEXT PRIMARY KEY, report_id TEXT NOT NULL, author TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, content TEXT NOT NULL, FOREIGN KEY (report_id) REFERENCES reports(uuid) ON DELETE CASCADE);");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid TEXT PRIMARY KEY, inventory_data TEXT NOT NULL, saved_at INTEGER);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid TEXT, server_name TEXT, inventory_data TEXT NOT NULL, saved_at INTEGER, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid TEXT PRIMARY KEY, world TEXT, x REAL, y REAL, z REAL, yaw REAL, pitch REAL, saved_at INTEGER);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid TEXT PRIMARY KEY, player_uuid TEXT, player_name TEXT, issuer_uuid TEXT, issuer_name TEXT, server_name TEXT, category TEXT, type TEXT, reason TEXT, created_at INTEGER, duration INTEGER, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid TEXT, removed_by_name TEXT, remove_reason TEXT, removed_at INTEGER);");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid TEXT PRIMARY KEY, last_name TEXT, last_ip TEXT, last_seen INTEGER);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid TEXT PRIMARY KEY, last_name TEXT, last_ip TEXT, last_seen INTEGER, in_staff_mode BOOLEAN DEFAULT 0);");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -166,19 +166,21 @@ public class SQLiteManager implements DatabaseProvider {
     }
 
     @Override
-    public void saveRawInventory(UUID uuid, byte[] data) {
-        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_inventories (uuid, inventory_data, saved_at) VALUES (?, ?, ?)")) {
+    public void saveRawInventory(UUID uuid, String serverName, byte[] data) {
+        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_inventories (uuid, server_name, inventory_data, saved_at) VALUES (?, ?, ?, ?)")) {
             ps.setString(1, uuid.toString());
-            ps.setBytes(2, data);
-            ps.setLong(3, System.currentTimeMillis());
+            ps.setString(2, serverName);
+            ps.setBytes(3, data);
+            ps.setLong(4, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override
-    public byte[] getRawInventory(UUID uuid) {
-        try (PreparedStatement ps = getConnection().prepareStatement("SELECT inventory_data FROM player_inventories WHERE uuid = ?")) {
+    public byte[] getRawInventory(UUID uuid, String serverName) {
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT inventory_data FROM player_inventories WHERE uuid = ? AND server_name = ?")) {
             ps.setString(1, uuid.toString());
+            ps.setString(2, serverName);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getBytes("inventory_data");
             }
@@ -316,11 +318,12 @@ public class SQLiteManager implements DatabaseProvider {
 
     @Override
     public void savePlayerData(PlayerData data) {
-        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_data (uuid, last_name, last_ip, last_seen) VALUES (?, ?, ?, ?)")) {
+        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_data (uuid, last_name, last_ip, last_seen, in_staff_mode) VALUES (?, ?, ?, ?, ?)")) {
             ps.setString(1, data.getUuid().toString());
             ps.setString(2, data.getLastName());
             ps.setString(3, data.getLastIp());
             ps.setLong(4, data.getLastSeen());
+            ps.setBoolean(5, data.isInStaffMode());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
@@ -330,7 +333,7 @@ public class SQLiteManager implements DatabaseProvider {
         try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM player_data WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"));
+                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode"));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
@@ -342,7 +345,7 @@ public class SQLiteManager implements DatabaseProvider {
         try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM player_data WHERE last_ip = ?")) {
             ps.setString(1, ip);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen")));
+                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode")));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
