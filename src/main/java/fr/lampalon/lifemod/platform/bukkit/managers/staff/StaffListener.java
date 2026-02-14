@@ -6,6 +6,7 @@ import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.model.StaffItem;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -20,6 +21,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -73,7 +75,7 @@ public class StaffListener implements Listener {
         String clickType = getClickType(event.getAction());
         if (clickType == null) return;
 
-        handleStaffAction(player, staffItem, clickType, event, null);
+        handleStaffAction(player, staffItem, clickType, event, null, null);
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -93,7 +95,7 @@ public class StaffListener implements Listener {
 
         if (!canInteract(player)) return;
 
-        handleStaffAction(player, staffItem, "RIGHT_CLICK", null, event);
+        handleStaffAction(player, staffItem, "RIGHT_CLICK", null, event, event.getRightClicked());
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -109,26 +111,24 @@ public class StaffListener implements Listener {
 
         if (!canInteract(player)) return;
 
-        StaffActionType actionType = staffItem.getAction("LEFT_CLICK");
-        if (actionType != null) {
+        // On annule les dégâts si une action est prévue
+        List<String> scripts = staffItem.getScripts("LEFT_CLICK");
+        if (scripts != null && !scripts.isEmpty()) {
             event.setCancelled(true);
-            IStaffAction action = staffActionManager.getAction(actionType);
-            if (action != null) {
-                action.onAttack(player, event.getEntity());
-            }
+            handleStaffAction(player, staffItem, "LEFT_CLICK", null, null, event.getEntity());
         }
     }
 
-    private void handleStaffAction(Player player, StaffItem staffItem, String clickType, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityEvent) {
+    private void handleStaffAction(Player player, StaffItem staffItem, String clickType, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityInteractEvent, Entity target) {
         List<String> scripts = staffItem.getScripts(clickType);
         if (scripts == null || scripts.isEmpty()) return;
 
         for (String script : scripts) {
-            executeScript(player, script, interactEvent, entityEvent);
+            executeScript(player, script, interactEvent, entityInteractEvent, target);
         }
     }
 
-    private void executeScript(Player player, String script, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityEvent) {
+    private void executeScript(Player player, String script, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityInteractEvent, Entity target) {
         String upper = script.toUpperCase();
         
         if (upper.startsWith("[PLAYER]")) {
@@ -137,8 +137,8 @@ public class StaffListener implements Listener {
         } 
         else if (upper.startsWith("[CONSOLE]")) {
             String cmd = script.substring(9).trim().replace("%player%", player.getName()).replace("%player_name%", player.getName());
-            if (entityEvent != null && entityEvent.getRightClicked() instanceof Player) {
-                cmd = cmd.replace("%target%", entityEvent.getRightClicked().getName());
+            if (target != null) {
+                cmd = cmd.replace("%target%", target.getName());
             }
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
@@ -158,29 +158,27 @@ public class StaffListener implements Listener {
             String actionName = script.substring(8).trim().toUpperCase();
             StaffActionType actionType = StaffActionType.fromString(actionName);
             if (actionType != null) {
-                IStaffAction action = staffActionManager.getAction(actionType);
-                if (action != null) {
-                    if (entityEvent != null) {
-                        action.onInteractEntity(player, entityEvent);
-                    } else if (interactEvent != null) {
-                        action.onInteract(player, interactEvent);
-                    }
-                }
+                executeNativeAction(player, actionType, interactEvent, entityInteractEvent, target);
             }
         }
         else {
-            // Default behavior if no tag: treat as native for backward compatibility
             StaffActionType actionType = StaffActionType.fromString(script.trim());
             if (actionType != null) {
-                IStaffAction action = staffActionManager.getAction(actionType);
-                if (action != null) {
-                    if (entityEvent != null) {
-                        action.onInteractEntity(player, entityEvent);
-                    } else if (interactEvent != null) {
-                        action.onInteract(player, interactEvent);
-                    }
-                }
+                executeNativeAction(player, actionType, interactEvent, entityInteractEvent, target);
             }
+        }
+    }
+
+    private void executeNativeAction(Player player, StaffActionType actionType, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityInteractEvent, Entity target) {
+        IStaffAction action = staffActionManager.getAction(actionType);
+        if (action == null) return;
+
+        if (entityInteractEvent != null) {
+            action.onInteractEntity(player, entityInteractEvent);
+        } else if (interactEvent != null) {
+            action.onInteract(player, interactEvent);
+        } else if (target != null) {
+            action.onAttack(player, target);
         }
     }
 
