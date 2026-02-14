@@ -223,7 +223,13 @@ public class LifeMod extends JavaPlugin {
                         if (state) {
                             staffModeManager.enableStaffMode(player);
                         } else {
-                            staffModeManager.disableStaffMode(player);
+                            // If we disable, we force cleanup even if not in the local 'moderators' set
+                            // because the player might have leftover staff items from a join/crash
+                            if (staffModeManager.isMod(player)) {
+                                staffModeManager.disableStaffMode(player);
+                            } else {
+                                staffModeManager.forceDisableOnJoin(player);
+                            }
                         }
                     }
                 });

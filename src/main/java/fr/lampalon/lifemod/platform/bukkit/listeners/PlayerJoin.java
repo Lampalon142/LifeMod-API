@@ -71,9 +71,13 @@ public class PlayerJoin implements Listener {
             String ip = player.getAddress().getAddress().getHostAddress();
             fr.lampalon.lifemod.common.model.PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
             
-            if (data != null && data.isInStaffMode()) {
+            if (data != null) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    plugin.getStaffModeManager().enableStaffMode(player);
+                    if (data.isInStaffMode()) {
+                        plugin.getStaffModeManager().enableStaffMode(player);
+                    } else {
+                        plugin.getStaffModeManager().forceDisableOnJoin(player);
+                    }
                 });
             }
 

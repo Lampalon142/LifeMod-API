@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
@@ -117,23 +118,74 @@ public class StaffModeManager {
     }
 
     private void saveInventory(Player player) {
-        ItemStack[] contents = player.getInventory().getContents();
-        ItemStack[] armor = player.getInventory().getArmorContents();
-        
-        savedInventories.put(player.getUniqueId(), contents);
-        savedArmor.put(player.getUniqueId(), armor);
+        String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+        UUID uuid = player.getUniqueId();
 
-        // Persistent save (Server-specific)
+        // Check if we already have a persistent save for this server to avoid overwriting survival items with staff items
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
-                String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
-                plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(player.getUniqueId(), serverName, data);
-            } catch (Exception e) {
-                plugin.getLogger().severe("Failed to persistently save inventory for " + player.getName());
-                e.printStackTrace();
+            byte[] existingData = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+            
+            if (existingData == null) {
+                // No save exists, we can safely save current inventory (Survival)
+                ItemStack[] contents = player.getInventory().getContents();
+                ItemStack[] armor = player.getInventory().getArmorContents();
+                
+                savedInventories.put(uuid, contents);
+                savedArmor.put(uuid, armor);
+
+                try {
+                    byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
+                    plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
+                    debug.log("mod", "Persistently saved " + player.getName() + " survival inventory.");
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Failed to persistently save inventory for " + player.getName());
+                    e.printStackTrace();
+                }
+            } else {
+                debug.log("mod", player.getName() + " already has a saved inventory for " + serverName + ". Skipping save to protect survival items.");
             }
         });
+    }
+
+    public void forceDisableOnJoin(Player player) {
+        String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+        UUID uuid = player.getUniqueId();
+
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+            boolean hasStaffItems = hasStaffItems(player);
+            
+            if (data != null || hasStaffItems) {
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    // Force clear potential staff items
+                    player.getInventory().clear();
+                    
+                    // Reset attributes
+                    player.setAllowFlight(false);
+                    player.setFlying(false);
+                    player.setInvulnerable(false);
+                    player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                    plugin.getVanishService().setVanished(player, false, false);
+                    
+                    // Restore if data exists
+                    if (data != null) {
+                        try {
+                            fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
+                            debug.log("mod", "Restored " + player.getName() + " inventory on force disable (Join).");
+                        } catch (Exception e) {
+                            plugin.getLogger().severe("Failed to restore inventory on force disable for " + player.getName());
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private boolean hasStaffItems(Player player) {
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && itemManager.getStaffItem(item) != null) return true;
+        }
+        return false;
     }
 
     private void restoreInventory(Player player) {
