@@ -53,132 +53,133 @@ public class StaffModeManager {
     public void enableStaffMode(Player player) {
         if (isMod(player)) return;
 
-        // Save Global State
+        // 1. Sauvegarder Globalement
         setStaffModeState(player, true);
 
-        // Save Inventory
-        saveInventory(player);
+        // 2. Sauvegarder l'inventaire LOCAL s'il n'est pas déjà sauvegardé
+        saveSurvivalInventory(player);
 
-        // Clear & Setup
-        player.getInventory().clear();
-        player.setGameMode(GameMode.SURVIVAL); // Or Adventure, depending on config
-        player.setAllowFlight(true);
-        player.setFlying(true);
-        player.setInvulnerable(true);
-        player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0)); // No particle
-
-        // Give Items
-        itemManager.giveItems(player);
-
-        // Vanish (Default to true when entering mod mode)
-        plugin.getVanishService().setVanished(player, true, false);
-
-        moderators.add(player.getUniqueId());
-        plugin.getModerators().add(player.getUniqueId()); // Keep legacy compatibility if needed
+        // 3. Appliquer le mode staff
+        applyStaffState(player);
         
-        // NMS Visual Feedback
-        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"), 
-                plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
-        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
-
+        moderators.add(player.getUniqueId());
+        
         player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.enable")));
-        debug.log("mod", player.getName() + " enabled staff mode (New System).");
+        debug.log("mod", player.getName() + " enabled staff mode.");
     }
 
     public void disableStaffMode(Player player) {
         if (!isMod(player)) return;
 
-        // Save Global State
+        // 1. Sauvegarder Globalement
         setStaffModeState(player, false);
 
-        player.getInventory().clear();
-        
-        // Restore Inventory
-        restoreInventory(player);
+        // 2. Retirer l'état staff
+        removeStaffState(player);
 
-        // Reset Attributes
-        player.setAllowFlight(false); // Should check permission or previous state ideally, but safety first
+        // 3. Restaurer l'inventaire LOCAL
+        restoreSurvivalInventory(player);
+
+        moderators.remove(player.getUniqueId());
+
+        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.disable")));
+        debug.log("mod", player.getName() + " disabled staff mode.");
+    }
+
+    // Applique uniquement les effets visuels et donne les items
+    private void applyStaffState(Player player) {
+        player.getInventory().clear();
+        player.setGameMode(GameMode.SURVIVAL);
+        player.setAllowFlight(true);
+        player.setFlying(true);
+        player.setInvulnerable(true);
+        player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0));
+        
+        itemManager.giveItems(player);
+        plugin.getVanishService().setVanished(player, true, false);
+
+        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"), 
+                plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
+        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
+    }
+
+    private void removeStaffState(Player player) {
+        player.getInventory().clear();
+        player.setAllowFlight(false);
         player.setFlying(false);
         player.setInvulnerable(false);
         player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-        
-        // Unvanish
         plugin.getVanishService().setVanished(player, false, false);
 
-        moderators.remove(player.getUniqueId());
-        plugin.getModerators().remove(player.getUniqueId()); // Legacy compatibility
-
-        // NMS Visual Feedback
         plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.disable-title"), 
                 plugin.getLangConfig().getString("mod.disable-subtitle"), 10, 40, 10);
         plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled"));
-
-        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.disable")));
-        debug.log("mod", player.getName() + " disabled staff mode (New System).");
     }
 
-    private void saveInventory(Player player) {
-        String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
+    private void saveSurvivalInventory(Player player) {
+        String serverName = plugin.getServerName();
         UUID uuid = player.getUniqueId();
 
-        // Check if we already have a persistent save for this server to avoid overwriting survival items with staff items
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            byte[] existingData = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
-            
-            if (existingData == null) {
-                // No save exists, we can safely save current inventory (Survival)
-                ItemStack[] contents = player.getInventory().getContents();
-                ItemStack[] armor = player.getInventory().getArmorContents();
-                
-                savedInventories.put(uuid, contents);
-                savedArmor.put(uuid, armor);
+        // Important: Si on a déjà des items de staff, on NE SAUVEGARDE PAS
+        if (hasStaffItems(player)) {
+            debug.log("mod", "Skipping inventory save for " + player.getName() + " because staff items detected.");
+            return;
+        }
 
-                try {
-                    byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
-                    plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
-                    debug.log("mod", "Persistently saved " + player.getName() + " survival inventory.");
-                } catch (Exception e) {
-                    plugin.getLogger().severe("Failed to persistently save inventory for " + player.getName());
-                    e.printStackTrace();
-                }
-            } else {
-                debug.log("mod", player.getName() + " already has a saved inventory for " + serverName + ". Skipping save to protect survival items.");
+        ItemStack[] contents = player.getInventory().getContents();
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        
+        savedInventories.put(uuid, contents);
+        savedArmor.put(uuid, armor);
+
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
+                plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
+    }
+
+    private void restoreSurvivalInventory(Player player) {
+        String serverName = plugin.getServerName();
+        UUID uuid = player.getUniqueId();
+
+        if (savedInventories.containsKey(uuid)) {
+            player.getInventory().setContents(savedInventories.get(uuid));
+            player.getInventory().setArmorContents(savedArmor.get(uuid));
+            savedInventories.remove(uuid);
+            savedArmor.remove(uuid);
+            
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+            });
+        } else {
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+                if (data != null) {
+                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                        try {
+                            fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
+                            plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                        } catch (Exception e) { e.printStackTrace(); }
+                    });
+                }
+            });
+        }
     }
 
     public void forceDisableOnJoin(Player player) {
-        String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
-        UUID uuid = player.getUniqueId();
+        removeStaffState(player);
+        restoreSurvivalInventory(player);
+        moderators.remove(player.getUniqueId());
+    }
 
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
-            boolean hasStaffItems = hasStaffItems(player);
-            
-            if (data != null || hasStaffItems) {
-                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-                    // Force clear potential staff items
-                    player.getInventory().clear();
-                    
-                    // Reset attributes
-                    player.setAllowFlight(false);
-                    player.setFlying(false);
-                    player.setInvulnerable(false);
-                    player.removePotionEffect(PotionEffectType.NIGHT_VISION);
-                    plugin.getVanishService().setVanished(player, false, false);
-                    
-                    // Restore if data exists
-                    if (data != null) {
-                        try {
-                            fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
-                            debug.log("mod", "Restored " + player.getName() + " inventory on force disable (Join).");
-                        } catch (Exception e) {
-                            plugin.getLogger().severe("Failed to restore inventory on force disable for " + player.getName());
-                        }
-                    }
-                });
-            }
-        });
+    public void cleanupMemoryOnQuit(UUID uuid) {
+        moderators.remove(uuid);
+        savedInventories.remove(uuid);
+        savedArmor.remove(uuid);
     }
 
     private boolean hasStaffItems(Player player) {
@@ -186,39 +187,5 @@ public class StaffModeManager {
             if (item != null && itemManager.getStaffItem(item) != null) return true;
         }
         return false;
-    }
-
-    private void restoreInventory(Player player) {
-        if (savedInventories.containsKey(player.getUniqueId())) {
-            player.getInventory().setContents(savedInventories.get(player.getUniqueId()));
-            player.getInventory().setArmorContents(savedArmor.get(player.getUniqueId()));
-            savedInventories.remove(player.getUniqueId());
-            savedArmor.remove(player.getUniqueId());
-            
-            // Delete persistent record for this server
-            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
-                // We don't have a deleteRawInventory yet, but we can set it to null or just let it stay
-                // For now, overwrite with empty to signify restoration if needed, or just ignore.
-            });
-            return;
-        }
-
-        // If not in memory, check database
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            String serverName = plugin.getConfigConfig().getString("server.name", "unknown");
-            byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(player.getUniqueId(), serverName);
-            
-            if (data != null) {
-                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-                    try {
-                        fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
-                        debug.log("mod", "Restored " + player.getName() + " inventory from database.");
-                    } catch (Exception e) {
-                        plugin.getLogger().severe("Failed to restore inventory from DB for " + player.getName());
-                    }
-                });
-            }
-        });
     }
 }

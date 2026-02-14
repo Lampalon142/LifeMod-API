@@ -74,8 +74,11 @@ public class PlayerJoin implements Listener {
             if (data != null) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
                     if (data.isInStaffMode()) {
+                        // S'il doit être staff, on applique juste l'état visuel et les items
+                        // Le manager s'occupera de ne pas écraser l'inventaire de survie s'il existe déjà
                         plugin.getStaffModeManager().enableStaffMode(player);
                     } else {
+                        // S'il ne doit pas être staff, on force le nettoyage
                         plugin.getStaffModeManager().forceDisableOnJoin(player);
                     }
                 });

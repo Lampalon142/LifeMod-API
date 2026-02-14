@@ -221,13 +221,15 @@ public class LifeMod extends JavaPlugin {
                     Player player = Bukkit.getPlayer(uuid);
                     if (player != null) {
                         if (state) {
-                            staffModeManager.enableStaffMode(player);
+                            if (!staffModeManager.isMod(player)) {
+                                staffModeManager.enableStaffMode(player);
+                            }
                         } else {
-                            // If we disable, we force cleanup even if not in the local 'moderators' set
-                            // because the player might have leftover staff items from a join/crash
                             if (staffModeManager.isMod(player)) {
                                 staffModeManager.disableStaffMode(player);
                             } else {
+                                // Important: si on reçoit "false" et qu'on n'est pas mod, on nettoie quand même
+                                // au cas où le joueur aurait rejoint avec des items de staff
                                 staffModeManager.forceDisableOnJoin(player);
                             }
                         }
