@@ -120,21 +120,65 @@ public class StaffListener implements Listener {
     }
 
     private void handleStaffAction(Player player, StaffItem staffItem, String clickType, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityEvent) {
-        // Execute Command
-        String command = staffItem.getCommand(clickType);
-        if (command != null) {
-            player.performCommand(command.replace("/", "").replace("%player%", player.getName()));
-        }
+        List<String> scripts = staffItem.getScripts(clickType);
+        if (scripts == null || scripts.isEmpty()) return;
 
-        // Execute Action
-        StaffActionType actionType = staffItem.getAction(clickType);
-        if (actionType != null) {
-            IStaffAction action = staffActionManager.getAction(actionType);
-            if (action != null) {
-                if (entityEvent != null) {
-                    action.onInteractEntity(player, entityEvent);
-                } else if (interactEvent != null) {
-                    action.onInteract(player, interactEvent);
+        for (String script : scripts) {
+            executeScript(player, script, interactEvent, entityEvent);
+        }
+    }
+
+    private void executeScript(Player player, String script, PlayerInteractEvent interactEvent, PlayerInteractEntityEvent entityEvent) {
+        String upper = script.toUpperCase();
+        
+        if (upper.startsWith("[PLAYER]")) {
+            String cmd = script.substring(8).trim().replace("%player%", player.getName()).replace("%player_name%", player.getName());
+            player.performCommand(cmd);
+        } 
+        else if (upper.startsWith("[CONSOLE]")) {
+            String cmd = script.substring(9).trim().replace("%player%", player.getName()).replace("%player_name%", player.getName());
+            if (entityEvent != null && entityEvent.getRightClicked() instanceof Player) {
+                cmd = cmd.replace("%target%", entityEvent.getRightClicked().getName());
+            }
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        }
+        else if (upper.startsWith("[MESSAGE]")) {
+            player.sendMessage(MessageUtil.formatMessage(script.substring(9).trim()));
+        }
+        else if (upper.startsWith("[ACTIONBAR]")) {
+            LifeMod.getInstance().getPacketController().sendActionBar(player, script.substring(11).trim());
+        }
+        else if (upper.startsWith("[SOUND]")) {
+            try {
+                org.bukkit.Sound sound = org.bukkit.Sound.valueOf(script.substring(7).trim().toUpperCase());
+                player.playSound(player.getLocation(), sound, 1f, 1f);
+            } catch (Exception ignored) {}
+        }
+        else if (upper.startsWith("[NATIVE]")) {
+            String actionName = script.substring(8).trim().toUpperCase();
+            StaffActionType actionType = StaffActionType.fromString(actionName);
+            if (actionType != null) {
+                IStaffAction action = staffActionManager.getAction(actionType);
+                if (action != null) {
+                    if (entityEvent != null) {
+                        action.onInteractEntity(player, entityEvent);
+                    } else if (interactEvent != null) {
+                        action.onInteract(player, interactEvent);
+                    }
+                }
+            }
+        }
+        else {
+            // Default behavior if no tag: treat as native for backward compatibility
+            StaffActionType actionType = StaffActionType.fromString(script.trim());
+            if (actionType != null) {
+                IStaffAction action = staffActionManager.getAction(actionType);
+                if (action != null) {
+                    if (entityEvent != null) {
+                        action.onInteractEntity(player, entityEvent);
+                    } else if (interactEvent != null) {
+                        action.onInteract(player, interactEvent);
+                    }
                 }
             }
         }

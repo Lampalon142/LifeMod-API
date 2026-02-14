@@ -70,13 +70,21 @@ modules:
         enabled: true
         slot: 0
         material: COMPASS
-        name: "&6Navigation Tool"
+        custom-model-data: 1001
+        name: "&6&lOUTIL DE NAVIGATION"
         lore:
-          - "&7Left-Click: &eThru"
-          - "&7Right-Click: &eJump"
+          - "&7--------------------------"
+          - "&eClic-Gauche &8» &fTraverser (Thru)"
+          - "&eClic-Droit &8» &fSauter (Jump)"
+          - "&7--------------------------"
         actions:
-          LEFT_CLICK: THRU
-          RIGHT_CLICK: JUMP
+          LEFT_CLICK:
+            - "[NATIVE] THRU"
+            - "[SOUND] ENTITY_EXPERIENCE_ORB_PICKUP"
+          RIGHT_CLICK:
+            - "[NATIVE] JUMP"
+            - "[SOUND] ENTITY_ENDERMAN_TELEPORT"
+            - "[MESSAGE] &8&l» &7Téléportation effectuée."
       inspector:
         enabled: true
         slot: 1
@@ -86,7 +94,9 @@ modules:
           - "&7Right-Click Player: &eInvSee"
           - "&7Right-Click Block: &eSilent Open"
         actions:
-          RIGHT_CLICK: INSPECT_INVENTORY
+          RIGHT_CLICK:
+            - "[NATIVE] INSPECT_INVENTORY"
+            - "[SOUND] BLOCK_CHEST_OPEN"
       freeze:
         enabled: true
         slot: 2
@@ -95,7 +105,8 @@ modules:
         lore:
           - "&7Right-Click: &eFreeze/Unfreeze"
         actions:
-          RIGHT_CLICK: FREEZE
+          RIGHT_CLICK:
+            - "[NATIVE] FREEZE"
       randomtp:
         enabled: true
         slot: 3
@@ -104,7 +115,8 @@ modules:
         lore:
           - "&7Right-Click: &eTeleport"
         actions:
-          RIGHT_CLICK: RANDOM_TP
+          RIGHT_CLICK:
+            - "[NATIVE] RANDOM_TP"
       vanish:
         enabled: true
         slot: 8
@@ -113,7 +125,8 @@ modules:
         lore:
           - "&7Right-Click: &eToggle Vanish"
         actions:
-          RIGHT_CLICK: VANISH
+          RIGHT_CLICK:
+            - "[NATIVE] VANISH"
       cpstester:
         enabled: true
         slot: 4
@@ -123,7 +136,8 @@ modules:
         lore:
           - "&7Right-Click Player: &eCheck CPS"
         actions:
-          RIGHT_CLICK: CPS_TESTER
+          RIGHT_CLICK:
+            - "[NATIVE] CPS_TESTER"
       kbtester:
         enabled: true
         slot: 5
@@ -134,8 +148,10 @@ modules:
         enchantments:
           KNOCKBACK: 2
         actions:
-          LEFT_CLICK: KNOCKBACK_TESTER
-          RIGHT_CLICK: KNOCKBACK_TESTER
+          LEFT_CLICK:
+            - "[NATIVE] KNOCKBACK_TESTER"
+          RIGHT_CLICK:
+            - "[NATIVE] KNOCKBACK_TESTER"
       infoviewer:
         enabled: true
         slot: 6
@@ -144,7 +160,8 @@ modules:
         lore:
           - "&7Right-Click Player: &eView Details"
         actions:
-          RIGHT_CLICK: INFO_VIEWER
+          RIGHT_CLICK:
+            - "[NATIVE] INFO_VIEWER"
 
   # Discord Webhook Integration
   discord:

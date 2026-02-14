@@ -56,15 +56,20 @@ public class StaffItemManager {
                         .setLore(lore);
 
                 // Custom Model Data
-                if (itemSec.contains("custom_model_data")) {
+                if (itemSec.contains("custom-model-data")) {
+                    builder.setCustomModelData(itemSec.getInt("custom-model-data"));
+                } else if (itemSec.contains("custom_model_data")) {
                     builder.setCustomModelData(itemSec.getInt("custom_model_data"));
                 }
 
                 // Enchants
                 if (itemSec.isConfigurationSection("enchantments")) {
-                    for (String ench : itemSec.getConfigurationSection("enchantments").getKeys(false)) {
-                        // Handle simple enchantment parsing if needed, assumed unsafe for now
-                        // Implementation depends on Utils, skipping complex parsing for brevity
+                    for (String enchKey : itemSec.getConfigurationSection("enchantments").getKeys(false)) {
+                        org.bukkit.enchantments.Enchantment enchantment = org.bukkit.enchantments.Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft(enchKey.toLowerCase()));
+                        if (enchantment != null) {
+                            int level = itemSec.getInt("enchantments." + enchKey);
+                            builder.addEnchant(enchantment, level);
+                        }
                     }
                 }
 
@@ -75,30 +80,34 @@ public class StaffItemManager {
                     finalStack.setItemMeta(meta);
                 }
 
-                // Parse Actions & Commands
-                Map<String, StaffActionType> actions = new HashMap<>();
-                Map<String, String> commands = new HashMap<>();
+                // Parse Scripted Actions
+                Map<String, List<String>> actionScripts = new HashMap<>();
 
                 if (itemSec.isConfigurationSection("actions")) {
                     ConfigurationSection actionsSec = itemSec.getConfigurationSection("actions");
                     for (String clickType : actionsSec.getKeys(false)) {
-                        String value = actionsSec.getString(clickType);
-                        if (value != null) {
-                            if (value.startsWith("/")) {
-                                commands.put(clickType.toUpperCase(), value);
-                            } else {
-                                StaffActionType actionType = StaffActionType.fromString(value);
-                                if (actionType != null) {
-                                    actions.put(clickType.toUpperCase(), actionType);
+                        List<String> scripts;
+                        if (actionsSec.isList(clickType)) {
+                            scripts = actionsSec.getStringList(clickType);
+                        } else {
+                            scripts = new ArrayList<>();
+                            String singleAction = actionsSec.getString(clickType);
+                            if (singleAction != null) {
+                                // Backward compatibility: if it doesn't have a tag, wrap it correctly
+                                if (singleAction.startsWith("/")) {
+                                    scripts.add("[PLAYER] " + singleAction.substring(1));
+                                } else if (singleAction.toUpperCase().equals(singleAction)) {
+                                    scripts.add("[NATIVE] " + singleAction);
                                 } else {
-                                    plugin.getLogger().warning("Unknown staff action: " + value + " for item " + key);
+                                    scripts.add(singleAction);
                                 }
                             }
                         }
+                        actionScripts.put(clickType.toUpperCase(), scripts);
                     }
                 }
 
-                StaffItem staffItem = new StaffItem(key, finalStack, slot, actions, commands);
+                StaffItem staffItem = new StaffItem(key, finalStack, slot, actionScripts);
                 staffItems.put(key, staffItem);
 
             } catch (Exception e) {

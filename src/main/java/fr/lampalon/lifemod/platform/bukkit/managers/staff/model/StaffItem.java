@@ -1,23 +1,21 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.model;
 
-import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
 import java.util.Map;
 
 public class StaffItem {
     private final String key;
     private final ItemStack itemStack;
     private final int slot;
-    private final Map<String, StaffActionType> actions; // ex: "RIGHT_CLICK" -> JUMP
-    private final Map<String, String> commands; // ex: "LEFT_CLICK" -> "ban %player%"
+    private final Map<String, List<String>> actionScripts; // ex: "RIGHT_CLICK" -> ["[PLAYER] jump", "[SOUND] ..."]
 
-    public StaffItem(String key, ItemStack itemStack, int slot, Map<String, StaffActionType> actions, Map<String, String> commands) {
+    public StaffItem(String key, ItemStack itemStack, int slot, Map<String, List<String>> actionScripts) {
         this.key = key;
         this.itemStack = itemStack;
         this.slot = slot;
-        this.actions = actions;
-        this.commands = commands;
+        this.actionScripts = actionScripts;
     }
 
     public String getKey() {
@@ -32,11 +30,7 @@ public class StaffItem {
         return slot;
     }
 
-    public StaffActionType getAction(String clickType) {
-        return actions.get(clickType);
-    }
-
-    public String getCommand(String clickType) {
-        return commands.get(clickType);
+    public List<String> getScripts(String clickType) {
+        return actionScripts.get(clickType);
     }
 }
