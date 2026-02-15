@@ -22,7 +22,9 @@ public class BukkitLangService implements ILangService {
         String message = getMessage(key);
         for (int i = 0; i < placeholders.length; i += 2) {
             if (i + 1 < placeholders.length) {
-                message = message.replace(placeholders[i], placeholders[i + 1]);
+                String replacement = placeholders[i + 1];
+                if (replacement == null) replacement = "";
+                message = message.replace(placeholders[i], replacement);
             }
         }
         return message;

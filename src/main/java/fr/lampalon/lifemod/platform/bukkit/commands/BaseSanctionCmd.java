@@ -79,7 +79,7 @@ public abstract class BaseSanctionCmd extends LifeCommand {
             }
         }
 
-        String serverName = LifeMod.getInstance().getConfigConfig().getString("server-name");
+        String serverName = LifeMod.getInstance().getConfigConfig().getString("server.name", "Survival");
 
         Sanction sanction = new Sanction(
                 targetUuid,

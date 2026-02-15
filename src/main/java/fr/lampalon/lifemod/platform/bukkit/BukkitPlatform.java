@@ -70,7 +70,7 @@ public class BukkitPlatform implements ILifePlatform {
 
     @Override
     public String getServerName() {
-        return plugin.getConfigConfig().getString("server-name");
+        return plugin.getConfigConfig().getString("server.name", "Survival");
     }
 
     @Override
