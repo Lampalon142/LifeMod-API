@@ -2,6 +2,8 @@ package fr.lampalon.lifemod.platform.bungee.managers;
 
 import fr.lampalon.lifemod.common.antialt.AnalysisResult;
 import fr.lampalon.lifemod.platform.bungee.BungeeLifeMod;
+import fr.lampalon.lifemod.platform.bungee.utils.DiscordWebhook;
+import fr.lampalon.lifemod.platform.bungee.utils.MessageUtil;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.PendingConnection;
@@ -57,23 +59,31 @@ public class BungeeReactionManager {
             });
         }
         else if (upper.startsWith("[MESSAGE]")) {
-            String message = MessageUtil.formatMessage(script.substring(9).trim());
-            // This message is for the player directly, we can only kick with a message here on Bungee
-            // For in-game message, we need Redis
-            if (connection != null && !connection.isOnline()) { // Only if player is still connecting
+            String message = fr.lampalon.lifemod.platform.bungee.utils.MessageUtil.formatMessage(script.substring(9).trim());
+            // If player is still connecting, kick them immediately with the message
+            if (connection != null && !connection.isOnline()) {
                 connection.disconnect(new TextComponent(message));
             } else {
-                // If player is already online, use Redis to send message to target server
-                // This requires a Redis listener on Bukkit/Spigot servers
+                // Otherwise, publish to Redis for target server to send the message
+                plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+                    if (ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class) != null) {
+                        ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class).publish("lifemod:antialt_actions", "MESSAGE|" + connection.getUniqueId() + "|" + message);
+                    }
+                });
             }
         }
-        else if (upper.startsWith("[STAFF]")) { // Notify staff
-            String message = MessageUtil.formatMessage(script.substring(7).trim());
+        else if (upper.startsWith("[STAFF]")) { // Notify staff (could be on other servers)
+            String message = fr.lampalon.lifemod.platform.bungee.utils.MessageUtil.formatMessage(script.substring(7).trim());
             plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+                // Send to local staff
                 for (net.md_5.bungee.api.connection.ProxiedPlayer p : plugin.getProxy().getPlayers()) {
                     if (p.hasPermission("lifemod.antialt.notify")) {
                         p.sendMessage(new TextComponent(message));
                     }
+                }
+                // Publish to Redis for staff on Bukkit servers
+                if (ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class) != null) {
+                    ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class).publish("lifemod:antialt_actions", "STAFF_ALERT|" + message);
                 }
             });
         }
@@ -86,7 +96,7 @@ public class BungeeReactionManager {
             if (plugin.getConfig().getBoolean("modules.discord.enabled")) {
                 plugin.getProxy().getScheduler().runAsync(plugin, () -> {
                     try {
-                        DiscordWebhook webhook = new DiscordWebhook(plugin.getConfig().getString("modules.discord.webhook-url")); // Use Bungee's config
+                        DiscordWebhook webhook = new DiscordWebhook(plugin.getConfig().getString("modules.discord.webhook-url"));
                         webhook.addEmbed(new DiscordWebhook.EmbedObject()
                                 .setTitle("AntiAlt Alert Bungee")
                                 .setDescription(discordMessage)
@@ -101,11 +111,16 @@ public class BungeeReactionManager {
             }
         }
         else if (upper.startsWith("[KICK]")) {
-            String message = MessageUtil.formatMessage(script.substring(6).trim());
+            String message = script.substring(6).trim();
             if (connection != null && !connection.isOnline()) { // Only if player is connecting
                 connection.disconnect(new TextComponent(message));
             } else {
-                // If player is already online, use Redis to send kick command to target server
+                // Publish to Redis for target server to kick the player
+                plugin.getProxy().getScheduler().runAsync(plugin, () -> {
+                    if (ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class) != null) {
+                        ServiceRegistry.get(fr.lampalon.lifemod.common.messaging.IMessagingService.class).publish("lifemod:antialt_actions", "KICK|" + connection.getUniqueId() + "|" + message);
+                    }
+                });
             }
         }
     }
