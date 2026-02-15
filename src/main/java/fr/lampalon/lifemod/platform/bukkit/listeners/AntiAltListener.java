@@ -24,7 +24,7 @@ public class AntiAltListener implements Listener {
         
         // Don't block the main thread for analysis
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            antiAltManager.analyze(player);
+            antiAltManager.handlePlayerJoin(player);
         });
     }
 }

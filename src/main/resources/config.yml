@@ -166,8 +166,19 @@ modules:
   # Anti-Alt Heuristic Engine
   antialt:
     enabled: true
-    entropy-threshold: 3.8
     debug: false # Logs analysis score for every joining player
+    
+    # --- Heuristic Weights (0-100) ---
+    weights:
+      entropy: 40
+      bigram: 25
+      trigram: 35
+      casing: 15
+      suffix: 50
+      ip-history: 50 # Bonus penalty if IP is already flagged
+
+    # --- Thresholds & Reactions ---
+    entropy-threshold: 3.8
     
     # Reaction thresholds (score is 0-100)
     thresholds:
