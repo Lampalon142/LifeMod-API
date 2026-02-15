@@ -67,6 +67,7 @@ public class LifeMod extends JavaPlugin {
     private ModeratorSessionManager moderatorSessionManager;
     private ModeratorAuthService moderatorAuthService;
     private PacketController packetController;
+    private ReactionManager reactionManager;
     private StaffItemManager staffItemManager;
     private StaffModeManager staffModeManager;
     private InvseeManager invseeManager;
@@ -301,6 +302,7 @@ public class LifeMod extends JavaPlugin {
         noteInputManager = new NoteInputManager(this);
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
+        reactionManager = new ReactionManager(this);
         
         // Staff System
         staffItemManager = new StaffItemManager(this);
@@ -445,6 +447,7 @@ public class LifeMod extends JavaPlugin {
     public SpectateManager getSpectateManager() { return spectateManager; }
     public ModeratorSessionManager getModeratorSessionManager() { return moderatorSessionManager; }
     public ModeratorAuthService getModeratorAuthService() { return moderatorAuthService; }
+    public ReactionManager getReactionManager() { return reactionManager; }
     public Map<UUID, Deque<Long>> getCpsMap() { return cpsMap; }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
     public InvseeManager getInvseeManager() { return invseeManager; }

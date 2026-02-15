@@ -65,31 +65,16 @@ public class AntiAltManager {
         AnalysisResult result = new AnalysisResult(name, score, rules, fingerprint);
         
         // Execute reaction based on score
-        executeReaction(result);
+        plugin.getReactionManager().executeReactions(result, player);
 
         return result;
     }
     
     private void executeReaction(AnalysisResult result) {
-        String playerName = result.getPlayerName();
-        int score = result.getDangerScore();
-        String reason = result.getReason();
-        String fingerprint = result.getFingerprint();
-
-        // This is where the logic from config will be executed.
+        // This method is now handled by ReactionManager
         // For now, let's just log it if debug is on.
-        if (plugin.getDebugManager().isModDebug("antialt")) {
-            plugin.getLogger().info("[AntiAlt Debug] Player: " + playerName + " | Score: " + score + " | Reason: " + reason + " | Fingerprint: " + fingerprint);
-        }
-
-        // Example reaction logic (to be moved to a script handler)
-        if (score > 85) {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ban " + playerName + " High-Threat Alt Account (Score: " + score + ", Reason: " + reason + ")");
-        } else if (score > 60) {
-            String message = "&c[AntiAlt] &e" + playerName + " &cest fortement suspect (Score: " + score + ").";
-            Bukkit.getOnlinePlayers().stream()
-                .filter(p -> p.hasPermission("lifemod.antialt.notify"))
-                .forEach(p -> p.sendMessage(message));
+        if (plugin.getConfigConfig().getBoolean("modules.antialt.debug")) {
+            plugin.getLogger().info("[AntiAlt Debug] Player: " + result.getPlayerName() + " | Score: " + result.getDangerScore() + " | Reason: " + result.getReason() + " | Fingerprint: " + result.getFingerprint());
         }
     }
 
