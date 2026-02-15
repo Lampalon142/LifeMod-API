@@ -27,19 +27,12 @@ public class BungeeAntiAltManager {
         String ipAddress = connection.getSocketAddress().toString();
         AnalysisResult result = engine.analyze(connection.getName(), ipAddress);
 
-        // On Bungee, we can't easily run player-specific commands,
-        // so we mainly focus on logging, alerting staff via Redis/messaging, or kicking.
-        // The Bukkit-side listeners will handle in-game actions like mute/freeze.
-
-        // For now, we will just log it. The ReactionManager needs to be adapted for Bungee.
-        if (plugin.getConfig().getBoolean("modules.antialt.debug")) {
-            plugin.getLogger().info("[AntiAlt Debug Bungee] Player: " + result.getPlayerName() + " | Score: " + result.getDangerScore() + " | Reason: " + result.getReason());
-        }
+        // Execute reaction based on score
+        plugin.getReactionManager().executeReactions(result, connection);
         
-        // Example: kick if score is too high
-        if (result.getDangerScore() > 85) {
-            String reason = "High-threat account detected. Please contact staff if this is an error.";
-            connection.disconnect(new net.md_5.bungee.api.chat.TextComponent(reason));
+        // For now, we will just log it. The ReactionManager needs to be adapted for Bungee.
+        if (plugin.getConfig().getBoolean("modules.antialt.debug", false)) {
+            plugin.getLogger().info("[AntiAlt Debug Bungee] Player: " + result.getPlayerName() + " | Score: " + result.getDangerScore() + " | Reason: " + result.getReason());
         }
     }
 }

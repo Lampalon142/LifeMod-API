@@ -35,6 +35,7 @@ public class BungeeLifeMod extends Plugin {
     private Configuration lang;
     private DatabaseManager databaseManager;
     private BungeeAntiAltManager antiAltManager;
+    private BungeeReactionManager reactionManager;
 
     @Override
     public void onEnable() {
@@ -59,6 +60,7 @@ public class BungeeLifeMod extends Plugin {
         databaseManager.setupDatabase();
         
         this.antiAltManager = new BungeeAntiAltManager(this);
+        this.reactionManager = new BungeeReactionManager(this);
         
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
@@ -111,5 +113,9 @@ public class BungeeLifeMod extends Plugin {
     
     public BungeeAntiAltManager getAntiAltManager() {
         return antiAltManager;
+    }
+
+    public BungeeReactionManager getReactionManager() {
+        return reactionManager;
     }
 }
