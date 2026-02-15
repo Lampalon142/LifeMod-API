@@ -38,7 +38,8 @@ public class BukkitCommandAdapter implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String alias, String[] args) {
-        return command.onTabComplete(new BukkitCommandSender(sender), args);
+        List<String> completions = command.onTabComplete(new BukkitCommandSender(sender), args);
+        return completions != null ? completions : java.util.Collections.emptyList();
     }
 
     private static class BukkitCommandSender implements ICommandSender {

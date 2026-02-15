@@ -368,8 +368,11 @@ public class LifeMod extends JavaPlugin {
         registerCommand("staff", new ModCmd(this, staffModeManager));
         registerCommand("broadcast", new BroadcastCmd(this));
         registerCommand("bc", new BroadcastCmd(this));
-        registerCommand("gamemode", new GmCmd(this));
-        registerCommand("gm", new GmCmd(this));
+        
+        GmCmd gmCmd = new GmCmd(this);
+        registerCommand(gmCmd); // registers "gamemode"
+        registerCommand("gm", new BukkitCommandAdapter(gmCmd));
+        
         registerCommand("ecopen", new EcopenCmd(this));
         registerCommand("vanish", new VanishCmd(this));
         registerCommand("clearinv", new ClearinvCmd(this));
@@ -377,8 +380,12 @@ public class LifeMod extends JavaPlugin {
         registerCommand("staffchat", new StaffchatCmd());
         registerCommand("chatclear", new ChatclearCmd(this));
         registerCommand("heal", new HealCmd(this));
-        registerCommand("tp", new TeleportCmd());
-        registerCommand("tphere", new TeleportCmd());
+        
+        TeleportCmd tpCmd = new TeleportCmd();
+        registerCommand(tpCmd); // registers "teleport"
+        registerCommand("tp", new BukkitCommandAdapter(tpCmd));
+        registerCommand("tphere", new BukkitCommandAdapter(tpCmd));
+        
         registerCommand("god", new GodModCmd(this));
         registerCommand("invsee", new InvseeCmd(this));
         registerCommand("feed", new FeedCmd(this));
