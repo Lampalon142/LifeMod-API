@@ -72,6 +72,7 @@ public class LifeMod extends JavaPlugin {
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
     private IVanishService vanishService;
+    private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
@@ -306,6 +307,7 @@ public class LifeMod extends JavaPlugin {
         staffModeManager = new StaffModeManager(this, staffItemManager);
         invseeManager = new InvseeManager();
         staffActionManager = new StaffActionManager();
+        antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
         
         // Vanish System
         vanishService = new VanishService(this);
@@ -344,6 +346,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new SanctionListener(), this);
         pm.registerEvents(new ConnectionListener(), this);
         pm.registerEvents(new InvseeListener(this), this);
+        pm.registerEvents(new AntiAltListener(this), this);
         if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         }
@@ -445,6 +448,7 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Deque<Long>> getCpsMap() { return cpsMap; }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
     public InvseeManager getInvseeManager() { return invseeManager; }
+    public fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager getAntiAltManager() { return antiAltManager; }
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
     public Set<UUID> getModerators() { return moderators; }

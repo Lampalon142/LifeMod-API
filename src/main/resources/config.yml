@@ -163,6 +163,27 @@ modules:
           RIGHT_CLICK:
             - "[NATIVE] INFO_VIEWER"
 
+  # Anti-Alt Heuristic Engine
+  antialt:
+    enabled: true
+    entropy-threshold: 3.8
+    debug: false # Logs analysis score for every joining player
+    
+    # Reaction thresholds (score is 0-100)
+    thresholds:
+      30: # Suspect
+        - "[LOG] Player %player% is suspect (Score: %score%, Reason: %reason%)"
+        - "[STAFF] &c[AntiAlt] &e%player% &cest suspect (Score: %score%, Raison: %reason%)."
+      60: # Critical
+        - "[STAFF] &c[AntiAlt] &4&lCRITICAL&c: &e%player% &cest un alt très probable (Score: %score%)."
+        - "[CONSOLE] mute %player% 1h Alt suspect (Automated)"
+      85: # High-Threat Alt
+        - "[CONSOLE] ban %player% 30d High-Threat Alt (Score: %score%, Reason: %reason%)"
+        - "[DISCORD] Player `%player%` was auto-banned (Score: %score%, Reason: %reason%)"
+        
+    whitelist:
+      - "PlayerToIgnore"
+
   # Discord Webhook Integration
   discord:
     enabled: false
