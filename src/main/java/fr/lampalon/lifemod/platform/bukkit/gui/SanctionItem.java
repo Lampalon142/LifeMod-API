@@ -38,7 +38,8 @@ public class SanctionItem extends AbstractItem {
             default: material = Material.PAPER;
         }
 
-        String dateFormat = LifeMod.getInstance().getConfigConfig().getString("date-format");
+        fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+        String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         

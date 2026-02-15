@@ -33,12 +33,14 @@ public class StaffNoteItem extends AbstractItem {
         if (authorName == null) authorName = note.getAuthor().toString();
 
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        String dateFormat = LifeMod.getInstance().getConfigConfig().getString("date-format");
+        fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+        String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 
         ItemBuilder builder = new ItemBuilder(Material.PAPER)
                 .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-title").replace("%author%", authorName)))
                 .addLoreLines(
-                        MessageUtil.formatMessage(lang.getMessage("report.detail.notes.item.date", "§7Date: §f%date%").replace("%date%", new SimpleDateFormat(dateFormat).format(new Date(note.getCreatedAt())))),
+                        MessageUtil.formatMessage(lang.getMessage("report.detail.notes.item.date", "§7Date: §f%date%").replace("%date%", sdf.format(new Date(note.getCreatedAt())))),
                         "",
                         "§f" + note.getContent(),
                         "",

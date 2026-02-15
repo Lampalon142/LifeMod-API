@@ -31,7 +31,9 @@ public class ReportDetailGui extends AbstractGui {
         String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
 
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        String dateFormat = fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getConfigConfig().getString("date-format");
+        fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+        String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 
         return Gui.normal()
                 .setStructure(
@@ -54,7 +56,7 @@ public class ReportDetailGui extends AbstractGui {
                                 MessageUtil.formatMessage(lang.getMessage("report.detail.reason", "%reason%", report.getReason())),
                                 MessageUtil.formatMessage(lang.getMessage("report.detail.server", "%server%", report.getServerName())),
                                 MessageUtil.formatMessage(lang.getMessage("report.detail.status", "%status%", report.getStatus().name())),
-                                MessageUtil.formatMessage(lang.getMessage("report.detail.date", "%date%", new SimpleDateFormat(dateFormat).format(new Date(report.getCreatedAt()))))
+                                MessageUtil.formatMessage(lang.getMessage("report.detail.date", "%date%", sdf.format(new Date(report.getCreatedAt()))))
                         )))
                 .addIngredient('L', new SimpleItem(new ItemBuilder(Material.COMPASS)
                         .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.teleport")))
