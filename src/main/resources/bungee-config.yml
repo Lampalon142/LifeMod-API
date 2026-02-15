@@ -26,6 +26,41 @@ redis:
 
 # --- GLOBAL RULES ---
 modules:
+  antialt:
+    enabled: true
+    debug: false
+    
+    # --- Heuristic Weights (0-100) ---
+    weights:
+      entropy: 40
+      bigram: 25
+      trigram: 35
+      casing: 15
+      suffix: 50
+      ip-history: 50 # Bonus penalty if IP is already flagged
+
+    # --- Thresholds & Reactions ---
+    entropy-threshold: 3.8
+    
+    # Reaction thresholds (score is 0-100)
+    thresholds:
+      30: # Suspect
+        actions:
+          - "[LOG] Player %player% is suspect (Score: %score%, Reason: %reason%)"
+          - "[STAFF] &c[AntiAlt] &e%player% &cest suspect (Score: %score%, Raison: %reason%)." # This will be sent to Bukkit servers via Redis
+      60: # Critical
+        actions:
+          - "[STAFF] &c[AntiAlt] &4&lCRITICAL&c: &e%player% &cest un alt très probable (Score: %score%)."
+          - "[CONSOLE] ban %player% 1h Alt suspect (Automated)" # Executed on Bungee
+      85: # High-Threat Alt
+        actions:
+          - "[CONSOLE] ban %player% 30d High-Threat Alt (Score: %score%, Reason: %reason%)"
+          - "[DISCORD] Player `%player%` was auto-banned (Score: %score%, Reason: %reason%)"
+          - "[KICK] &cYou have been banned for using a high-threat alt account. Appeal at example.com"
+          
+    whitelist:
+      - "PlayerToIgnore"
+      
   auto-punish:
     enabled: true
     mode: "GLOBAL"
