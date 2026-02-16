@@ -42,9 +42,14 @@ public class BungeeReactionManager {
     }
 
     private void executeScript(String script, AnalysisResult result, PendingConnection connection) {
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String rules = result.getTriggeredRules().stream()
+                .map(r -> lang.getMessage("antialt.rules." + r.getKey()))
+                .collect(java.util.stream.Collectors.joining(", "));
+
         String formatted = script.replace("%player%", result.getPlayerName())
                                 .replace("%score%", String.valueOf(result.getDangerScore()))
-                                .replace("%reason%", result.getReason())
+                                .replace("%reason%", rules)
                                 .replace("%fingerprint%", result.getFingerprint());
 
         String upper = formatted.toUpperCase();

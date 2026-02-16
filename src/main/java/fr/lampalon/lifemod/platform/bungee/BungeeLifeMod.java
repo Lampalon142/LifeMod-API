@@ -14,6 +14,7 @@ import fr.lampalon.lifemod.platform.bungee.adapter.BungeeLangService;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiAltListener;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeChatListener;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeConnectionListener;
+import fr.lampalon.lifemod.platform.bungee.managers.BungeeReactionManager;
 import fr.lampalon.lifemod.platform.bungee.managers.antialt.BungeeAntiAltManager;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -78,7 +79,7 @@ public class BungeeLifeMod extends Plugin {
         ProxyServer.getInstance().getLogger().info("§e• §fPlatform: §aBungeeCord");
         ProxyServer.getInstance().getLogger().info("§e• §fInstance: §d" + ProxyServer.getInstance().getVersion());
         ProxyServer.getInstance().getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
-        Proxy_stringerver().getInstance().getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
+        ProxyServer.getInstance().getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
         ProxyServer.getInstance().getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
         ProxyServer.getInstance().getLogger().info(" ");
         ProxyServer.getInstance().getLogger().info("§8§m----------------------------------------");
@@ -109,6 +110,10 @@ public class BungeeLifeMod extends Plugin {
 
     public static BungeeLifeMod getInstance() {
         return instance;
+    }
+
+    public Configuration getConfig() {
+        return config;
     }
     
     public BungeeAntiAltManager getAntiAltManager() {
