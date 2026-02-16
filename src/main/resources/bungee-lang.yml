@@ -108,5 +108,16 @@ commands:
     success: "%prefix%&aMessage sent to network staff chat."
     message: "&7[&cNetwork-SC&7] &e%player%&f: %message%"
 
+antialt:
+  debug: "&6[AntiAlt-Bungee] &ePlayer: &b%player% &e| Score: &b%score% &e| Reason: &b%reason%"
+  rules:
+    EntropyHigh: "High Entropy"
+    BadBigram: "Uncommon Bigrams"
+    BadTrigram: "Uncommon Trigrams"
+    GeneratedSuffix: "Generated Suffix"
+    RandomCasing: "Random Casing"
+    IPHistory: "Suspicious IP History"
+    PatternMatch: "Pattern Match"
+
 # Metadata
 version: 200
