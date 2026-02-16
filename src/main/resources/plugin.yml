@@ -117,6 +117,9 @@ commands:
   alts:
     description: View a player's alternative accounts.
     usage: /alts <player/ip>
+  alt:
+    description: Analyze a player for suspicious patterns.
+    usage: /alt <player>
   staffhistory:
     description: View a moderator's sanction history.
     usage: /staffhistory <player>
@@ -170,3 +173,5 @@ permissions:
       - lifemod.history
       - lifemod.case
       - lifemod.alts
+      - lifemod.antialt.check
+      - lifemod.antialt.notify
