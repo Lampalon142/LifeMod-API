@@ -191,6 +191,7 @@ modules:
       85: # High-Threat Alt
         - "[CONSOLE] ban %player% 30d High-Threat Alt (Score: %score%, Reason: %reason%)"
         - "[DISCORD] Player `%player%` was auto-banned (Score: %score%, Reason: %reason%)"
+        - "[CANCEL] &cAccès refusé. Compte suspect détecté par notre système de sécurité."
         
     whitelist:
       - "PlayerToIgnore"
