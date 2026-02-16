@@ -26,6 +26,11 @@ public class BukkitConfigurationService implements IConfigurationService {
     }
 
     @Override
+    public double getDouble(String key, double defaultValue) {
+        return config.getDouble(key, defaultValue);
+    }
+
+    @Override
     public String getPrefix() {
         return config.getString("prefix");
     }
