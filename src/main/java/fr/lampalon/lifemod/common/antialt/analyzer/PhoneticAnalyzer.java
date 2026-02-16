@@ -10,8 +10,7 @@ public class PhoneticAnalyzer {
     // Generated names often use improbable combinations.
     private static final Set<String> FORBIDDEN_BIGRAMS = new HashSet<>(Arrays.asList(
             "qg", "qx", "qj", "qz", "jc", "jg", "jk", "jq", "jv", "jx", "jz",
-            "vx", "wx", "zx", "zj", "x
-j"
+            "vx", "wx", "zx", "zj", "xj"
     ));
     
     private static final Set<String> FORBIDDEN_TRIGRAMS = new HashSet<>(Arrays.asList(
