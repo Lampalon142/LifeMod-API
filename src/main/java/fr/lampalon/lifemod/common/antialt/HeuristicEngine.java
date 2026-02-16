@@ -59,24 +59,34 @@ public class HeuristicEngine {
             }
 
             // 5. Historique IP (Voisinage)
-            DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
-            ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
-            
-            if (db != null && sanctionService != null) {
-                List<PlayerData> alts = db.getAlts(ipAddress);
-                long bannedAlts = alts.stream().filter(alt -> 
-                    sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN).join() != null
-                ).count();
+            try {
+                DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
+                ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
+                
+                if (db != null && sanctionService != null) {
+                    List<PlayerData> alts = db.getAlts(ipAddress);
+                    if (alts != null) {
+                        long bannedAlts = alts.stream().filter(alt -> {
+                            var sanction = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN);
+                            return sanction != null && sanction.join() != null;
+                        }).count();
 
-                if (bannedAlts > 0) {
-                    score += config.getInt("modules.antialt.weights.ip-history", 50);
-                    rules.add(HeuristicRule.IP_HISTORY);
+                        if (bannedAlts > 0) {
+                            score += config.getInt("modules.antialt.weights.ip-history", 50);
+                            rules.add(HeuristicRule.IP_HISTORY);
+                        }
+                    }
                 }
+            } catch (Exception e) {
+                // Ignore DB errors but log if critical
             }
 
             score = Math.min(100, score);
             String fingerprint = generateFingerprint(playerName);
             return new AnalysisResult(playerName, score, rules, fingerprint);
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            return null;
         });
     }
 

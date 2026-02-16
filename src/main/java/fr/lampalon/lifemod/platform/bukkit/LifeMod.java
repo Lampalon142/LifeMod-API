@@ -298,6 +298,7 @@ public class LifeMod extends JavaPlugin {
         chatManager = new ChatManager(this);
         databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
+        ServiceRegistry.register(DatabaseProvider.class, databaseManager.getDatabaseProvider());
         guiManager = new GuiManager(this);
         noteInputManager = new NoteInputManager(this);
         moderatorAuthService = new ModeratorAuthService(this);
@@ -367,6 +368,7 @@ public class LifeMod extends JavaPlugin {
         registerCommand(new CaseCmd());
         registerCommand(new AltsCmd());
         registerCommand(new StaffHistoryCmd());
+        registerCommand(new AltCmd());
         
         registerCommand("freeze", new FreezeCmd(this));
         registerCommand("mod", new ModCmd(this, staffModeManager));

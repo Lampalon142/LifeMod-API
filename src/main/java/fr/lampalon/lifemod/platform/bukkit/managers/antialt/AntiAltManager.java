@@ -16,6 +16,10 @@ public class AntiAltManager {
         this.engine = new HeuristicEngine(ServiceRegistry.get(IConfigurationService.class));
     }
 
+    public HeuristicEngine getEngine() {
+        return engine;
+    }
+
     public void handlePlayerJoin(Player player) {
         if (!plugin.getConfigConfig().getBoolean("modules.antialt.enabled", true)) return;
         if (player.hasPermission("lifemod.antialt.bypass")) return;
