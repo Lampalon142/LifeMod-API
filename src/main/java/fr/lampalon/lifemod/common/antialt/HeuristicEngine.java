@@ -46,19 +46,16 @@ public class HeuristicEngine {
                 rules.add(HeuristicRule.BAD_TRIGRAM);
             }
 
-            // 3. Analyse de la Casse
             if (hasRandomCasing(playerName)) {
                 score += config.getInt("modules.antialt.weights.casing", 15);
                 rules.add(HeuristicRule.RANDOM_CASING);
             }
 
-            // 4. Segmentation et Suffixes
             if (hasGeneratedSuffix(playerName)) {
                 score += config.getInt("modules.antialt.weights.suffix", 50);
                 rules.add(HeuristicRule.GENERATED_SUFFIX);
             }
 
-            // 5. Historique IP (Voisinage)
             try {
                 DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
                 ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);

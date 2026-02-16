@@ -184,14 +184,14 @@ modules:
     thresholds:
       30: # Suspect
         - "[LOG] Player %player% is suspect (Score: %score%, Reason: %reason%)"
-        - "[STAFF] &c[AntiAlt] &e%player% &cest suspect (Score: %score%, Raison: %reason%)."
+        - "[STAFF] &c[AntiAlt] &e%player% &cis suspect (Score: %score%, Reason: %reason%)."
       60: # Critical
-        - "[STAFF] &c[AntiAlt] &4&lCRITICAL&c: &e%player% &cest un alt très probable (Score: %score%)."
+        - "[STAFF] &c[AntiAlt] &4&lCRITICAL&c: &e%player% &cis a very likely alt (Score: %score%)."
         - "[CONSOLE] mute %player% 1h Alt suspect (Automated)"
       85: # High-Threat Alt
         - "[CONSOLE] ban %player% 30d High-Threat Alt (Score: %score%, Reason: %reason%)"
         - "[DISCORD] Player `%player%` was auto-banned (Score: %score%, Reason: %reason%)"
-        - "[CANCEL] &cAccès refusé. Compte suspect détecté par notre système de sécurité."
+        - "[CANCEL] &cAccess denied. Suspicious account detected by our security system.."
         
     whitelist:
       - "PlayerToIgnore"

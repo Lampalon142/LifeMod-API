@@ -21,7 +21,7 @@ public class AltCmd extends LifeCommand {
     public void execute(ICommandSender sender, String[] args) {
         ILangService lang = ServiceRegistry.get(ILangService.class);
         if (args.length < 1) {
-            sender.sendMessage(MessageUtil.formatMessage("&cUsage: /alt <player>"));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.usage")));
             return;
         }
 
@@ -33,15 +33,23 @@ public class AltCmd extends LifeCommand {
             ip = target.getAddress().getAddress().getHostAddress();
         }
 
-        sender.sendMessage(MessageUtil.formatMessage("&6[AntiAlt] &eAnalyse de &b" + targetName + " &een cours..."));
+        sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.analyzing", "%player%", targetName)));
 
         LifeMod.getInstance().getAntiAltManager().getEngine().analyze(targetName, ip).thenAccept(result -> {
-            sender.sendMessage(MessageUtil.formatMessage("&8&m----------------------------------------"));
-            sender.sendMessage(MessageUtil.formatMessage("&6&lAntiAlt Analysis: &b" + result.getPlayerName()));
-            sender.sendMessage(MessageUtil.formatMessage("&e• &fScore de Danger: " + getScoreColor(result.getDangerScore()) + result.getDangerScore() + "/100"));
-            sender.sendMessage(MessageUtil.formatMessage("&e• &fRègles déclenchées: &7" + (result.getTriggeredRules().isEmpty() ? "Aucune" : result.getTriggeredRules().stream().map(r -> "&c" + r.getKey()).collect(Collectors.joining("&7, ")))));
-            sender.sendMessage(MessageUtil.formatMessage("&e• &fFingerprint: &7" + result.getFingerprint()));
-            sender.sendMessage(MessageUtil.formatMessage("&8&m----------------------------------------"));
+            String rules = result.getTriggeredRules().isEmpty() 
+                ? lang.getMessage("antialt.no-rules") 
+                : result.getTriggeredRules().stream()
+                    .map(r -> lang.getMessage("antialt.rules." + r.getKey()))
+                    .collect(Collectors.joining("&7, "));
+
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.header")));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.title", "%player%", result.getPlayerName())));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.score", 
+                "%color%", getScoreColor(result.getDangerScore()), 
+                "%score%", String.valueOf(result.getDangerScore()))));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.rules-triggered", "%rules%", rules)));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.fingerprint", "%fingerprint%", result.getFingerprint())));
+            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("antialt.footer")));
         });
     }
 
