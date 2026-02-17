@@ -74,9 +74,7 @@ public class HeuristicEngine {
                         }
                     }
                 }
-            } catch (Exception e) {
-                // Ignore DB errors but log if critical
-            }
+            } catch (Exception e) {}
 
             score = Math.min(100, score);
             String fingerprint = generateFingerprint(playerName);
