@@ -1,0 +1,31 @@
+package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
+
+import fr.lampalon.lifemod.common.model.Sanction;
+import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+
+public class KickCommand extends BaseSanctionCommand {
+    public KickCommand(LifeMod plugin) {
+        super("kick", "lifemod.kick", SanctionType.KICK, "Kicks a player from the server.", "/kick <player> <reason> [-s]", plugin);
+    }
+
+    @Override
+    protected boolean supportsDuration() {
+        return false;
+    }
+
+    @Override
+    protected void onSanctionApplied(CommandContext context, OfflinePlayer target, Sanction sanction) {
+        String successMsg = context.getLang().getMessage("sanctions.kick.success", "%target%", target.getName(), "%reason%", sanction.getReason());
+        context.getSender().sendMessage(successMsg);
+        if (target.isOnline()) {
+            Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
+                String kickMsg = context.getLang().getMessage("sanctions.kick.message", "%reason%", sanction.getReason(), "%issuer%", sanction.getIssuerName());
+                context.getPlugin().getPacketController().kickPlayer(target.getPlayer(), kickMsg);
+            });
+        }
+    }
+}

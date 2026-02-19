@@ -7,7 +7,6 @@ import fr.lampalon.lifemod.common.model.SanctionType;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.zaxxer.hikari.HikariDataSource;
-import fr.lampalon.lifemod.common.commands.framework.LifeCommand;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
@@ -19,8 +18,7 @@ import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.integration.nms.PacketController;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
-import fr.lampalon.lifemod.platform.bukkit.commands.*;
-import fr.lampalon.lifemod.platform.bukkit.commands.adapter.BukkitCommandAdapter;
+import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry; // NEW
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
@@ -33,11 +31,6 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -73,7 +66,7 @@ public class LifeMod extends JavaPlugin {
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
     private IVanishService vanishService;
-    private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
+    private fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry commandRegistry;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
@@ -252,6 +245,7 @@ public class LifeMod extends JavaPlugin {
         this.packetController = new PacketController(this);
         PacketEvents.getAPI().getEventManager().registerListener(this.packetController, PacketListenerPriority.NORMAL);
         
+        this.commandRegistry = new CommandRegistry(this);
         registerEvents();
         registerCommands();
         setupMetrics();
@@ -356,76 +350,7 @@ public class LifeMod extends JavaPlugin {
     }
 
     private void registerCommands() {
-        registerCommand(new FlyCmd(this));
-        registerCommand(new BanCmd());
-        registerCommand(new MuteCmd());
-        registerCommand(new KickCmd());
-        registerCommand(new WarnCmd());
-        registerCommand(new NoteCmd());
-        registerCommand(new UnbanCmd());
-        registerCommand(new UnmuteCmd());
-        registerCommand(new HistoryCmd());
-        registerCommand(new CaseCmd());
-        registerCommand(new AltsCmd());
-        registerCommand(new StaffHistoryCmd());
-        registerCommand(new AltCmd());
-        
-        registerCommand("freeze", new FreezeCmd(this));
-        registerCommand("mod", new ModCmd(this, staffModeManager));
-        registerCommand("staff", new ModCmd(this, staffModeManager));
-        registerCommand("broadcast", new BroadcastCmd(this));
-        registerCommand("bc", new BroadcastCmd(this));
-        
-        GmCmd gmCmd = new GmCmd(this);
-        registerCommand(gmCmd); // registers "gamemode"
-        registerCommand("gm", new BukkitCommandAdapter(gmCmd));
-        
-        registerCommand("ecopen", new EcopenCmd(this));
-        registerCommand("vanish", new VanishCmd(this));
-        registerCommand("clearinv", new ClearinvCmd(this));
-        registerCommand("stafflist", new StafflistCmd());
-        registerCommand("staffchat", new StaffchatCmd());
-        registerCommand("chatclear", new ChatclearCmd(this));
-        registerCommand("heal", new HealCmd(this));
-        
-        TeleportCmd tpCmd = new TeleportCmd();
-        registerCommand(tpCmd); // registers "teleport"
-        registerCommand("tp", new BukkitCommandAdapter(tpCmd));
-        registerCommand("tphere", new BukkitCommandAdapter(tpCmd));
-        
-        registerCommand("god", new GodModCmd(this));
-        registerCommand("invsee", new InvseeCmd(this));
-        registerCommand("feed", new FeedCmd(this));
-        registerCommand("weather", new WeatherCmd(this));
-        registerCommand("lifemod", new LifemodCmd(this));
-        registerCommand("speed", new SpeedCmd());
-        registerCommand("spectate", new SpectateCmd(this));
-        registerCommand("otp", new OtpCmd(databaseManager));
-        registerCommand("oinvsee", new OInvseeCmd(databaseManager));
-        registerCommand("settime", new TimeCmd(this));
-        registerCommand("difficulty", new DifficultyCmd(this));
-        registerCommand("hearts", new HeartsCmd(this));
-        registerCommand("modregister", new ModRegisterCmd());
-        registerCommand("modlogin", new ModLoginCmd());
-        registerCommand("modreset", new ModResetCmd());
-        registerCommand("modchangepass", new ModChangePassCmd());
-        registerCommand("follow", new FollowCmd(this));
-        registerCommand("report", new ReportCmd(this));
-        registerCommand("reports", new ReportsCmd(this));
-        registerCommand("togglechat", new ToggleChatCmd());
-    }
-
-    private void registerCommand(LifeCommand lifeCommand) {
-        registerCommand(lifeCommand.getName(), new BukkitCommandAdapter(lifeCommand));
-    }
-
-    private void registerCommand(String commandName, CommandExecutor executor) {
-        if (configConfig.getBoolean("commands.enabled." + commandName, true)) {
-            if (getCommand(commandName) != null) {
-                getCommand(commandName).setExecutor(executor);
-                if (executor instanceof TabCompleter) getCommand(commandName).setTabCompleter((TabCompleter) executor);
-            }
-        }
+        commandRegistry.scanAndRegisterCommands("fr.lampalon.lifemod.platform.bukkit.commands.impl");
     }
 
     @Override
