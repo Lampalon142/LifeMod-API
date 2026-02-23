@@ -172,6 +172,20 @@ public class ModeratorAuthService {
             plugin.getLogger().severe("[LifeMod] changePassword error: " + e.getMessage());
         }
     }
+
+    public java.util.List<String> getAllRegisteredNames() {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT name FROM moderator_auth");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                names.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[LifeMod] getAllRegisteredNames error: " + e.getMessage());
+        }
+        return names;
+    }
 }
 
 

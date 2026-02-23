@@ -30,6 +30,12 @@ public class PlayerJoin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
+        // Initialize AntiCheat Data
+        fr.lampalon.lifemod.common.anticheat.AntiCheatService acService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.anticheat.AntiCheatService.class);
+        if (acService != null) {
+            acService.addPlayerData(player.getUniqueId());
+        }
+
         if (player.hasPermission("lifemod.notify")) {
             updateChecker.checkForUpdates(result -> {
                 Bukkit.getScheduler().runTask(plugin, () -> {

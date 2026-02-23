@@ -196,6 +196,37 @@ modules:
     whitelist:
       - "PlayerToIgnore"
 
+  # AntiCheat Proactive (Feat-AC)
+  anticheat:
+    enabled: true
+    checks:
+      autoclicker:
+        enabled: true
+        sample_size: 50
+        min_deviation: 1.2
+        min_entropy: 0.5
+        threshold: 0.9
+        violation_weight: 5
+      reach:
+        enabled: true
+        max_distance: 3.2
+        threshold: 0.8
+        violation_weight: 5
+      hitbox:
+        enabled: true
+        max_range: 6.0
+        margin: 0.1
+        threshold: 0.9
+        violation_weight: 5
+      aimbot:
+        enabled: true
+        threshold: 0.8
+        violation_weight: 4
+      timer:
+        enabled: true
+        threshold: 0.8
+        violation_weight: 3
+
   # Discord Webhook Integration
   discord:
     enabled: false
@@ -245,6 +276,7 @@ commands:
     invsee: true
     oinvsee: true
     otp: true
+    ac: true
     speed: true
     spectate: true
     hearts: true

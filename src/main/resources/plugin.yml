@@ -124,6 +124,10 @@ commands:
     description: View a moderator's sanction history.
     usage: /staffhistory <player>
     permission: lifemod.admin.staffhistory
+  ac:
+    description: Anticheat Manager
+    permission: lifemod.admin.ac
+
 permissions:
   lifemod.*:
     default: op
@@ -175,3 +179,4 @@ permissions:
       - lifemod.alts
       - lifemod.antialt.check
       - lifemod.antialt.notify
+      - lifemod.admin.ac

@@ -1,0 +1,79 @@
+package fr.lampalon.lifemod.platform.bukkit.commands.impl.utility;
+
+import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
+import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
+import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
+import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+import java.awt.*;
+import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+
+public class EcopenCommand extends LifeCommand {
+
+    public EcopenCommand() {
+        super("ecopen", "lifemod.ecopen", true);
+        setDescription("Opens the Ender Chest of another player.");
+        setUsage("/ecopen <player>");
+    }
+
+    @Override
+    public void execute(CommandContext context) {
+        if (context.getArgs().length != 1) {
+            context.getSender().sendMessage(context.getLang().getMessage("commands.ec.usage"));
+            return;
+        }
+
+        Player targetPlayer = Bukkit.getPlayer(context.getArgs()[0]);
+        if (targetPlayer == null) {
+            context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
+            return;
+        }
+
+        if (targetPlayer.equals(context.getPlayer())) {
+            context.getSender().sendMessage(context.getLang().getMessage("commands.ec.yourself"));
+            return;
+        }
+
+        context.getPlayer().openInventory(targetPlayer.getEnderChest());
+        context.getDebug().log("ecopen", context.getSender().getName() + " opened ender chest of " + targetPlayer.getName());
+
+        if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
+            sendDiscordAlert(context);
+        }
+    }
+
+    private void sendDiscordAlert(CommandContext context) {
+        try {
+            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
+            webhook.addEmbed(new DiscordWebhook.EmbedObject()
+                    .setTitle(context.getConfig().getString("discord.ecopen.title", ""))
+                    .setDescription(context.getConfig().getString("discord.ecopen.description", "")
+                            .replace("%player%", context.getSender().getName()))
+                    .setFooter(
+                            context.getConfig().getString("discord.ecopen.footer.title", ""),
+                            context.getConfig().getString("discord.ecopen.footer.logo", "")
+                                    .replace("%player%", context.getSender().getName())
+                    )
+                    .setColor(Color.decode(Objects.requireNonNull(
+                            context.getConfig().getString("discord.ecopen.color", "")
+                    ))));
+            webhook.execute();
+        } catch (IOException e) {
+            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandContext context) {
+        if (context.getArgs().length == 1) {
+            return TabCompleterUtils.filterOnlinePlayers(context.getArgs()[0]);
+        }
+        return super.onTabComplete(context);
+    }
+}

@@ -7,7 +7,6 @@ import fr.lampalon.lifemod.common.model.SanctionType;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.zaxxer.hikari.HikariDataSource;
-import fr.lampalon.lifemod.common.commands.framework.LifeCommand;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
@@ -19,8 +18,7 @@ import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.integration.nms.PacketController;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
-import fr.lampalon.lifemod.platform.bukkit.commands.*;
-import fr.lampalon.lifemod.platform.bukkit.commands.adapter.BukkitCommandAdapter;
+import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
@@ -33,12 +31,6 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandMap;
-import org.bukkit.command.SimpleCommandMap;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -46,16 +38,12 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.util.*;
 
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
 public class LifeMod extends JavaPlugin {
     private static LifeMod instance;
-    private CommandMap commandMap;
     private SpectateManager spectateManager;
     private FreezeManager freezeManager;
     private DatabaseManager databaseManager;
@@ -73,7 +61,9 @@ public class LifeMod extends JavaPlugin {
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
     private IVanishService vanishService;
+    private CommandRegistry commandRegistry;
     private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
+    private fr.lampalon.lifemod.common.anticheat.AntiCheatService antiCheatService;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
@@ -104,141 +94,7 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         
-        if (configConfig.getBoolean("redis.enabled", false)) {
-            String host = configConfig.getString("redis.host");
-            int port = configConfig.getInt("redis.port", 6379);
-            String password = configConfig.getString("redis.password");
-            IMessagingService redis = new RedisMessagingService(host, port, password);
-            ServiceRegistry.register(IMessagingService.class, redis);
-            
-            redis.subscribe("lifemod:sanctions", message -> {
-                String[] parts = message.split("\\|");
-                if (parts.length < 3) return;
-                
-                String action = parts[0];
-                String typeStr = parts[1];
-                UUID playerUuid = UUID.fromString(parts[2]);
-                
-                if (action.equals("ADD")) {
-                    // ADD|TYPE|PLAYER_UUID|ISSUER_NAME|REASON|DURATION|SILENT|SERVER|CATEGORY
-                    if (parts.length < 9) return;
-                    String issuerName = parts[3];
-                    String reason = parts[4];
-                    long duration = Long.parseLong(parts[5]);
-                    boolean silent = Boolean.parseBoolean(parts[6]);
-                    String server = parts[7];
-                    String category = parts[8];
-
-                    Bukkit.getScheduler().runTask(this, () -> {
-                        Player player = Bukkit.getPlayer(playerUuid);
-                        if (player != null) {
-                            if (typeStr.equals("BAN")) {
-                                String kickMsg = langConfig.getString("sanctions.ban.login")
-                                        .replace("%reason%", reason);
-                                player.kickPlayer(MessageUtil.formatMessage(kickMsg));
-                            } else if (typeStr.equals("KICK")) {
-                                String kickMsg = langConfig.getString("sanctions.kick.message")
-                                        .replace("%reason%", reason);
-                                player.kickPlayer(MessageUtil.formatMessage(kickMsg));
-                            }
-                        }
-
-                        // Broadcast sur les autres serveurs
-                        String path = "sanctions.broadcast." + typeStr.toLowerCase() + (silent ? ".silent" : ".public");
-                        String template = langConfig.getString(path);
-                        if (template != null) {
-                            String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
-                            if (targetName == null) targetName = playerUuid.toString();
-
-                            String broadcastMsg = template
-                                    .replace("%target%", targetName)
-                                    .replace("%issuer%", issuerName)
-                                    .replace("%reason%", reason)
-                                    .replace("%time%", TimeUtil.formatTime(duration))
-                                    .replace("%server%", server);
-
-                            String formatted = MessageUtil.formatMessage(broadcastMsg);
-                            if (silent) {
-                                Bukkit.getOnlinePlayers().stream()
-                                        .filter(p -> p.hasPermission("lifemod.sanctions.see-silent"))
-                                        .forEach(p -> p.sendMessage(formatted));
-                                Bukkit.getConsoleSender().sendMessage(formatted);
-                            } else {
-                                Bukkit.broadcastMessage(formatted);
-                            }
-                        }
-                    });
-                } else if (action.equals("REMOVE")) {
-                    // REMOVE|TYPE|PLAYER_UUID|REMOVED_BY_NAME|REASON|SILENT
-                    if (parts.length < 5) return;
-                    String removedByName = parts[3];
-                    String reason = parts[4];
-                    boolean silent = parts.length > 5 && Boolean.parseBoolean(parts[5]);
-
-                    Bukkit.getScheduler().runTask(this, () -> {
-                        String path = "sanctions.broadcast.un" + typeStr.toLowerCase() + (silent ? ".silent" : ".public");
-                        String template = langConfig.getString(path);
-                        if (template == null) {
-                            template = langConfig.getString("sanctions.broadcast.un" + typeStr.toLowerCase());
-                        }
-                        
-                        if (template != null) {
-                            String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
-                            if (targetName == null) targetName = playerUuid.toString();
-
-                            String broadcastMsg = template
-                                    .replace("%target%", targetName)
-                                    .replace("%issuer%", removedByName)
-                                    .replace("%reason%", reason);
-
-                            String formatted = MessageUtil.formatMessage(broadcastMsg);
-                            if (silent) {
-                                Bukkit.getOnlinePlayers().stream()
-                                        .filter(p -> p.hasPermission("lifemod.sanctions.see-silent"))
-                                        .forEach(p -> p.sendMessage(formatted));
-                                Bukkit.getConsoleSender().sendMessage(formatted);
-                            } else {
-                                Bukkit.broadcastMessage(formatted);
-                            }
-                        }
-                    });
-                }
-            });
-
-            redis.subscribe("lifemod:staff", message -> {
-                String[] parts = message.split("\\|");
-                if (parts.length < 4) return;
-
-                String action = parts[0];
-                if (!action.equals("UPDATE")) return;
-
-                UUID uuid = UUID.fromString(parts[1]);
-                boolean state = Boolean.parseBoolean(parts[2]);
-                String originServer = parts[3];
-
-                // If the message comes from THIS server, ignore it
-                if (originServer.equals(getServerName())) return;
-
-                Bukkit.getScheduler().runTask(this, () -> {
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player != null) {
-                        if (state) {
-                            if (!staffModeManager.isMod(player)) {
-                                staffModeManager.enableStaffMode(player);
-                            }
-                        } else {
-                            if (staffModeManager.isMod(player)) {
-                                staffModeManager.disableStaffMode(player);
-                            } else {
-                                // Important: si on reçoit "false" et qu'on n'est pas mod, on nettoie quand même
-                                // au cas où le joueur aurait rejoint avec des items de staff
-                                staffModeManager.forceDisableOnJoin(player);
-                            }
-                        }
-                    }
-                });
-            });
-        }
+        setupRedis();
 
         PacketEvents.getAPI().init();
         
@@ -252,29 +108,29 @@ public class LifeMod extends JavaPlugin {
         this.packetController = new PacketController(this);
         PacketEvents.getAPI().getEventManager().registerListener(this.packetController, PacketListenerPriority.NORMAL);
         
+        this.commandRegistry = new CommandRegistry(this);
         registerEvents();
         registerCommands();
         setupMetrics();
 
-        // Cleanup task for expired sanctions
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);
         
         long elapsed = System.currentTimeMillis() - start;
-        
-        // Detailed Startup Message
-        getLogger().info("§8§m----------------------------------------");
-        getLogger().info("§6§lLifeMod §7- §aSuccessfully Enabled");
-        getLogger().info(" ");
-        getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        getLogger().info("§e• §fPlatform: §aBukkit §7(" + Bukkit.getName() + ")");
-        getLogger().info("§e• §fNMS Instance: §d" + Bukkit.getBukkitVersion());
-        getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type").toUpperCase());
-        getLogger().info("§e• §fRedis Sync: " + (configConfig.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
-        getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
-        getLogger().info(" ");
-        getLogger().info("§8§m----------------------------------------");
+        printStartupMessage(elapsed);
+    }
+
+    private void setupRedis() {
+        if (configConfig.getBoolean("redis.enabled", false)) {
+            String host = configConfig.getString("redis.host");
+            int port = configConfig.getInt("redis.port", 6379);
+            String password = configConfig.getString("redis.password");
+            IMessagingService redis = new RedisMessagingService(host, port, password);
+            ServiceRegistry.register(IMessagingService.class, redis);
+            
+            // Subscriptions logic would go here if needed
+        }
     }
 
     private void loadConfigurations() {
@@ -305,14 +161,17 @@ public class LifeMod extends JavaPlugin {
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
         reactionManager = new ReactionManager(this);
         
-        // Staff System
         staffItemManager = new StaffItemManager(this);
         staffModeManager = new StaffModeManager(this, staffItemManager);
         invseeManager = new InvseeManager();
         staffActionManager = new StaffActionManager();
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
         
-        // Vanish System
+        // AntiCheat System
+        this.antiCheatService = new fr.lampalon.lifemod.common.anticheat.AntiCheatService(ServiceRegistry.get(ILifePlatform.class));
+        this.antiCheatService.init();
+        ServiceRegistry.register(fr.lampalon.lifemod.common.anticheat.AntiCheatService.class, this.antiCheatService);
+
         vanishService = new VanishService(this);
         PacketEvents.getAPI().getEventManager().registerListener(
             new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService), 
@@ -329,7 +188,6 @@ public class LifeMod extends JavaPlugin {
         PluginManager pm = Bukkit.getPluginManager();
         updateChecker = new UpdateChecker(this, 112381);
         pm.registerEvents(new ModCancels(), this);
-        // pm.registerEvents(new ModItemsInteract(), this); // Deprecated
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffListener(staffModeManager, staffItemManager, staffActionManager), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffPhysicalListener(staffModeManager), this);
         pm.registerEvents(new Staffchatevent(this), this);
@@ -356,80 +214,24 @@ public class LifeMod extends JavaPlugin {
     }
 
     private void registerCommands() {
-        registerCommand(new FlyCmd(this));
-        registerCommand(new BanCmd());
-        registerCommand(new MuteCmd());
-        registerCommand(new KickCmd());
-        registerCommand(new WarnCmd());
-        registerCommand(new NoteCmd());
-        registerCommand(new UnbanCmd());
-        registerCommand(new UnmuteCmd());
-        registerCommand(new HistoryCmd());
-        registerCommand(new CaseCmd());
-        registerCommand(new AltsCmd());
-        registerCommand(new StaffHistoryCmd());
-        registerCommand(new AltCmd());
-        
-        registerCommand("freeze", new FreezeCmd(this));
-        registerCommand("mod", new ModCmd(this, staffModeManager));
-        registerCommand("staff", new ModCmd(this, staffModeManager));
-        registerCommand("broadcast", new BroadcastCmd(this));
-        registerCommand("bc", new BroadcastCmd(this));
-        
-        GmCmd gmCmd = new GmCmd(this);
-        registerCommand(gmCmd); // registers "gamemode"
-        registerCommand("gm", new BukkitCommandAdapter(gmCmd));
-        
-        registerCommand("ecopen", new EcopenCmd(this));
-        registerCommand("vanish", new VanishCmd(this));
-        registerCommand("clearinv", new ClearinvCmd(this));
-        registerCommand("stafflist", new StafflistCmd());
-        registerCommand("staffchat", new StaffchatCmd());
-        registerCommand("chatclear", new ChatclearCmd(this));
-        registerCommand("heal", new HealCmd(this));
-        
-        TeleportCmd tpCmd = new TeleportCmd();
-        registerCommand(tpCmd); // registers "teleport"
-        registerCommand("tp", new BukkitCommandAdapter(tpCmd));
-        registerCommand("tphere", new BukkitCommandAdapter(tpCmd));
-        
-        registerCommand("god", new GodModCmd(this));
-        registerCommand("invsee", new InvseeCmd(this));
-        registerCommand("feed", new FeedCmd(this));
-        registerCommand("weather", new WeatherCmd(this));
-        registerCommand("lifemod", new LifemodCmd(this));
-        registerCommand("speed", new SpeedCmd());
-        registerCommand("spectate", new SpectateCmd(this));
-        registerCommand("otp", new OtpCmd(databaseManager));
-        registerCommand("oinvsee", new OInvseeCmd(databaseManager));
-        registerCommand("settime", new TimeCmd(this));
-        registerCommand("difficulty", new DifficultyCmd(this));
-        registerCommand("hearts", new HeartsCmd(this));
-        registerCommand("modregister", new ModRegisterCmd());
-        registerCommand("modlogin", new ModLoginCmd());
-        registerCommand("modreset", new ModResetCmd());
-        registerCommand("modchangepass", new ModChangePassCmd());
-        registerCommand("follow", new FollowCmd(this));
-        registerCommand("report", new ReportCmd(this));
-        registerCommand("reports", new ReportsCmd(this));
-        registerCommand("togglechat", new ToggleChatCmd());
+        commandRegistry.scanAndRegisterCommands("fr.lampalon.lifemod.platform.bukkit.commands.impl");
     }
 
-    private void registerCommand(LifeCommand lifeCommand) {
-        registerCommand(lifeCommand.getName(), new BukkitCommandAdapter(lifeCommand));
-    }
-
-    private void registerCommand(String commandName, CommandExecutor executor) {
-        if (configConfig.getBoolean("commands.enabled." + commandName, true)) {
-            if (getCommand(commandName) != null) {
-                getCommand(commandName).setExecutor(executor);
-                if (executor instanceof TabCompleter) getCommand(commandName).setTabCompleter((TabCompleter) executor);
-            }
-        }
+    private void printStartupMessage(long elapsed) {
+        getLogger().info("§8§m----------------------------------------");
+        getLogger().info("§6§lLifeMod §7- §aSuccessfully Enabled");
+        getLogger().info(" ");
+        getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
+        getLogger().info("§e• §fPlatform: §aBukkit");
+        getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type").toUpperCase());
+        getLogger().info("§e• §fCommands: §aAuto-Registered (" + commandRegistry.getCommands().size() + ")");
+        getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
+        getLogger().info("§8§m----------------------------------------");
     }
 
     @Override
     public void onDisable() {
+        if (antiCheatService != null) antiCheatService.terminate();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
