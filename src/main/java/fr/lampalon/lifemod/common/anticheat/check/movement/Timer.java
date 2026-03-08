@@ -6,19 +6,13 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import fr.lampalon.lifemod.common.anticheat.check.AbstractCheck;
 import fr.lampalon.lifemod.common.anticheat.data.ACPlayerData;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
-import fr.lampalon.lifemod.common.core.ILifePlatform;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
 
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Timer check measuring the number of incoming movement/flying packets per second.
+ * Timer check using a balance system.
  */
 public class Timer extends AbstractCheck {
-
-    private long lastResetTime = -1;
-    private final AtomicInteger packetCount = new AtomicInteger(0);
 
     public Timer(IConfigurationService configService) {
         super("Timer", configService);
@@ -28,7 +22,6 @@ public class Timer extends AbstractCheck {
     public PacketTypeCommon[] getSupportedPackets() {
         return new PacketTypeCommon[]{
             PacketType.Play.Client.PLAYER_POSITION, 
-            PacketType.Play.Client.PLAYER_ROTATION, 
             PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION
         };
     }
@@ -36,32 +29,25 @@ public class Timer extends AbstractCheck {
     @Override
     public void onHandle(UUID uuid, ACPlayerData data, Object context) {
         if (!(context instanceof PacketReceiveEvent)) return;
-        PacketReceiveEvent event = (PacketReceiveEvent) context;
-        PacketTypeCommon type = event.getPacketType();
+        
+        long now = System.currentTimeMillis();
+        long lastMoveTime = data.getLastMoveTime();
 
-        if (type == PacketType.Play.Client.PLAYER_POSITION || 
-            type == PacketType.Play.Client.PLAYER_ROTATION || 
-            type == PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) {
+        if (lastMoveTime != -1) {
+            long delta = now - lastMoveTime;
+            long balance = data.getTimerBalance();
+            balance += 50; 
+            balance -= delta;
             
-            long now = System.currentTimeMillis();
-            
-            if (lastResetTime == -1) {
-                lastResetTime = now;
-                return;
-            }
+            if (balance < -200) balance = -200;
+            data.setTimerBalance(balance);
 
-            packetCount.incrementAndGet();
-
-            if (now - lastResetTime >= 1000) {
-                int count = packetCount.get();
-                if (count > 22) {
-                    double probability = (count - 20) / 10.0;
-                    flag(uuid, data, Math.min(1.0, probability), "PPS: " + count);
-                }
-                
-                packetCount.set(0);
-                lastResetTime = now;
+            if (balance > 100) { 
+                double probability = balance / 200.0;
+                flag(uuid, data, Math.min(1.0, probability), "Balance: " + balance + "ms");
+                data.setTimerBalance(0);
             }
         }
+        data.setLastMoveTime(now);
     }
 }

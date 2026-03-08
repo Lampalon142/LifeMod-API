@@ -16,6 +16,11 @@ public class BukkitConfigurationService implements IConfigurationService {
     }
 
     @Override
+    public java.util.List<String> getStringList(String path) {
+        return config.getStringList(path);
+    }
+
+    @Override
     public boolean getBoolean(String key, boolean defaultValue) {
         return config.getBoolean(key, defaultValue);
     }

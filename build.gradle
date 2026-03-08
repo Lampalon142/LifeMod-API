@@ -31,6 +31,7 @@ dependencies {
     compileOnly 'net.luckperms:api:5.4'
 
     implementation 'com.github.retrooper:packetevents-spigot:2.7.0'
+    implementation 'com.github.retrooper:packetevents-bungeecord:2.7.0'
     implementation 'xyz.xenondevs.invui:invui:1.49'
     implementation 'redis.clients:jedis:5.1.0'
     implementation 'com.zaxxer:HikariCP:5.1.0'
@@ -58,27 +59,30 @@ tasks.register('deploy') {
     dependsOn shadowJar
     group = "deployment"
 
-    // Only run this if we are NOT in a CI environment
-    onlyIf { System.getenv('GITHUB_ACTIONS') != 'true' }
-
     doLast {
         def shadowJarFile = shadowJar.archiveFile.get().asFile
-        def destinations = [
-                "C:/Users/Lampalon/Desktop/serveurs/Proxy/plugins",
-                "C:/Users/Lampalon/Desktop/serveurs/Lobby/plugins"
-        ]
+        def destDir = file("${projectDir}/run/server/plugins")
 
-        destinations.each { destPath ->
-            def destDir = file(destPath)
-            if (!destDir.exists()) {
-                destDir.mkdirs()
-            }
-            copy {
-                from shadowJarFile
-                into destDir
-            }
+        if (!destDir.exists()) {
+            destDir.mkdirs()
         }
+
+        copy {
+            from shadowJarFile
+            into destDir
+            rename { "LifeMod.jar" }
+        }
+
+        println "🐳 Déploiement Docker (Linux)..."
+
+        exec {
+            commandLine 'docker', 'compose', 'up', '-d'
+        }
+
+        exec {
+            commandLine 'docker', 'compose', 'restart', 'mc-server'
+        }
+
+        println "✅ Plugin déployé. Pour voir les logs : docker logs -f lifemod-server"
     }
 }
-
-//build.dependsOn deploy

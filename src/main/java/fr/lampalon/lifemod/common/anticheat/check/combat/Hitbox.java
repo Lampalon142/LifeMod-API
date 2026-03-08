@@ -1,6 +1,6 @@
 package fr.lampalon.lifemod.common.anticheat.check.combat;
 
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
@@ -19,9 +19,6 @@ import org.bukkit.util.Vector;
 
 import java.util.UUID;
 
-/**
- * Hitbox check using server-side Ray-tracing.
- */
 public class Hitbox extends AbstractCheck {
 
     public Hitbox(IConfigurationService configService) {
@@ -35,41 +32,62 @@ public class Hitbox extends AbstractCheck {
 
     @Override
     public void onHandle(UUID uuid, ACPlayerData data, Object context) {
-        if (!(context instanceof PacketReceiveEvent)) return;
-        PacketReceiveEvent event = (PacketReceiveEvent) context;
+        if (!(context instanceof WrapperPlayClientInteractEntity)) return;
+        WrapperPlayClientInteractEntity wrapper = (WrapperPlayClientInteractEntity) context;
 
-        if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
-            WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
-            if (wrapper.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return;
+        if (wrapper.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return;
+        int targetId = wrapper.getEntityId();
 
-            int targetId = wrapper.getEntityId();
-            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
-            
-            platform.runTask(() -> {
-                Player player = Bukkit.getPlayer(uuid);
-                if (player == null) return;
+        ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
 
-                Entity target = player.getWorld().getEntities().stream()
-                        .filter(e -> e.getEntityId() == targetId)
-                        .findFirst().orElse(null);
+        long ping = PacketEvents.getAPI().getPlayerManager().getPing(Bukkit.getPlayer(uuid));
 
-                if (target == null) return;
+        platform.runTask(() -> {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player == null || !player.isOnline()) return;
 
-                Location eye = player.getEyeLocation();
-                Vector direction = eye.getDirection();
-                
-                double maxRange = configService.getDouble("anticheat.checks.hitbox.max_range", 6.0);
-                BoundingBox targetBox = target.getBoundingBox();
-                
-                double margin = configService.getDouble("anticheat.checks.hitbox.margin", 0.1);
-                targetBox.expand(margin);
-
-                RayTraceResult result = targetBox.rayTrace(eye.toVector(), direction, maxRange);
-
-                if (result == null) {
-                    flag(uuid, data, 0.9, "No intersection with BoundingBox");
+            Entity target = null;
+            for (Entity e : player.getNearbyEntities(10, 10, 10)) {
+                if (e.getEntityId() == targetId) {
+                    target = e;
+                    break;
                 }
-            });
-        }
+            }
+
+            if (target == null) return;
+
+            Location eye = player.getEyeLocation();
+            Vector direction = eye.getDirection();
+
+            double baseMargin = configService.getDouble("anticheat.checks.hitbox.margin", 0.15);
+
+            double pingExpansion = (ping / 50.0) * 0.05;
+
+            BoundingBox targetBox = target.getBoundingBox().clone();
+
+            double expandX = baseMargin + pingExpansion + 0.2;
+            double expandY = baseMargin + pingExpansion + 0.4;
+            double expandZ = baseMargin + pingExpansion + 0.2;
+
+            targetBox.expand(expandX, expandY, expandZ);
+
+            double maxRange = configService.getDouble("anticheat.checks.hitbox.max_range", 6.0);
+            RayTraceResult result = targetBox.rayTrace(eye.toVector(), direction, maxRange);
+
+            double buffer = data.getHitboxBuffer();
+
+            if (result == null) {
+                buffer += 1.0;
+
+                if (buffer > 4.0) {
+                    flag(uuid, data, 0.9, "Hitbox manquée. Buffer max atteint. (Ping: " + ping + "ms)");
+                    buffer = 0;
+                }
+            } else {
+                buffer = Math.max(0, buffer - 0.5);
+            }
+
+            data.setHitboxBuffer(buffer);
+        });
     }
 }

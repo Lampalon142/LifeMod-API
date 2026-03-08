@@ -227,6 +227,29 @@ modules:
         threshold: 0.8
         violation_weight: 3
 
+  # AntiVPN & Network Security
+  antivpn:
+    enabled: false
+    block-vpn: true
+    geo-blocking:
+      mode: "NONE" # NONE, WHITELIST, BLACKLIST
+      countries:
+        - "FR"
+        - "BE"
+        - "CA"
+    blocked-isps:
+      - "OVH"
+      - "Hetzner"
+      - "DigitalOcean"
+      - "Cloudflare"
+      - "Hostinger"
+    whitelist:
+      - "127.0.0.1"
+      - "Lampalon"
+    anti-bot:
+      global-limit: 5 # max connections per second
+      per-ip-cooldown: 10000 # ms (10 seconds)
+
   # Discord Webhook Integration
   discord:
     enabled: false

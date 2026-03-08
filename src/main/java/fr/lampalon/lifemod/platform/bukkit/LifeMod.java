@@ -64,6 +64,7 @@ public class LifeMod extends JavaPlugin {
     private CommandRegistry commandRegistry;
     private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
     private fr.lampalon.lifemod.common.anticheat.AntiCheatService antiCheatService;
+    private fr.lampalon.lifemod.common.antivpn.AntiVPNService antiVPNService;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
@@ -171,6 +172,14 @@ public class LifeMod extends JavaPlugin {
         this.antiCheatService = new fr.lampalon.lifemod.common.anticheat.AntiCheatService(ServiceRegistry.get(ILifePlatform.class));
         this.antiCheatService.init();
         ServiceRegistry.register(fr.lampalon.lifemod.common.anticheat.AntiCheatService.class, this.antiCheatService);
+
+        // AntiVPN System
+        this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(ServiceRegistry.get(ILifePlatform.class));
+        PacketEvents.getAPI().getEventManager().registerListener(
+            new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
+            PacketListenerPriority.LOW
+        );
+        ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
 
         vanishService = new VanishService(this);
         PacketEvents.getAPI().getEventManager().registerListener(

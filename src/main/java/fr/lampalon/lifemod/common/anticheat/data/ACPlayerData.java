@@ -1,8 +1,8 @@
 package fr.lampalon.lifemod.common.anticheat.data;
 
-import java.util.LinkedList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.Map;
 
 /**
@@ -18,7 +18,7 @@ public final class ACPlayerData {
     private String clientBrand;
     private long lastTransactionTime;
 
-    // Combat Samples (Sliding windows)
+    // Combat Samples (Sliding windows) - Thread-safe structure
     private final FixedSizeQueue<Long> clickIntervals = new FixedSizeQueue<>(100);
     private final Map<Integer, EntityState> entityStates = new ConcurrentHashMap<>();
 
@@ -30,6 +30,39 @@ public final class ACPlayerData {
     private long timerBalance = 0;
     private long lastMoveTime = -1;
     private long lastSwingTime = -1;
+    private long highCpsStartTime = -1;
+    private double hitboxBuffer = 0.0;
+
+    // View
+    private float lastYaw = 0.0f;
+    private float lastPitch = 0.0f;
+    private float lastDeltaYaw = 0.0f;
+    private float lastDeltaPitch = 0.0f;
+    private double lastGcd = 0.0;
+    private double aimbotSnapBuffer = 0.0;
+    private double aimbotSmoothBuffer = 0.0;
+    private double aimbotJitterBuffer = 0.0;
+    private long lastAttackTime = 0;
+    private int lastTargetId = -1;
+    private double headLockBuffer = 0.0;
+    private float lastRatio = 0.0f;
+
+
+
+    private boolean onGround = true;
+    private boolean lastOnGround = true;
+    private int airTicks = 0;
+    private int groundTicks = 0;
+    private long lastVelocityTime = 0;
+    private double lastY = 0.0;
+    private double deltaY = 0.0;
+    private float fallDistance = 0.0f;
+
+
+    // Rotation Samples (last 20 deltas for statistical analysis)
+    private final FixedSizeQueue<Float> lastYawDeltas = new FixedSizeQueue<>(20);
+    private final FixedSizeQueue<Float> lastPitchDeltas = new FixedSizeQueue<>(20);
+    private final FixedSizeQueue<Float> lastAccelerations = new FixedSizeQueue<>(20);
 
     // Probabilities & Confidence Score
     private double confidenceScore = 0.0;
@@ -61,6 +94,22 @@ public final class ACPlayerData {
 
     public void setLastSwingTime(long lastSwingTime) {
         this.lastSwingTime = lastSwingTime;
+    }
+
+    public long getHighCpsStartTime() {
+        return highCpsStartTime;
+    }
+
+    public void setHighCpsStartTime(long highCpsStartTime) {
+        this.highCpsStartTime = highCpsStartTime;
+    }
+
+    public double getHitboxBuffer() {
+        return hitboxBuffer;
+    }
+
+    public void setHitboxBuffer(double hitboxBuffer) {
+        this.hitboxBuffer = hitboxBuffer;
     }
 
     public UUID getUuid() {
@@ -115,10 +164,104 @@ public final class ACPlayerData {
         violationLevels.merge(checkName, weight, Integer::sum);
     }
 
+    public double getAimbotSmoothBuffer() {
+        return aimbotSmoothBuffer;
+    }
+
+    public void setAimbotSmoothBuffer(double aimbotSmoothBuffer) {
+        this.aimbotSmoothBuffer = aimbotSmoothBuffer;
+    }
+
+    public double getAimbotSnapBuffer() {
+        return aimbotSnapBuffer;
+    }
+
+    public void setAimbotSnapBuffer(double aimbotSnapBuffer) {
+        this.aimbotSnapBuffer = aimbotSnapBuffer;
+    }
+
+    public float getLastPitch() {
+        return lastPitch;
+    }
+
+    public void setLastPitch(float lastPitch) {
+        this.lastPitch = lastPitch;
+    }
+
+    public float getLastDeltaYaw() {
+        return lastDeltaYaw;
+    }
+
+    public void setLastDeltaYaw(float lastDeltaYaw) {
+        this.lastDeltaYaw = lastDeltaYaw;
+    }
+
+    public float getLastYaw() {
+        return lastYaw;
+    }
+
+    public void setLastYaw(float lastYaw) {
+        this.lastYaw = lastYaw;
+    }
+
+    public long getLastAttackTime() { return lastAttackTime; }
+    public void setLastAttackTime(long lastAttackTime) { this.lastAttackTime = lastAttackTime; }
+
+    public int getLastTargetId() { return lastTargetId; }
+    public void setLastTargetId(int lastTargetId) { this.lastTargetId = lastTargetId; }
+
+    public double getHeadLockBuffer() { return headLockBuffer; }
+    public void setHeadLockBuffer(double headLockBuffer) { this.headLockBuffer = headLockBuffer; }
+
+    public float getLastDeltaPitch() { return lastDeltaPitch; }
+    public void setLastDeltaPitch(float lastDeltaPitch) { this.lastDeltaPitch = lastDeltaPitch; }
+
+    public double getLastGcd() { return lastGcd; }
+    public void setLastGcd(double lastGcd) { this.lastGcd = lastGcd; }
+
+    public double getAimbotJitterBuffer() { return aimbotJitterBuffer; }
+    public void setAimbotJitterBuffer(double aimbotJitterBuffer) { this.aimbotJitterBuffer = aimbotJitterBuffer; }
+
+    public FixedSizeQueue<Float> getLastYawDeltas() { return lastYawDeltas; }
+    public FixedSizeQueue<Float> getLastPitchDeltas() { return lastPitchDeltas; }
+    public FixedSizeQueue<Float> getLastAccelerations() { return lastAccelerations; }
+
+    public boolean isOnGround() { return onGround; }
+    public void setOnGround(boolean onGround) { this.onGround = onGround; }
+
+    public boolean isLastOnGround() { return lastOnGround; }
+    public void setLastOnGround(boolean lastOnGround) { this.lastOnGround = lastOnGround; }
+
+    public int getAirTicks() { return airTicks; }
+    public void setAirTicks(int airTicks) { this.airTicks = airTicks; }
+
+    public int getGroundTicks() { return groundTicks; }
+    public void setGroundTicks(int groundTicks) { this.groundTicks = groundTicks; }
+
+    public long getLastVelocityTime() { return lastVelocityTime; }
+    public void setLastVelocityTime(long lastVelocityTime) { this.lastVelocityTime = lastVelocityTime; }
+
+    public double getLastY() { return lastY; }
+    public void setLastY(double lastY) { this.lastY = lastY; }
+
+    public double getDeltaY() { return deltaY; }
+    public void setDeltaY(double deltaY) { this.deltaY = deltaY; }
+
+    public float getFallDistance() { return fallDistance; }
+    public void setFallDistance(float fallDistance) { this.fallDistance = fallDistance; }
+
+    public float getLastRatio() {
+        return lastRatio;
+    }
+    public void setLastRatio(float lastRatio) {
+        this.lastRatio = lastRatio;
+    }
+
     /**
      * Internal FixedSizeQueue for circular sampling.
+     * Uses ConcurrentLinkedDeque to avoid ConcurrentModificationException.
      */
-    public static class FixedSizeQueue<T> extends LinkedList<T> {
+    public static class FixedSizeQueue<T> extends ConcurrentLinkedDeque<T> {
         private final int maxSize;
 
         public FixedSizeQueue(int maxSize) {
@@ -128,7 +271,7 @@ public final class ACPlayerData {
         @Override
         public boolean add(T k) {
             if (size() >= maxSize) {
-                removeFirst();
+                pollFirst();
             }
             return super.add(k);
         }
@@ -136,7 +279,7 @@ public final class ACPlayerData {
         @Override
         public void addLast(T k) {
             if (size() >= maxSize) {
-                removeFirst();
+                pollFirst();
             }
             super.addLast(k);
         }

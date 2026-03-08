@@ -1,8 +1,14 @@
 package fr.lampalon.lifemod.common.anticheat;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.*;
+import com.github.retrooper.packetevents.event.PacketListener;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerRotation;
 import fr.lampalon.lifemod.common.anticheat.check.Check;
 import fr.lampalon.lifemod.common.anticheat.data.ACPlayerData;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
@@ -14,7 +20,6 @@ import java.util.ArrayList;
 
 /**
  * Service managing the lifecycle of the AntiCheat module.
- * Responsibilities: PlayerData management, Packet interception, Check registration.
  */
 public final class AntiCheatService implements PacketListener {
 
@@ -45,11 +50,11 @@ public final class AntiCheatService implements PacketListener {
         registerCheck(new fr.lampalon.lifemod.common.anticheat.check.combat.Hitbox(config));
         registerCheck(new fr.lampalon.lifemod.common.anticheat.check.combat.Aimbot(config));
         registerCheck(new fr.lampalon.lifemod.common.anticheat.check.movement.Timer(config));
+        registerCheck(new fr.lampalon.lifemod.common.anticheat.check.movement.Fly(config));
+        registerCheck(new fr.lampalon.lifemod.common.anticheat.check.movement.NoFall(config));
     }
 
     public void terminate() {
-        com.github.retrooper.packetevents.event.PacketListener listener = this;
-        PacketEvents.getAPI().getEventManager().unregisterListener((PacketListenerCommon) listener);
         asyncProcessor.shutdown();
         playerDataMap.clear();
         checks.clear();
@@ -80,14 +85,13 @@ public final class AntiCheatService implements PacketListener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        // Required by interface
     }
 
-    private void handleCheck(Check check, UUID uuid, ACPlayerData data, PacketReceiveEvent event) {
+    private void handleCheck(Check check, UUID uuid, ACPlayerData data, Object context) {
         try {
-            check.onHandle(uuid, data, event);
+            check.onHandle(uuid, data, context);
         } catch (Exception e) {
-            platform.logInfo("§c[Feat-AC] Error while handling " + check.getName() + ": " + e.getMessage());
+            platform.logInfo("§c[Feat-AC] Error in " + check.getName() + ": " + e.getMessage());
         }
     }
 

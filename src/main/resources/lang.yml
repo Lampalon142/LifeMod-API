@@ -361,6 +361,9 @@ antialt:
     IPHistory: "Suspicious IP History"
     PatternMatch: "Pattern Match"
 
+antivpn:
+  kick-reason: "&c&lLifeMod &7- &cVPN/Proxy are not allowed on this server."
+
 vanish:
   activate: "&aVanish activated."
   deactivate: "&cVanish deactivated."

@@ -20,6 +20,11 @@ public class ColorUtil {
         }
         return new String(b);
     }
+
+    public static String format(String text) {
+        if (text == null) return "";
+        return translateAlternateColorCodes('&', text);
+    }
 }
 
 

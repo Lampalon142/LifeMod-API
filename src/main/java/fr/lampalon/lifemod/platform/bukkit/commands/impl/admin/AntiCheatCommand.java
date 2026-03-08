@@ -12,7 +12,7 @@ import java.util.List;
 public class AntiCheatCommand extends LifeCommand {
 
     public AntiCheatCommand() {
-        super("anticheat", "lifemod.admin.anticheat", false, "ac");
+        super("anticheat", "lifemod.admin.anticheat", false);
         setDescription("Manage the AntiCheat system.");
         setUsage("/anticheat <reload|status>");
     }

@@ -42,6 +42,7 @@ public class MySQLManager implements DatabaseProvider {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid VARCHAR(36) PRIMARY KEY, world VARCHAR(64), x DOUBLE, y DOUBLE, z DOUBLE, yaw FLOAT, pitch FLOAT, saved_at BIGINT);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36), player_name VARCHAR(32), issuer_uuid VARCHAR(36), issuer_name VARCHAR(32), server_name VARCHAR(64), category VARCHAR(32), type VARCHAR(16), reason TEXT, created_at BIGINT, duration BIGINT, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid VARCHAR(36), removed_by_name VARCHAR(32), remove_reason TEXT, removed_at BIGINT);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, last_name VARCHAR(32), last_ip VARCHAR(45), last_seen BIGINT, in_staff_mode BOOLEAN DEFAULT FALSE);");
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS antivpn_cache (ip VARCHAR(45) PRIMARY KEY, country_code VARCHAR(10), country_name VARCHAR(64), isp TEXT, is_proxy BOOLEAN, last_update BIGINT);");
                         
                         // Mise à jour auto des colonnes si elles manquent
                         try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN in_staff_mode BOOLEAN DEFAULT FALSE;"); } catch (SQLException ignored) {}
@@ -379,6 +380,39 @@ public class MySQLManager implements DatabaseProvider {
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
+    }
+
+    @Override
+    public void saveIPInfo(String ip, String countryCode, String countryName, String isp, boolean isProxy, long lastUpdate) {
+        String sql = "INSERT INTO antivpn_cache (ip, country_code, country_name, isp, is_proxy, last_update) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE country_code=VALUES(country_code), country_name=VALUES(country_name), isp=VALUES(isp), is_proxy=VALUES(is_proxy), last_update=VALUES(last_update)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ip);
+            ps.setString(2, countryCode);
+            ps.setString(3, countryName);
+            ps.setString(4, isp);
+            ps.setBoolean(5, isProxy);
+            ps.setLong(6, lastUpdate);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public fr.lampalon.lifemod.common.antivpn.data.IPInfo getIPInfo(String ip) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM antivpn_cache WHERE ip = ?")) {
+            ps.setString(1, ip);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return new fr.lampalon.lifemod.common.antivpn.data.IPInfo(rs.getString("ip"), rs.getString("country_code"), rs.getString("country_name"), rs.getString("isp"), rs.getBoolean("is_proxy"), rs.getLong("last_update"));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @Override
+    public void deleteExpiredIPInfo(long threshold) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("DELETE FROM antivpn_cache WHERE last_update < ?")) {
+            ps.setLong(1, threshold);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     private Report mapResultSetToReport(ResultSet rs) throws SQLException {

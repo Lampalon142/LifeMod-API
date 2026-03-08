@@ -9,6 +9,8 @@ import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.database.DatabaseManager;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import fr.lampalon.lifemod.platform.bungee.adapter.BungeeConfigurationService;
 import fr.lampalon.lifemod.platform.bungee.adapter.BungeeLangService;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiAltListener;
@@ -16,6 +18,7 @@ import fr.lampalon.lifemod.platform.bungee.listeners.BungeeChatListener;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeConnectionListener;
 import fr.lampalon.lifemod.platform.bungee.managers.BungeeReactionManager;
 import fr.lampalon.lifemod.platform.bungee.managers.antialt.BungeeAntiAltManager;
+import io.github.retrooper.packetevents.bungee.factory.BungeePacketEventsBuilder;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -37,6 +40,13 @@ public class BungeeLifeMod extends Plugin {
     private DatabaseManager databaseManager;
     private BungeeAntiAltManager antiAltManager;
     private BungeeReactionManager reactionManager;
+    private fr.lampalon.lifemod.common.antivpn.AntiVPNService antiVPNService;
+
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(BungeePacketEventsBuilder.build(this));
+        PacketEvents.getAPI().load();
+    }
 
     @Override
     public void onEnable() {
@@ -59,6 +69,14 @@ public class BungeeLifeMod extends Plugin {
 
         this.databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
+
+        PacketEvents.getAPI().init();
+        this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(platform);
+        PacketEvents.getAPI().getEventManager().registerListener(
+                new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, platform),
+                PacketListenerPriority.LOW
+        );
+        ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
         
         this.antiAltManager = new BungeeAntiAltManager(this);
         this.reactionManager = new BungeeReactionManager(this);
@@ -71,18 +89,17 @@ public class BungeeLifeMod extends Plugin {
 
         long elapsed = System.currentTimeMillis() - start;
 
-        // Detailed Startup Message
-        ProxyServer.getInstance().getLogger().info("§8§m----------------------------------------");
-        ProxyServer.getInstance().getLogger().info("§6§lLifeMod §bBungee §7- §aSuccessfully Enabled");
-        ProxyServer.getInstance().getLogger().info(" ");
-        ProxyServer.getInstance().getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        ProxyServer.getInstance().getLogger().info("§e• §fPlatform: §aBungeeCord");
-        ProxyServer.getInstance().getLogger().info("§e• §fInstance: §d" + ProxyServer.getInstance().getVersion());
-        ProxyServer.getInstance().getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
-        ProxyServer.getInstance().getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
-        ProxyServer.getInstance().getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
-        ProxyServer.getInstance().getLogger().info(" ");
-        ProxyServer.getInstance().getLogger().info("§8§m----------------------------------------");
+        getLogger().info("§8§m----------------------------------------");
+        getLogger().info("§6§lLifeMod §bBungee §7- §aSuccessfully Enabled");
+        getLogger().info(" ");
+        getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
+        getLogger().info("§e• §fPlatform: §aBungeeCord");
+        getLogger().info("§e• §fInstance: §d" + ProxyServer.getInstance().getVersion());
+        getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
+        getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
+        getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
+        getLogger().info(" ");
+        getLogger().info("§8§m----------------------------------------");
     }
 
     private void loadConfigs() {

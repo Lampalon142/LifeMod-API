@@ -51,6 +51,11 @@ public interface DatabaseProvider {
     PlayerData getPlayerData(UUID uuid);
     List<PlayerData> getAlts(String ip);
 
+    // AntiVPN Cache
+    void saveIPInfo(String ip, String countryCode, String countryName, String isp, boolean isProxy, long lastUpdate);
+    fr.lampalon.lifemod.common.antivpn.data.IPInfo getIPInfo(String ip);
+    void deleteExpiredIPInfo(long threshold);
+
     class StoredLocation {
         public String world;
         public double x, y, z;

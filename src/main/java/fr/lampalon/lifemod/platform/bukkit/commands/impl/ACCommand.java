@@ -12,21 +12,26 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Commande de gestion de l'AntiCheat (Version compatible avec le nouveau moteur de commandes).
+ */
 public class ACCommand extends LifeCommand {
 
     private static final Set<UUID> alertsToggled = new HashSet<>();
 
     public ACCommand() {
+        // name, permission, playerOnly, aliases
         super("ac", "lifemod.anticheat", false);
     }
 
     @Override
     public void execute(CommandContext context) {
         String[] args = context.getArgs();
+        
         if (args.length == 0) {
             context.getSender().sendMessage("§6§lLifeMod AntiCheat §7- §fCommandes :");
             context.getSender().sendMessage("§e/ac alerts §7- Activer/Désactiver les alertes.");
-            context.getSender().sendMessage("§e/ac stats <joueur> §7- Voir les probabilités de triche.");
+            context.getSender().sendMessage("§e/ac stats <joueur> §7- Voir les statistiques.");
             return;
         }
 
@@ -55,6 +60,8 @@ public class ACCommand extends LifeCommand {
                 return;
             }
             AntiCheatService service = ServiceRegistry.get(AntiCheatService.class);
+            if (service == null) return;
+            
             ACPlayerData data = service.getPlayerData(target.getUniqueId());
             if (data == null) {
                 context.getSender().sendMessage("§cAucune donnée disponible pour ce joueur.");
@@ -63,7 +70,8 @@ public class ACCommand extends LifeCommand {
 
             context.getSender().sendMessage("§8§m----------------------------------------");
             context.getSender().sendMessage("§6§lAntiCheat Stats: §e" + target.getName());
-            context.getSender().sendMessage("§fScore de confiance: §b" + String.format("%.2f", data.getConfidenceScore()));
+            context.getSender().sendMessage("§fConfiance: §b" + String.format("%.2f", data.getConfidenceScore()));
+            context.getSender().sendMessage("§fBalance Timer: §7" + data.getTimerBalance() + "ms");
             context.getSender().sendMessage("§fViolations :");
             data.getViolationLevels().forEach((check, vl) -> {
                 context.getSender().sendMessage(" §7- §e" + check + " : §c" + vl + " VL");
