@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.common.anticheat.check.combat;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
@@ -32,18 +33,20 @@ public class Hitbox extends AbstractCheck {
 
     @Override
     public void onHandle(UUID uuid, ACPlayerData data, Object context) {
-        if (!(context instanceof WrapperPlayClientInteractEntity)) return;
-        WrapperPlayClientInteractEntity wrapper = (WrapperPlayClientInteractEntity) context;
+        if (!(context instanceof PacketReceiveEvent)) return;
+        PacketReceiveEvent event = (PacketReceiveEvent) context;
+
+        if (event.getPacketType() != PacketType.Play.Client.INTERACT_ENTITY) return;
+        WrapperPlayClientInteractEntity wrapper = new WrapperPlayClientInteractEntity(event);
 
         if (wrapper.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return;
         int targetId = wrapper.getEntityId();
 
         ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
-
-        long ping = PacketEvents.getAPI().getPlayerManager().getPing(Bukkit.getPlayer(uuid));
+        Player player = Bukkit.getPlayer(uuid);
+        long ping = PacketEvents.getAPI().getPlayerManager().getPing(player);
 
         platform.runTask(() -> {
-            Player player = Bukkit.getPlayer(uuid);
             if (player == null || !player.isOnline()) return;
 
             Entity target = null;
@@ -60,7 +63,6 @@ public class Hitbox extends AbstractCheck {
             Vector direction = eye.getDirection();
 
             double baseMargin = configService.getDouble("anticheat.checks.hitbox.margin", 0.15);
-
             double pingExpansion = (ping / 50.0) * 0.05;
 
             BoundingBox targetBox = target.getBoundingBox().clone();
@@ -78,7 +80,6 @@ public class Hitbox extends AbstractCheck {
 
             if (result == null) {
                 buffer += 1.0;
-
                 if (buffer > 4.0) {
                     flag(uuid, data, 0.9, "Hitbox manquée. Buffer max atteint. (Ping: " + ping + "ms)");
                     buffer = 0;
