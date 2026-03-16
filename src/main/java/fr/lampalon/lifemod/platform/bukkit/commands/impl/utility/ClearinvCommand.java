@@ -51,16 +51,16 @@ public class ClearinvCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.clearinv.title"))
-                    .setDescription(context.getConfig().getString("discord.clearinv.description")
+                    .setTitle(context.getConfig().getString("discord.clearinv.title", ""))
+                    .setDescription(context.getConfig().getString("discord.clearinv.description", "")
                             .replace("%player%", context.getSender().getName()))
                     .setFooter(
-                            context.getConfig().getString("discord.clearinv.footer.title"),
-                            context.getConfig().getString("discord.clearinv.footer.logo")
+                            context.getConfig().getString("discord.clearinv.footer.title", ""),
+                            context.getConfig().getString("discord.clearinv.footer.logo", "")
                                     .replace("%player%", context.getSender().getName())
                     )
                     .setColor(Color.decode(Objects.requireNonNull(
-                            context.getConfig().getString("discord.clearinv.color")
+                            context.getConfig().getString("discord.clearinv.color", "")
                     ))));
             webhook.execute();
         } catch (IOException e) {

@@ -56,13 +56,13 @@ public class EcopenCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.ecopen.title"))
-                    .setDescription(context.getConfig().getString("discord.ecopen.description")
+                    .setTitle(context.getConfig().getString("discord.ecopen.title", ""))
+                    .setDescription(context.getConfig().getString("discord.ecopen.description", "")
                             .replace("%player%", context.getSender().getName())
                             .replace("%target%", targetName))
-                    .setFooter(context.getConfig().getString("discord.ecopen.footer.title"),
-                            context.getConfig().getString("discord.ecopen.footer.logo"))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.ecopen.color")))));
+                    .setFooter(context.getConfig().getString("discord.ecopen.footer.title", ""),
+                            context.getConfig().getString("discord.ecopen.footer.logo", ""))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.ecopen.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

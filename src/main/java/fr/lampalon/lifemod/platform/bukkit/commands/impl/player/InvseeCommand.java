@@ -77,13 +77,13 @@ public class InvseeCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.invsee.title"))
-                    .setDescription(context.getConfig().getString("discord.invsee.description")
+                    .setTitle(context.getConfig().getString("discord.invsee.title", ""))
+                    .setDescription(context.getConfig().getString("discord.invsee.description", "")
                             .replace("%player%", context.getSender().getName())
                             .replace("%target%", targetName))
-                    .setFooter(context.getConfig().getString("discord.invsee.footer.title"),
-                            context.getConfig().getString("discord.invsee.footer.logo"))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.invsee.color")))));
+                    .setFooter(context.getConfig().getString("discord.invsee.footer.title", ""),
+                            context.getConfig().getString("discord.invsee.footer.logo", ""))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.invsee.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

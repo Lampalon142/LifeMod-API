@@ -71,16 +71,16 @@ public class FreezeCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl); 
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.freeze.title"))
-                    .setDescription(context.getConfig().getString("discord.freeze.description")
+                    .setTitle(context.getConfig().getString("discord.freeze.title", ""))
+                    .setDescription(context.getConfig().getString("discord.freeze.description", "")
                             .replace("%player%", context.getSender().getName()))
                     .setFooter(
-                            context.getConfig().getString("discord.freeze.footer.title"),
-                            context.getConfig().getString("discord.freeze.footer.logo")
+                            context.getConfig().getString("discord.freeze.footer.title", ""),
+                            context.getConfig().getString("discord.freeze.footer.logo", "")
                                     .replace("%player%", context.getSender().getName())
                     )
                     .setColor(Color.decode(Objects.requireNonNull(
-                            context.getConfig().getString("discord.freeze.color")
+                            context.getConfig().getString("discord.freeze.color", "")
                     ))));
             webhook.execute();
         } catch (IOException e) {

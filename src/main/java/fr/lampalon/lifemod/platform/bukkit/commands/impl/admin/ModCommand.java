@@ -42,11 +42,11 @@ public class ModCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl); 
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.mod.title"))
-                    .setDescription(context.getConfig().getString("discord.mod.description").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.mod.footer.title"),
-                            context.getConfig().getString("discord.mod.footer.logo").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.mod.color")))));
+                    .setTitle(context.getConfig().getString("discord.mod.title", ""))
+                    .setDescription(context.getConfig().getString("discord.mod.description", "").replace("%player%", context.getSender().getName()))
+                    .setFooter(context.getConfig().getString("discord.mod.footer.title", ""),
+                            context.getConfig().getString("discord.mod.footer.logo", "").replace("%player%", context.getSender().getName()))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.mod.color", "")))));
             webhook.execute();
         } catch (Exception e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

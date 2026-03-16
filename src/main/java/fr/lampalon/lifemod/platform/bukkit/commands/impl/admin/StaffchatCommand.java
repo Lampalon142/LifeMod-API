@@ -53,13 +53,13 @@ public class StaffchatCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.staffchat.title"))
-                    .setDescription(context.getConfig().getString("discord.staffchat.description")
+                    .setTitle(context.getConfig().getString("discord.staffchat.title", ""))
+                    .setDescription(context.getConfig().getString("discord.staffchat.description", "")
                             .replace("%player%", context.getSender().getName())
                             .replace("%message%", message))
-                    .setFooter(context.getConfig().getString("discord.staffchat.footer.title"),
-                            context.getConfig().getString("discord.staffchat.footer.logo"))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.staffchat.color")))));
+                    .setFooter(context.getConfig().getString("discord.staffchat.footer.title", ""),
+                            context.getConfig().getString("discord.staffchat.footer.logo", ""))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.staffchat.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

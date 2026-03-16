@@ -33,9 +33,7 @@ public class BroadcastCommand extends LifeCommand {
             return;
         }
 
-        String message = String.join(" ", context.getArgs()).replace("
-", "
-");
+        String message = String.join(" ", context.getArgs()).replace(" ", " ");
         String prefix = context.getLang().getMessage("commands.broadcast.prefix");
         String broadcast = MessageUtil.parseColors(prefix + message); // Still using MessageUtil for color parsing
 
@@ -55,17 +53,17 @@ public class BroadcastCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.broadcast.title"))
-                    .setDescription(context.getConfig().getString("discord.broadcast.description")
+                    .setTitle(context.getConfig().getString("discord.broadcast.title", ""))
+                    .setDescription(context.getConfig().getString("discord.broadcast.description", "")
                             .replace("%player%", playerName)
                             .replace("%message%", message))
                     .setFooter(
-                            context.getConfig().getString("discord.broadcast.footer.title"),
-                            context.getConfig().getString("discord.broadcast.footer.logo")
+                            context.getConfig().getString("discord.broadcast.footer.title", ""),
+                            context.getConfig().getString("discord.broadcast.footer.logo", "")
                                     .replace("%player%", playerName)
                     )
                     .setColor(Color.decode(Objects.requireNonNull(
-                            context.getConfig().getString("discord.broadcast.color")
+                            context.getConfig().getString("discord.broadcast.color", "")
                     ))));
             webhook.execute();
         } catch (IOException e) {

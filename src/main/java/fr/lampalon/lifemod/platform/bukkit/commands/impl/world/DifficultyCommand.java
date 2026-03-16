@@ -65,13 +65,13 @@ public class DifficultyCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.difficulty.title"))
-                    .setDescription(context.getConfig().getString("discord.difficulty.description")
+                    .setTitle(context.getConfig().getString("discord.difficulty.title", ""))
+                    .setDescription(context.getConfig().getString("discord.difficulty.description", "")
                             .replace("%player%", context.getSender().getName())
                             .replace("%difficulty%", difficulty))
-                    .setFooter(context.getConfig().getString("discord.difficulty.footer.title"),
-                            context.getConfig().getString("discord.difficulty.footer.logo"))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.difficulty.color")))));
+                    .setFooter(context.getConfig().getString("discord.difficulty.footer.title", ""),
+                            context.getConfig().getString("discord.difficulty.footer.logo", ""))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.difficulty.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

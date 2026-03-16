@@ -56,11 +56,11 @@ public class HealCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.heal.title"))
-                    .setDescription(context.getConfig().getString("discord.heal.description").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.heal.footer.title"),
-                            context.getConfig().getString("discord.heal.footer.logo").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.heal.color")))));
+                    .setTitle(context.getConfig().getString("discord.heal.title", ""))
+                    .setDescription(context.getConfig().getString("discord.heal.description", "").replace("%player%", context.getSender().getName()))
+                    .setFooter(context.getConfig().getString("discord.heal.footer.title", ""),
+                            context.getConfig().getString("discord.heal.footer.logo", "").replace("%player%", context.getSender().getName()))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.heal.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static fr.lampalon.lifemod.platform.bukkit.utils.CompletionUtil.filter;
+
 public class SpectateCommand extends LifeCommand {
     private final SpectateManager spectateManager;
 
@@ -65,7 +67,7 @@ public class SpectateCommand extends LifeCommand {
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1) {
             List<String> suggestions = new ArrayList<>(Arrays.asList("leave", "fp", "random", "back", "list"));
-            suggestions = filter(suggestions, context);
+            suggestions = filter(suggestions, context.getArgs());
             suggestions.addAll(TabCompleterUtils.filterOnlinePlayers(context.getArgs()[0]));
             return suggestions;
         }

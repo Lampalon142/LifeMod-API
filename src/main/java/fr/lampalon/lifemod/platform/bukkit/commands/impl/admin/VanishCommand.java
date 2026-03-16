@@ -62,11 +62,11 @@ public class VanishCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.vanish.title"))
-                    .setDescription(context.getConfig().getString("discord.vanish.description").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.vanish.footer.title"),
-                            context.getConfig().getString("discord.vanish.footer.logo").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.vanish.color")))));
+                    .setTitle(context.getConfig().getString("discord.vanish.title", ""))
+                    .setDescription(context.getConfig().getString("discord.vanish.description", "").replace("%player%", context.getSender().getName()))
+                    .setFooter(context.getConfig().getString("discord.vanish.footer.title", ""),
+                            context.getConfig().getString("discord.vanish.footer.logo", "").replace("%player%", context.getSender().getName()))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.vanish.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

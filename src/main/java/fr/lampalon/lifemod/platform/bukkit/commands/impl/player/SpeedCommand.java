@@ -63,11 +63,11 @@ public class SpeedCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl); 
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.speed.title"))
-                    .setDescription(context.getConfig().getString("discord.speed.description").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.speed.footer.title"),
-                            context.getConfig().getString("discord.speed.footer.logo").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.speed.color")))));
+                    .setTitle(context.getConfig().getString("discord.speed.title", ""))
+                    .setDescription(context.getConfig().getString("discord.speed.description", "").replace("%player%", context.getSender().getName()))
+                    .setFooter(context.getConfig().getString("discord.speed.footer.title", ""),
+                            context.getConfig().getString("discord.speed.footer.logo", "").replace("%player%", context.getSender().getName()))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.speed.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());

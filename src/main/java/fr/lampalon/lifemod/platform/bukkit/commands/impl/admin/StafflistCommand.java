@@ -51,12 +51,12 @@ public class StafflistCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.stafflist.title"))
-                    .setDescription(context.getConfig().getString("discord.stafflist.description")
+                    .setTitle(context.getConfig().getString("discord.stafflist.title", ""))
+                    .setDescription(context.getConfig().getString("discord.stafflist.description", "")
                             .replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.stafflist.footer.title"),
-                            context.getConfig().getString("discord.stafflist.footer.logo"))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.stafflist.color")))));
+                    .setFooter(context.getConfig().getString("discord.stafflist.footer.title", ""),
+                            context.getConfig().getString("discord.stafflist.footer.logo", ""))
+                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.stafflist.color", "")))));
             webhook.execute();
         } catch (IOException e) {
             context.getDebug().log("discord", "Webhook error: " + e.getMessage());
