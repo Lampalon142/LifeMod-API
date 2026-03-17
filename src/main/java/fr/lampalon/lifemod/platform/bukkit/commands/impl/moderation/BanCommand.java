@@ -1,7 +1,11 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -23,7 +27,13 @@ public class BanCommand extends BaseSanctionCommand {
                     "%issuer%", sanction.getIssuerName(), 
                     "%time%", fr.lampalon.lifemod.common.utils.TimeUtil.formatTime(sanction.getDuration()));
                 
-                context.getPlugin().getPacketController().kickPlayer(target.getPlayer(), kickMsg);
+                ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+                if (platform instanceof BukkitPlatform) {
+                    NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
+                    if (nms != null) {
+                        nms.kickPlayer(target.getPlayer(), kickMsg);
+                    }
+                }
             });
         }
     }

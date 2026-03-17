@@ -1,0 +1,48 @@
+package fr.lampalon.lifemod.common.nms.api;
+
+import org.bukkit.entity.Player;
+
+/**
+ * Interface representing NMS (net.minecraft.server) capabilities.
+ * This abstraction layer allows the plugin to be compatible with multiple Minecraft versions.
+ * 
+ * Règle : Aucune importation net.minecraft ou org.bukkit.craftbukkit ne doit figurer ici.
+ */
+public interface NMSProvider {
+
+    /**
+     * Sends an action bar message to a player.
+     *
+     * @param player  The player receiving the message.
+     * @param message The message to display.
+     */
+    void sendActionBar(Player player, String message);
+
+    /**
+     * Sends a title and subtitle to a player.
+     *
+     * @param player   The player receiving the title.
+     * @param title    The title text.
+     * @param subtitle The subtitle text.
+     * @param fadeIn   The fade in time in ticks.
+     * @param stay     The stay time in ticks.
+     * @param fadeOut  The fade out time in ticks.
+     */
+    void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut);
+
+    /**
+     * Kicks a player with a custom reason.
+     *
+     * @param player The player to kick.
+     * @param reason The reason for the kick.
+     */
+    void kickPlayer(Player player, String reason);
+
+    /**
+     * Retrieves the ping of a player.
+     *
+     * @param player The player.
+     * @return The ping in milliseconds.
+     */
+    int getPing(Player player);
+}

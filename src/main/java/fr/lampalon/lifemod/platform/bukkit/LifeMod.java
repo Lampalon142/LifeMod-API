@@ -15,7 +15,6 @@ import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
-import fr.lampalon.lifemod.integration.nms.PacketController;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
@@ -23,6 +22,7 @@ import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
+import fr.lampalon.lifemod.platform.bukkit.nms.NMSLoader;
 import fr.lampalon.lifemod.platform.bukkit.utils.ConfigUpdater;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
@@ -54,7 +54,6 @@ public class LifeMod extends JavaPlugin {
     private NoteInputManager noteInputManager;
     private ModeratorSessionManager moderatorSessionManager;
     private ModeratorAuthService moderatorAuthService;
-    private PacketController packetController;
     private ReactionManager reactionManager;
     private StaffItemManager staffItemManager;
     private StaffModeManager staffModeManager;
@@ -90,14 +89,15 @@ public class LifeMod extends JavaPlugin {
         new ConfigUpdater(this).updateConfigs();
         loadConfigurations();
         
-        ILifePlatform platform = new BukkitPlatform(this);
-        ServiceRegistry.register(ILifePlatform.class, platform);
+        BukkitPlatform bukkitPlatform = new BukkitPlatform(this);
+        ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         
         setupRedis();
 
         PacketEvents.getAPI().init();
+        bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
         
         this.webHookUrl = configConfig.getString("modules.discord.webhook-url");
         this.spectateManager = new SpectateManager();
@@ -106,8 +106,7 @@ public class LifeMod extends JavaPlugin {
         
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
-        this.packetController = new PacketController(this);
-        PacketEvents.getAPI().getEventManager().registerListener(this.packetController, PacketListenerPriority.NORMAL);
+        PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
         
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();
@@ -253,7 +252,6 @@ public class LifeMod extends JavaPlugin {
     public ChatManager getChatManager() { return chatManager; }
     public GuiManager getGuiManager() { return guiManager; }
     public NoteInputManager getNoteInputManager() { return noteInputManager; }
-    public PacketController getPacketController() { return packetController; }
     public FreezeManager getFreezeManager() { return freezeManager; }
     public IVanishService getVanishService() { return vanishService; }
     public DebugManager getDebugManager() { return debugManager; }

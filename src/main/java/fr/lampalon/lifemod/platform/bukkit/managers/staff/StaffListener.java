@@ -1,5 +1,9 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.IStaffAction;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
@@ -146,7 +150,13 @@ public class StaffListener implements Listener {
             player.sendMessage(MessageUtil.formatMessage(script.substring(9).trim()));
         }
         else if (upper.startsWith("[ACTIONBAR]")) {
-            LifeMod.getInstance().getPacketController().sendActionBar(player, script.substring(11).trim());
+            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+            if (platform instanceof BukkitPlatform) {
+                NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
+                if (nms != null) {
+                    nms.sendActionBar(player, script.substring(11).trim());
+                }
+            }
         }
         else if (upper.startsWith("[SOUND]")) {
             try {

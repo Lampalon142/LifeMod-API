@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -11,9 +12,18 @@ import java.util.UUID;
 public class BukkitPlatform implements ILifePlatform {
 
     private final LifeMod plugin;
+    private NMSProvider nmsProvider;
 
     public BukkitPlatform(LifeMod plugin) {
         this.plugin = plugin;
+    }
+
+    public void setNmsProvider(NMSProvider nmsProvider) {
+        this.nmsProvider = nmsProvider;
+    }
+
+    public NMSProvider getNmsProvider() {
+        return nmsProvider;
     }
 
     @Override
