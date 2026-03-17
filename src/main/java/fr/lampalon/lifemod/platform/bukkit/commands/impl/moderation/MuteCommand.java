@@ -1,7 +1,11 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import org.bukkit.OfflinePlayer;
 
@@ -19,9 +23,15 @@ public class MuteCommand extends BaseSanctionCommand {
             String received = context.getLang().getMessage("sanctions.mute.received").replace("%reason%", sanction.getReason());
             target.getPlayer().sendMessage(received);
 
-            context.getPlugin().getPacketController().sendTitle(target.getPlayer(), context.getLang().getMessage("sanctions.mute.title"), 
-                context.getLang().getMessage("sanctions.mute.subtitle").replace("%reason%", sanction.getReason()), 10, 40, 10);
-            context.getPlugin().getPacketController().sendActionBar(target.getPlayer(), received);
+            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+            if (platform instanceof BukkitPlatform) {
+                NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
+                if (nms != null) {
+                    nms.sendTitle(target.getPlayer(), context.getLang().getMessage("sanctions.mute.title"), 
+                        context.getLang().getMessage("sanctions.mute.subtitle").replace("%reason%", sanction.getReason()), 10, 40, 10);
+                    nms.sendActionBar(target.getPlayer(), received);
+                }
+            }
         }
     }
 }

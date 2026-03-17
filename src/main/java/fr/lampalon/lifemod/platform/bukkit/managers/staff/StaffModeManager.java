@@ -1,6 +1,10 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
@@ -98,9 +102,15 @@ public class StaffModeManager {
         itemManager.giveItems(player);
         plugin.getVanishService().setVanished(player, true, false);
 
-        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"), 
-                plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
-        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
+        ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+        if (platform instanceof BukkitPlatform) {
+            NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
+            if (nms != null) {
+                nms.sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"),
+                        plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
+                nms.sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
+            }
+        }
     }
 
     private void removeStaffState(Player player) {
@@ -111,9 +121,15 @@ public class StaffModeManager {
         player.removePotionEffect(PotionEffectType.NIGHT_VISION);
         plugin.getVanishService().setVanished(player, false, false);
 
-        plugin.getPacketController().sendTitle(player, plugin.getLangConfig().getString("mod.disable-title"), 
-                plugin.getLangConfig().getString("mod.disable-subtitle"), 10, 40, 10);
-        plugin.getPacketController().sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled"));
+        ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+        if (platform instanceof BukkitPlatform) {
+            NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
+            if (nms != null) {
+                nms.sendTitle(player, plugin.getLangConfig().getString("mod.disable-title"),
+                        plugin.getLangConfig().getString("mod.disable-subtitle"), 10, 40, 10);
+                nms.sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled"));
+            }
+        }
     }
 
     private void saveSurvivalInventory(Player player) {
