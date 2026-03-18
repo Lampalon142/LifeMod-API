@@ -30,9 +30,9 @@ public class BinaryReplayReader {
                 int packetCount = inputStream.readInt();
                 List<Object> packets = new ArrayList<>();
                 for (int i = 0; i < packetCount; i++) {
-                    int packetId = inputStream.readInt();
-                    // Basic packet placeholder reading
-                    packets.add(packetId);
+                    String packetName = inputStream.readUTF();
+                    // Basic reconstruction using name (placeholder for logic)
+                    packets.add(packetName);
                 }
                 frames.add(new ReplayFrame(timestamp, packets));
             }

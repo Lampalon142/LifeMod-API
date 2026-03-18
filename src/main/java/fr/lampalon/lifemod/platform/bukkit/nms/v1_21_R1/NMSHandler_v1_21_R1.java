@@ -21,12 +21,13 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
     public void spawnNPC(Player spectator, UUID uuid, String name, Location location) {
         int entityId = uuid.hashCode();
 
-        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData playerData = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
-                new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
-                com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
-                0,
-                null
-        );
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData playerData =
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
+                        net.kyori.adventure.text.Component.text(name),
+                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
+                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
+                        0
+                );
 
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetInfo = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
                 com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
@@ -36,8 +37,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer packetSpawn = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer(
                 entityId,
                 uuid,
-                location.getX(), location.getY(), location.getZ(),
-                location.getYaw(), location.getPitch()
+                new com.github.retrooper.packetevents.protocol.world.Location(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch())
         );
 
         PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetInfo);
@@ -49,10 +49,10 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetRemove = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
                 com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER,
                 java.util.Collections.singletonList(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
+                        null,
                         new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, null),
                         com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
-                        0,
-                        null
+                        0
                 ))
         );
         PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetRemove);
