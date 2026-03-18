@@ -26,9 +26,12 @@ public class BinaryReplayReader {
             while (inputStream.available() > 0) {
                 long timestamp = inputStream.readLong();
                 int packetCount = inputStream.readInt();
-                
-                // Packet deserialization logic here (requires PacketEvents wrapping)
-                frames.add(new ReplayFrame(timestamp, new ArrayList<>()));
+                List<Object> packets = new ArrayList<>();
+                for (int i = 0; i < packetCount; i++) {
+                    // Logic to reconstruct the packet from the stream
+                    // Based on the marker written in BinaryReplayWriter
+                }
+                frames.add(new ReplayFrame(timestamp, packets));
             }
         } catch (IOException e) {
             e.printStackTrace();
