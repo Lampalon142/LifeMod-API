@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.common.replay.storage;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import java.io.*;
 import java.util.List;
@@ -14,7 +16,6 @@ public class BinaryReplayWriter implements ReplayWriter {
 
     @Override
     public void initialize(String sessionName) {
-        // We will store replays in a dedicated directory
         File replayDir = new File("plugins/LifeMod/replays");
         if (!replayDir.exists()) {
             replayDir.mkdirs();
@@ -36,14 +37,7 @@ public class BinaryReplayWriter implements ReplayWriter {
                 outputStream.writeInt(frame.getPackets().size());
                 for (Object packet : frame.getPackets()) {
                     if (packet instanceof com.github.retrooper.packetevents.protocol.packettype.PacketType) {
-                        com.github.retrooper.packetevents.netty.buffer.ByteBufHelper helper = com.github.retrooper.packetevents.PacketEvents.getAPI().getNettyManager().getByteBufHelper();
-                        com.github.retrooper.packetevents.netty.buffer.ByteBuf buffer = helper.allocate(1024);
-                        com.github.retrooper.packetevents.PacketEvents.getAPI().getProtocolManager().writePacket(buffer, (com.github.retrooper.packetevents.protocol.packetwrapper.PacketWrapper<?>) packet);
-                        byte[] bytes = new byte[buffer.readableBytes()];
-                        buffer.readBytes(bytes);
-                        outputStream.writeInt(bytes.length);
-                        outputStream.write(bytes);
-                        buffer.release();
+                        outputStream.writeInt(((com.github.retrooper.packetevents.protocol.packettype.PacketType) packet).getId());
                     }
                 }
             }

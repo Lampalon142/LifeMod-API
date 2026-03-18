@@ -13,19 +13,19 @@ public class ReplayCommand extends LifeCommand {
     private final LifeMod plugin;
 
     public ReplayCommand(LifeMod plugin) {
-        super("replay", "replay.use");
+        super("replay", "replay.use", false, new String[0]);
         this.plugin = plugin;
     }
 
     @Override
     public void execute(CommandContext context) {
         if (!(context.getSender() instanceof Player)) {
-            context.sendMessage("§cOnly players can use this command.");
+            context.getSender().sendMessage("§cOnly players can use this command.");
             return;
         }
 
         if (context.getArgs().length < 2) {
-            context.sendMessage("§cUsage: /replay <player> <time>");
+            context.getSender().sendMessage("§cUsage: /replay <player> <time>");
             return;
         }
 
@@ -34,11 +34,11 @@ public class ReplayCommand extends LifeCommand {
 
         long duration = parseTime(timeStr);
         if (duration == -1) {
-            context.sendMessage("§cInvalid time format. Use: 1h, 30m, 10s.");
+            context.getSender().sendMessage("§cInvalid time format. Use: 1h, 30m, 10s.");
             return;
         }
 
-        context.sendMessage("§aStarting playback for " + targetName + " (" + timeStr + ")...");
+        context.getSender().sendMessage("§aStarting playback for " + targetName + " (" + timeStr + ")...");
         new fr.lampalon.lifemod.platform.bukkit.replay.gui.ReplayGui().open((Player) context.getSender());
     }
 

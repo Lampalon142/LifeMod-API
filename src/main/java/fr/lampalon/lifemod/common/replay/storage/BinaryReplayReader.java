@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.common.replay.storage;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import java.io.*;
 import java.util.ArrayList;
@@ -28,15 +30,9 @@ public class BinaryReplayReader {
                 int packetCount = inputStream.readInt();
                 List<Object> packets = new ArrayList<>();
                 for (int i = 0; i < packetCount; i++) {
-                    int length = inputStream.readInt();
-                    byte[] packetBytes = new byte[length];
-                    inputStream.readFully(packetBytes);
-                    com.github.retrooper.packetevents.netty.buffer.ByteBufHelper helper = com.github.retrooper.packetevents.PacketEvents.getAPI().getNettyManager().getByteBufHelper();
-                    com.github.retrooper.packetevents.netty.buffer.ByteBuf buffer = helper.allocate(length);
-                    buffer.writeBytes(packetBytes);
-                    // Reconstruct packet from the buffer using PacketEvents protocol manager
-                    // packets.add(com.github.retrooper.packetevents.PacketEvents.getAPI().getProtocolManager().readPacket(buffer));
-                    buffer.release();
+                    int packetId = inputStream.readInt();
+                    // Basic packet placeholder reading
+                    packets.add(packetId);
                 }
                 frames.add(new ReplayFrame(timestamp, packets));
             }

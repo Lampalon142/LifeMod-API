@@ -15,6 +15,7 @@ public class ReplayGui {
 
     /**
      * Opens the replay control menu for the moderator.
+     *
      * @param player The mod viewing the replay.
      */
     public void open(Player player) {
@@ -31,8 +32,8 @@ public class ReplayGui {
         Window window = Window.single()
                 .setGui(gui)
                 .setTitle("Replay Controls")
-                .build();
+                .build(player);
 
-        window.open(player);
+        window.open();
     }
 }
