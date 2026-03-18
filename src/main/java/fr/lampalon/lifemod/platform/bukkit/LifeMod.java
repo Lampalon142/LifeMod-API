@@ -59,6 +59,7 @@ public class LifeMod extends JavaPlugin {
     private StaffModeManager staffModeManager;
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
+    private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
     private IVanishService vanishService;
     private CommandRegistry commandRegistry;
     private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
@@ -167,6 +168,12 @@ public class LifeMod extends JavaPlugin {
         staffActionManager = new StaffActionManager();
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
         
+        this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
+        PacketEvents.getAPI().getEventManager().registerListener(
+            new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager.getBuffer()),
+            PacketListenerPriority.MONITOR
+        );
+
         // AntiCheat System
         this.antiCheatService = new fr.lampalon.lifemod.common.anticheat.AntiCheatService(ServiceRegistry.get(ILifePlatform.class));
         this.antiCheatService.init();
