@@ -21,14 +21,16 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
     public void spawnNPC(Player spectator, UUID uuid, String name, Location location) {
         int entityId = uuid.hashCode();
         
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData playerData = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
+                new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
+                com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
+                0,
+                null
+        );
+        
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetInfo = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
                 com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
-                java.util.Collections.singletonList(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
-                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
-                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
-                        0,
-                        null
-                ))
+                java.util.Collections.singletonList(playerData)
         );
         
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer packetSpawn = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer(
