@@ -5,14 +5,27 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerAc
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisconnect;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTitle;
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.common.nms.api.NMSReplayHandler;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import java.util.UUID;
 
 /**
  * Implementation for NMS capabilities using PacketEvents (v1_21_R1 compatible).
  */
-public class NMSHandler_v1_21_R1 implements NMSProvider {
+public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
+
+    @Override
+    public void spawnNPC(Player spectator, UUID uuid, String name, Location location) {
+        // Implementation for spawning NPC using PacketEvents wrappers
+    }
+
+    @Override
+    public void removeNPC(Player spectator, UUID uuid) {
+        // Implementation for removing NPC using PacketEvents wrappers
+    }
 
     @Override
     public void sendActionBar(Player player, String message) {
