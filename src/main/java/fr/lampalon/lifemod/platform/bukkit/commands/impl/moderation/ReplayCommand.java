@@ -39,7 +39,7 @@ public class ReplayCommand extends LifeCommand {
         }
 
         context.sendMessage("§aStarting playback for " + targetName + " (" + timeStr + ")...");
-        // Integration with ReplayManager logic to start playback will go here
+        new fr.lampalon.lifemod.platform.bukkit.replay.gui.ReplayGui().open((Player) context.getSender());
     }
 
     private long parseTime(String timeStr) {
