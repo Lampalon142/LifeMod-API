@@ -28,8 +28,15 @@ public class BinaryReplayReader {
                 int packetCount = inputStream.readInt();
                 List<Object> packets = new ArrayList<>();
                 for (int i = 0; i < packetCount; i++) {
-                    // Logic to reconstruct the packet from the stream
-                    // Based on the marker written in BinaryReplayWriter
+                    int length = inputStream.readInt();
+                    byte[] packetBytes = new byte[length];
+                    inputStream.readFully(packetBytes);
+                    com.github.retrooper.packetevents.netty.buffer.ByteBufHelper helper = com.github.retrooper.packetevents.PacketEvents.getAPI().getNettyManager().getByteBufHelper();
+                    com.github.retrooper.packetevents.netty.buffer.ByteBuf buffer = helper.allocate(length);
+                    buffer.writeBytes(packetBytes);
+                    // Reconstruct packet from the buffer using PacketEvents protocol manager
+                    // packets.add(com.github.retrooper.packetevents.PacketEvents.getAPI().getProtocolManager().readPacket(buffer));
+                    buffer.release();
                 }
                 frames.add(new ReplayFrame(timestamp, packets));
             }
