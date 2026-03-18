@@ -1,5 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.replay;
 
+import fr.lampalon.lifemod.common.replay.EntityIdMapper;
+import fr.lampalon.lifemod.common.replay.SkinManager;
+import fr.lampalon.lifemod.common.replay.Interpolator;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -8,16 +11,20 @@ import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import java.util.List;
 
 /**
- * Manages the playback of recorded replay data.
+ * Manages the playback of recorded replay data using dedicated replay tools.
  */
 public class PlaybackManager {
 
     private final LifeMod plugin;
+    private final EntityIdMapper idMapper;
+    private final SkinManager skinManager;
     private List<ReplayFrame> frames;
     private int currentIndex = 0;
 
     public PlaybackManager(LifeMod plugin) {
         this.plugin = plugin;
+        this.idMapper = new EntityIdMapper();
+        this.skinManager = new SkinManager();
     }
 
     /**
@@ -34,15 +41,18 @@ public class PlaybackManager {
             public void run() {
                 if (currentIndex >= frames.size()) {
                     this.cancel();
+                    idMapper.clear();
                     return;
                 }
 
                 ReplayFrame frame = frames.get(currentIndex);
-                // Here we inject the packets to the spectator using PacketEvents
-                // Example: PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, frame.getPackets());
+                // Here we would apply interpolation for smooth movement:
+                // Location interpolated = Interpolator.interpolateLocation(lastLoc, currentLoc, 0.5);
+                
+                // NPC spawning/updating would be handled here via NMSReplayHandler
                 
                 currentIndex++;
             }
-        }.runTaskTimer(plugin, 0L, 1L); // Playback speed: 1 frame per tick
+        }.runTaskTimer(plugin, 0L, 1L);
     }
 }
