@@ -19,12 +19,37 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
 
     @Override
     public void spawnNPC(Player spectator, UUID uuid, String name, Location location) {
-        // Implementation for spawning NPC using PacketEvents wrappers
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetInfo = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
+                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
+                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
+                        0,
+                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
+                        null
+                )
+        );
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer packetSpawn = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer(
+                uuid,
+                location.toVector(),
+                location.getYaw(),
+                location.getPitch()
+        );
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetInfo);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetSpawn);
     }
 
     @Override
     public void removeNPC(Player spectator, UUID uuid) {
-        // Implementation for removing NPC using PacketEvents wrappers
+        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetRemove = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
+                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER,
+                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
+                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, null),
+                        0,
+                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
+                        null
+                )
+        );
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetRemove);
     }
 
     @Override
