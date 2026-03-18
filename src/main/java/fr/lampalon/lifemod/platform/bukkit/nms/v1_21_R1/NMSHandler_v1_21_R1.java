@@ -36,7 +36,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer packetSpawn = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer(
                 entityId,
                 uuid,
-                new com.github.retrooper.packetevents.protocol.world.Location(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch())
+                location.toVector().toLocation(location.getWorld())
         );
         
         PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetInfo);

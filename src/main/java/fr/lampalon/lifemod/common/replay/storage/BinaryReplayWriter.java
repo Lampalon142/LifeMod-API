@@ -37,7 +37,8 @@ public class BinaryReplayWriter implements ReplayWriter {
                 outputStream.writeInt(frame.getPackets().size());
                 for (Object packet : frame.getPackets()) {
                     if (packet instanceof com.github.retrooper.packetevents.protocol.packettype.PacketType) {
-                        outputStream.writeInt(((com.github.retrooper.packetevents.protocol.packettype.PacketType) packet).getId());
+                        int packetId = com.github.retrooper.packetevents.PacketEvents.getAPI().getProtocolManager().getPacketId(com.github.retrooper.packetevents.protocol.ConnectionState.PLAY, com.github.retrooper.packetevents.protocol.PacketSide.SERVER, packet.getClass());
+                        outputStream.writeInt(packetId);
                     }
                 }
             }
