@@ -10,6 +10,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
+import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
@@ -278,6 +279,10 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
     public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
+
+    public ReplayManager getReplayManager() {
+        return replayManager;
+    }
 
     public String getServerName() {
         return configConfig.getString("server.name");
