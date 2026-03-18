@@ -13,8 +13,25 @@ import java.util.logging.Logger;
 public class NMSLoader {
 
     public static NMSProvider load(Logger logger) {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        String[] parts = Bukkit.getServer().getClass().getPackage().getName().split("\\.");
+        String version = parts.length > 3 ? parts[3] : "unknown";
         logger.info("Detecting NMS version: " + version);
+
+        if (version.equals("unknown")) {
+            // On recent Paper/Purpur versions, versioned packages are often removed.
+            // We can try to detect via Bukkit version if needed, or default to latest.
+            String bukkitVersion = Bukkit.getBukkitVersion();
+            logger.info("Versioned package not found. Bukkit version: " + bukkitVersion);
+            
+            if (bukkitVersion.contains("1.21")) {
+                return new NMSHandler_v1_21_R1();
+            } else if (bukkitVersion.contains("1.20")) {
+                return new NMSHandler_v1_20_R1();
+            }
+            
+            logger.warning("Unknown Bukkit version: " + bukkitVersion + ". Defaulting to v1_21_R1.");
+            return new NMSHandler_v1_21_R1();
+        }
 
         switch (version) {
             case "v1_20_R1":

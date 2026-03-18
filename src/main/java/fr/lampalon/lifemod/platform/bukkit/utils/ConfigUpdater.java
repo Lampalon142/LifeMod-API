@@ -44,8 +44,6 @@ public class ConfigUpdater {
             return;
         }
 
-        backupFile(file, fileName, userConfig.getString(VERSION_KEY, "unknown"));
-
         boolean changed = false;
         int added = 0;
         List<String> addedKeys = new ArrayList<>();
@@ -69,6 +67,7 @@ public class ConfigUpdater {
 
         if (changed) {
             try {
+                backupFile(file, fileName, userConfig.getString(VERSION_KEY, "unknown"));
                 userConfig.save(file);
                 moveVersionKeyToTop(file);
                 logSection("§6LifeMod §8| §f" + fileName + " §aupgraded! §7(§a+" + added + " new keys§7, §eversion: " + defaultVersion + "§7)\n§7Added keys: §f" + String.join(", ", addedKeys));

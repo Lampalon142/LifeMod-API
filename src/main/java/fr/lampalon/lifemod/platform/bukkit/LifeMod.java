@@ -118,7 +118,7 @@ public class LifeMod extends JavaPlugin {
         }, 20 * 60L, 20 * 60L);
         
         long elapsed = System.currentTimeMillis() - start;
-        printStartupMessage(elapsed);
+        printStartupMessage(elapsed, bukkitPlatform.getNmsProvider().getName());
     }
 
     private void setupRedis() {
@@ -225,12 +225,12 @@ public class LifeMod extends JavaPlugin {
         commandRegistry.scanAndRegisterCommands("fr.lampalon.lifemod.platform.bukkit.commands.impl");
     }
 
-    private void printStartupMessage(long elapsed) {
+    private void printStartupMessage(long elapsed, String nmsVersion) {
         getLogger().info("§8§m----------------------------------------");
         getLogger().info("§6§lLifeMod §7- §aSuccessfully Enabled");
         getLogger().info(" ");
         getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        getLogger().info("§e• §fPlatform: §aBukkit");
+        getLogger().info("§e• §fPlatform: §b" + nmsVersion + "§e)");
         getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type").toUpperCase());
         getLogger().info("§e• §fCommands: §aAuto-Registered (" + commandRegistry.getCommands().size() + ")");
         getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");

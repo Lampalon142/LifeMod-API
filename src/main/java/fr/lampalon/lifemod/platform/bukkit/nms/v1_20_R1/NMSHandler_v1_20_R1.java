@@ -61,4 +61,9 @@ public class NMSHandler_v1_20_R1 implements NMSProvider {
     public int getPing(Player player) {
         return player.getPing();
     }
+
+    @Override
+    public String getName() {
+        return "v1_20_R1";
+    }
 }

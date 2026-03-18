@@ -45,4 +45,11 @@ public interface NMSProvider {
      * @return The ping in milliseconds.
      */
     int getPing(Player player);
+
+    /**
+     * Retrieves the name of this NMS version.
+     *
+     * @return The NMS version name.
+     */
+    String getName();
 }
