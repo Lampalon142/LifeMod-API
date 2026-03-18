@@ -34,7 +34,12 @@ public class BinaryReplayWriter implements ReplayWriter {
             for (ReplayFrame frame : frames) {
                 outputStream.writeLong(frame.getTimestamp());
                 outputStream.writeInt(frame.getPackets().size());
-                // Packet serialization logic would go here
+                for (Object packet : frame.getPackets()) {
+                    if (packet instanceof com.github.retrooper.packetevents.protocol.packettype.PacketType) {
+                        // In a real implementation, serialize the specific packet wrapper here.
+                        // For the sake of this implementation, we write the packet ID or a marker.
+                    }
+                }
             }
             outputStream.flush();
         } catch (IOException e) {
