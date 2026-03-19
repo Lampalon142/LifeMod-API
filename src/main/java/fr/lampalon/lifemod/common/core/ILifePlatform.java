@@ -53,4 +53,9 @@ public interface ILifePlatform {
      * Dispatch a command as the console.
      */
     void dispatchCommand(String command);
+
+    /**
+     * Get the NMS provider for the current platform.
+     */
+    fr.lampalon.lifemod.common.nms.api.NMSProvider getNmsProvider();
 }

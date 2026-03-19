@@ -18,13 +18,16 @@ import java.util.UUID;
 public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
 
     @Override
-    public void spawnNPC(Player spectator, UUID uuid, String name, Location location) {
-        int entityId = uuid.hashCode();
+    public void spawnNPC(Player spectator, int entityId, UUID uuid, String name, com.github.retrooper.packetevents.protocol.player.TextureProperty[] skin, Location location) {
+        com.github.retrooper.packetevents.protocol.player.UserProfile profile = new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name);
+        if (skin != null) {
+            profile.setTextureProperties(java.util.Arrays.asList(skin));
+        }
 
         com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData playerData =
                 new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
                         net.kyori.adventure.text.Component.text(name),
-                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name),
+                        profile,
                         com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
                         0
                 );

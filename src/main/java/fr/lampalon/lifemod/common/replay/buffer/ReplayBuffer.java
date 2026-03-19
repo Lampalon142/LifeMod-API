@@ -1,36 +1,71 @@
 package fr.lampalon.lifemod.common.replay.buffer;
 
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
- * Thread-safe buffer for incoming replay frames to maintain performance.
+ * A circular-like buffer that keeps the last 1 hour of replay data in memory.
+ * This is designed for high-performance recording with quick retrieval.
  */
 public class ReplayBuffer {
 
-    private final ConcurrentLinkedQueue<ReplayFrame> frameQueue = new ConcurrentLinkedQueue<>();
+    private static final long MAX_DURATION_MS = 3600000; // 1 hour in milliseconds
+    private final ConcurrentLinkedDeque<ReplayFrame> frames = new ConcurrentLinkedDeque<>();
 
     /**
-     * Appends a frame to the queue.
+     * Appends a frame to the buffer and removes frames older than 1 hour.
      * @param frame The frame to record.
      */
     public void addFrame(ReplayFrame frame) {
-        frameQueue.add(frame);
+        frames.addLast(frame);
+        cleanup();
     }
 
     /**
-     * Drains the queue for asynchronous processing.
-     * @return List of current recorded frames.
+     * Removes frames that are older than the maximum allowed duration (1 hour).
      */
-    public List<ReplayFrame> flush() {
-        List<ReplayFrame> flushedFrames = new ArrayList<>();
-        ReplayFrame frame;
-        while ((frame = frameQueue.poll()) != null) {
-            flushedFrames.add(frame);
+    private void cleanup() {
+        long now = System.currentTimeMillis();
+        while (!frames.isEmpty() && (now - frames.peekFirst().getTimestamp() > MAX_DURATION_MS)) {
+            frames.pollFirst();
         }
-        return flushedFrames;
+    }
+
+    /**
+     * Retrieves the last frames for a specific duration.
+     * @param durationMs The duration in milliseconds to retrieve.
+     * @return A list of frames within the requested duration.
+     */
+    public List<ReplayFrame> getFrames(long durationMs) {
+        long now = System.currentTimeMillis();
+        long startTime = now - durationMs;
+        
+        List<ReplayFrame> result = new ArrayList<>();
+        // Iterate backwards from the most recent frames
+        var iterator = frames.descendingIterator();
+        while (iterator.hasNext()) {
+            ReplayFrame frame = iterator.next();
+            if (frame.getTimestamp() >= startTime) {
+                result.add(frame);
+            } else {
+                // Since frames are chronological, we can stop here
+                break;
+            }
+        }
+        
+        // Reverse because we collected them in descending order
+        Collections.reverse(result);
+        return result;
+    }
+
+    /**
+     * Clears all frames from the buffer.
+     */
+    public void clear() {
+        frames.clear();
     }
 
     /**
@@ -38,6 +73,6 @@ public class ReplayBuffer {
      * @return Current buffer size.
      */
     public int size() {
-        return frameQueue.size();
+        return frames.size();
     }
 }

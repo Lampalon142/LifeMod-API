@@ -26,12 +26,15 @@ public class ReplayPacketListener implements PacketListener {
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         UUID uuid = event.getUser().getUUID();
+        if (uuid == null) return;
+        
         ReplaySession session = replayManager.getSession(uuid);
         
         // Cas 1 : Actions directes du joueur/bot (Input)
         if (session != null && session.isRecording()) {
             byte[] dataBuffer = serializePacket(event.getByteBuf());
             if (dataBuffer != null) {
+                // LOGGER.info("[DEBUG] Recorded input packet for " + uuid);
                 session.addFrame(new ReplayFrame(System.currentTimeMillis(), Collections.singletonList(dataBuffer)));
             }
         }
@@ -39,9 +42,23 @@ public class ReplayPacketListener implements PacketListener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        // Cas 2 : Ce que le serveur diffuse sur l'entité (Mouvements, Animations, etc.)
         com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type = event.getPacketType();
         
+        // Capture skins
+        if (type.equals(PacketType.Play.Server.PLAYER_INFO)) {
+            WrapperPlayServerPlayerInfo info = new WrapperPlayServerPlayerInfo(event);
+            if (info.getAction() == WrapperPlayServerPlayerInfo.Action.ADD_PLAYER) {
+                for (WrapperPlayServerPlayerInfo.PlayerData data : info.getPlayerDataList()) {
+                    if (data.getUserProfile().getTextureProperties() != null) {
+                        fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance().getReplayManager().getSkinManager().cacheSkin(
+                            data.getUserProfile().getUUID(),
+                            data.getUserProfile().getTextureProperties().toArray(new com.github.retrooper.packetevents.protocol.player.TextureProperty[0])
+                        );
+                    }
+                }
+            }
+        }
+
         int entityId = -1;
         
         // On extrait l'ID de l'entité concernée par le paquet
@@ -70,9 +87,14 @@ public class ReplayPacketListener implements PacketListener {
             if (session != null && session.isRecording()) {
                 byte[] dataBuffer = serializePacket(event.getByteBuf());
                 if (dataBuffer != null) {
+                    // LOGGER.info("[DEBUG] Recorded movement packet for " + session.getPlayerName());
                     session.addFrame(new ReplayFrame(System.currentTimeMillis(), Collections.singletonList(dataBuffer)));
                 }
             }
+        }
+ else {
+            // Check if this packet is being sent TO a recorded player (e.g. they see others moving)
+            // But we already record packets FROM the player in onPacketReceive.
         }
     }
 

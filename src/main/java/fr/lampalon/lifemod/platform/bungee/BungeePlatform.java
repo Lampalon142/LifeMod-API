@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bungee;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -84,5 +85,10 @@ public class BungeePlatform implements ILifePlatform {
     @Override
     public void dispatchCommand(String command) {
         ProxyServer.getInstance().getPluginManager().dispatchCommand(ProxyServer.getInstance().getConsole(), command);
+    }
+
+    @Override
+    public NMSProvider getNmsProvider() {
+        return null;
     }
 }

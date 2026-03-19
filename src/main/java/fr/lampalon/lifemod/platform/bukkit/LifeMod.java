@@ -60,6 +60,7 @@ public class LifeMod extends JavaPlugin {
     private StaffModeManager staffModeManager;
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
+    private fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager replayPlayerManager;
     private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
     private IVanishService vanishService;
     private CommandRegistry commandRegistry;
@@ -169,6 +170,7 @@ public class LifeMod extends JavaPlugin {
         staffActionManager = new StaffActionManager();
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
         
+        this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
         PacketEvents.getAPI().getEventManager().registerListener(
             new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
@@ -224,6 +226,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new ConnectionListener(), this);
         pm.registerEvents(new InvseeListener(this), this);
         pm.registerEvents(new AntiAltListener(this), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
         if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
@@ -279,6 +282,10 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
     public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
+
+    public fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager getReplayPlayerManager() {
+        return replayPlayerManager;
+    }
 
     public ReplayManager getReplayManager() {
         return replayManager;

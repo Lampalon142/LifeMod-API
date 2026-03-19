@@ -26,10 +26,13 @@ public class ReplayAutoStartListener implements Listener {
         
         LOGGER.info("[DEBUG] PlayerJoinEvent: " + playerName + " (UUID: " + event.getPlayer().getUniqueId() + ", ID: " + entityId + ")");
         
+        org.bukkit.Location loc = event.getPlayer().getLocation();
         plugin.getReplayManager().startRecording(
             event.getPlayer().getUniqueId(), 
             entityId,
-            playerName + "_" + System.currentTimeMillis()
+            event.getPlayer().getName(),
+            playerName + "_" + System.currentTimeMillis(),
+            loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch()
         );
     }
 

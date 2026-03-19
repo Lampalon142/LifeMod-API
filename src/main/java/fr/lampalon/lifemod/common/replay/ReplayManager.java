@@ -11,6 +11,11 @@ public class ReplayManager {
 
     private final Map<UUID, ReplaySession> activeSessions = new ConcurrentHashMap<>();
     private final Map<Integer, ReplaySession> entityIdSessions = new ConcurrentHashMap<>();
+    private final SkinManager skinManager = new SkinManager();
+    
+    public SkinManager getSkinManager() {
+        return skinManager;
+    }
 
     /**
      * Starts recording a session.
@@ -18,8 +23,9 @@ public class ReplayManager {
      * @param entityId Entity ID of the player/bot.
      * @param sessionName Unique session name.
      */
-    public void startRecording(UUID playerUUID, int entityId, String sessionName) {
-        ReplaySession session = new ReplaySession(playerUUID, sessionName);
+    public void startRecording(UUID playerUUID, int entityId, String playerName, String sessionName, double x, double y, double z, float yaw, float pitch) {
+        ReplaySession session = new ReplaySession(playerUUID, entityId, playerName, sessionName);
+        session.setStartPosition(x, y, z, yaw, pitch);
         session.start();
         activeSessions.put(playerUUID, session);
         entityIdSessions.put(entityId, session);
@@ -39,6 +45,7 @@ public class ReplayManager {
     }
 
     public ReplaySession getSession(UUID playerUUID) {
+        if (playerUUID == null) return null;
         return activeSessions.get(playerUUID);
     }
 
@@ -47,6 +54,7 @@ public class ReplayManager {
     }
 
     public boolean isRecording(UUID playerUUID) {
+        if (playerUUID == null) return false;
         return activeSessions.containsKey(playerUUID);
     }
 }
