@@ -1,7 +1,5 @@
 package fr.lampalon.lifemod.common.replay.storage;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import java.io.*;
 import java.util.ArrayList;
@@ -24,15 +22,18 @@ public class BinaryReplayReader {
      */
     public List<ReplayFrame> readAllFrames() {
         List<ReplayFrame> frames = new ArrayList<>();
+        if (!replayFile.exists()) return frames;
+
         try (DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(replayFile)))) {
             while (inputStream.available() > 0) {
                 long timestamp = inputStream.readLong();
                 int packetCount = inputStream.readInt();
-                List<Object> packets = new ArrayList<>();
+                List<byte[]> packets = new ArrayList<>(packetCount);
                 for (int i = 0; i < packetCount; i++) {
-                    String packetName = inputStream.readUTF();
-                    // Basic reconstruction using name (placeholder for logic)
-                    packets.add(packetName);
+                    int length = inputStream.readInt();
+                    byte[] data = new byte[length];
+                    inputStream.readFully(data);
+                    packets.add(data);
                 }
                 frames.add(new ReplayFrame(timestamp, packets));
             }

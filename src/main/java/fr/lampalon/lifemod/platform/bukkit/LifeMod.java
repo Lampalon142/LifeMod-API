@@ -171,7 +171,7 @@ public class LifeMod extends JavaPlugin {
         
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager.getBuffer()),
+            new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
             PacketListenerPriority.MONITOR
         );
 

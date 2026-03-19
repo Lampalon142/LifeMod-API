@@ -1,55 +1,52 @@
 package fr.lampalon.lifemod.common.replay;
 
-import fr.lampalon.lifemod.common.replay.buffer.ReplayBuffer;
-import fr.lampalon.lifemod.common.replay.storage.BinaryReplayWriter;
-import fr.lampalon.lifemod.common.replay.storage.ReplayWriter;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages the replay recording lifecycle, including buffering and disk flushing.
+ * Manages multiple replay recording sessions for both real and fake players.
  */
 public class ReplayManager {
 
-    private final ReplayBuffer buffer;
-    private final ReplayWriter writer;
-    private final ScheduledExecutorService scheduler;
-    private boolean recording;
-
-    public ReplayManager() {
-        this.buffer = new ReplayBuffer();
-        this.writer = new BinaryReplayWriter();
-        this.scheduler = Executors.newSingleThreadScheduledExecutor();
-    }
+    private final Map<UUID, ReplaySession> activeSessions = new ConcurrentHashMap<>();
+    private final Map<Integer, ReplaySession> entityIdSessions = new ConcurrentHashMap<>();
 
     /**
      * Starts recording a session.
+     * @param playerUUID UUID of the player/bot.
+     * @param entityId Entity ID of the player/bot.
      * @param sessionName Unique session name.
      */
-    public void startRecording(String sessionName) {
-        this.writer.initialize(sessionName);
-        this.recording = true;
-
-        // Schedule periodic flush (every 1 second to keep memory usage low)
-        scheduler.scheduleAtFixedRate(() -> {
-            if (!buffer.flush().isEmpty()) {
-                // Here we would implement the segmentation logic (5 mins max per file)
-                writer.writeFrames(buffer.flush());
-            }
-        }, 1, 1, TimeUnit.SECONDS);
+    public void startRecording(UUID playerUUID, int entityId, String sessionName) {
+        ReplaySession session = new ReplaySession(playerUUID, sessionName);
+        session.start();
+        activeSessions.put(playerUUID, session);
+        entityIdSessions.put(entityId, session);
     }
 
     /**
      * Stops the recording process.
+     * @param playerUUID UUID of the player/bot.
      */
-    public void stopRecording() {
-        this.recording = false;
-        scheduler.shutdown();
-        writer.close();
+    public void stopRecording(UUID playerUUID) {
+        ReplaySession session = activeSessions.remove(playerUUID);
+        if (session != null) {
+            session.stop();
+            // Clean mapping by EntityId
+            entityIdSessions.values().removeIf(s -> s.equals(session));
+        }
     }
 
-    public ReplayBuffer getBuffer() {
-        return buffer;
+    public ReplaySession getSession(UUID playerUUID) {
+        return activeSessions.get(playerUUID);
+    }
+
+    public ReplaySession getSessionByEntityId(int entityId) {
+        return entityIdSessions.get(entityId);
+    }
+
+    public boolean isRecording(UUID playerUUID) {
+        return activeSessions.containsKey(playerUUID);
     }
 }
