@@ -1,15 +1,24 @@
 package fr.lampalon.lifemod.platform.bukkit.nms.v1_21_R1;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDisconnect;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTitle;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
+import com.github.retrooper.packetevents.protocol.player.TextureProperty;
+import com.github.retrooper.packetevents.protocol.player.UserProfile;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.common.nms.api.NMSReplayHandler;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Location;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,73 +26,138 @@ import java.util.UUID;
  */
 public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
 
-    @Override
-    public void spawnNPC(Player spectator, int entityId, UUID uuid, String name, com.github.retrooper.packetevents.protocol.player.TextureProperty[] skin, Location location) {
-        com.github.retrooper.packetevents.protocol.player.UserProfile profile = new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, name);
-        if (skin != null) {
-            profile.setTextureProperties(java.util.Arrays.asList(skin));
-        }
+    private static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger("NMSHandler_v1_21_R1");
 
-        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData playerData =
-                new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
-                        net.kyori.adventure.text.Component.text(name),
-                        profile,
-                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
-                        0
-                );
+    private final LifeMod plugin;
 
-        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetInfo = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
-                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.ADD_PLAYER,
-                java.util.Collections.singletonList(playerData)
-        );
-
-        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer packetSpawn = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer(
-                entityId,
-                uuid,
-                new com.github.retrooper.packetevents.protocol.world.Location(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch())
-        );
-
-        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetInfo);
-        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetSpawn);
+    public NMSHandler_v1_21_R1(LifeMod plugin) {
+        this.plugin = plugin;
     }
 
     @Override
-    public void removeNPC(Player spectator, UUID uuid) {
-        com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo packetRemove = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo(
-                com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.Action.REMOVE_PLAYER,
-                java.util.Collections.singletonList(new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo.PlayerData(
-                        null,
-                        new com.github.retrooper.packetevents.protocol.player.UserProfile(uuid, null),
-                        com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL,
-                        0
-                ))
+    public void spawnNPC(Player spectator, int entityId, UUID uuid, String name,
+                         TextureProperty[] skin, org.bukkit.Location location) {
+
+        LOGGER.info("[DEBUG] Spawning NPC for " + spectator.getName()
+                + ": " + name + " (ID: " + entityId + ")");
+
+        // 1) Build profile with skin
+        UserProfile profile = new UserProfile(uuid, name);
+        if (skin != null && skin.length > 0) {
+            profile.setTextureProperties(Arrays.asList(skin));
+        }
+
+        // 2) PlayerInfoUpdate (replaces deprecated PlayerInfo for 1.19+)
+        //    listed=false → NPC won't appear in the tab list
+        //    We still need ADD_PLAYER so the client loads the skin before SpawnEntity
+        WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo =
+                new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(profile);
+        playerInfo.setGameMode(GameMode.SURVIVAL);
+        playerInfo.setDisplayName(Component.text(name));
+        playerInfo.setListed(false);
+
+        WrapperPlayServerPlayerInfoUpdate packetAddTab = new WrapperPlayServerPlayerInfoUpdate(
+                EnumSet.of(
+                        WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+                        WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE,
+                        WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_LISTED,
+                        WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_DISPLAY_NAME
+                ),
+                Collections.singletonList(playerInfo)
         );
-        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetRemove);
+
+        // 3) SpawnEntity
+        WrapperPlayServerSpawnEntity packetSpawn = new WrapperPlayServerSpawnEntity(
+                entityId,
+                Optional.of(uuid),
+                EntityTypes.PLAYER,
+                new Vector3d(location.getX(), location.getY(), location.getZ()),
+                location.getPitch(),
+                location.getYaw(),
+                location.getYaw(),
+                0,
+                Optional.empty()
+        );
+
+        // 4) Metadata — all skin layers visible (index 17, value 127)
+        WrapperPlayServerEntityMetadata metadata = new WrapperPlayServerEntityMetadata(
+                entityId,
+                Collections.singletonList(
+                        new com.github.retrooper.packetevents.protocol.entity.data.EntityData(
+                                17,
+                                com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes.BYTE,
+                                (byte) 127
+                        )
+                )
+        );
+
+        // 5) Head look + teleport for correct initial orientation
+        WrapperPlayServerEntityHeadLook headLook =
+                new WrapperPlayServerEntityHeadLook(entityId, location.getYaw());
+        WrapperPlayServerEntityTeleport teleport =
+                new WrapperPlayServerEntityTeleport(
+                        entityId,
+                        new Vector3d(location.getX(), location.getY(), location.getZ()),
+                        location.getYaw(), location.getPitch(), true
+                );
+
+        // Send ADD_PLAYER first — client needs the profile to render the skin
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetAddTab);
+
+        // Wait 3 ticks before spawning so the client processes the profile
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!spectator.isOnline()) return;
+
+            PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetSpawn);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, metadata);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, headLook);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, teleport);
+
+            LOGGER.info("[DEBUG] Sent spawn packets for " + name);
+
+        }, 3L);
+    }
+
+    @Override
+    public void removeNPC(Player spectator, int entityId, UUID uuid) {
+        LOGGER.info("[DEBUG] Removing NPC for " + spectator.getName() + ": ID " + entityId);
+
+        // Remove from tab list
+        WrapperPlayServerPlayerInfoRemove packetRemoveTab =
+                new WrapperPlayServerPlayerInfoRemove(Collections.singletonList(uuid));
+
+        // Destroy entity
+        WrapperPlayServerDestroyEntities packetDestroy =
+                new WrapperPlayServerDestroyEntities(entityId);
+
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetRemoveTab);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetDestroy);
     }
 
     @Override
     public void sendActionBar(Player player, String message) {
-        WrapperPlayServerActionBar packet = new WrapperPlayServerActionBar(Component.text(MessageUtil.formatMessage(message)));
+        WrapperPlayServerActionBar packet = new WrapperPlayServerActionBar(
+                Component.text(MessageUtil.formatMessage(message)));
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
     }
 
     @Override
-    public void sendTitle(Player player, String title, String subtitle, int fadeIn, int stay, int fadeOut) {
-        Component titleComp = title != null ? Component.text(MessageUtil.formatMessage(title)) : null;
+    public void sendTitle(Player player, String title, String subtitle,
+                          int fadeIn, int stay, int fadeOut) {
+        Component titleComp    = title    != null ? Component.text(MessageUtil.formatMessage(title))    : null;
         Component subtitleComp = subtitle != null ? Component.text(MessageUtil.formatMessage(subtitle)) : null;
 
         WrapperPlayServerTitle timePacket = new WrapperPlayServerTitle(
                 WrapperPlayServerTitle.TitleAction.SET_TIMES_AND_DISPLAY,
-                (Component) null, (Component) null, (Component) null,
-                fadeIn, stay, fadeOut
+                Component.empty(), Component.empty(), Component.empty(), fadeIn, stay, fadeOut
         );
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, timePacket);
 
         if (titleComp != null) {
             WrapperPlayServerTitle titlePacket = new WrapperPlayServerTitle(
                     WrapperPlayServerTitle.TitleAction.SET_TITLE,
-                    titleComp, null, null,
-                    fadeIn, stay, fadeOut
+                    titleComp, Component.empty(), Component.empty(), fadeIn, stay, fadeOut
             );
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, titlePacket);
         }
@@ -91,8 +165,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
         if (subtitleComp != null) {
             WrapperPlayServerTitle subtitlePacket = new WrapperPlayServerTitle(
                     WrapperPlayServerTitle.TitleAction.SET_SUBTITLE,
-                    null, subtitleComp, null,
-                    fadeIn, stay, fadeOut
+                    Component.empty(), subtitleComp, Component.empty(), fadeIn, stay, fadeOut
             );
             PacketEvents.getAPI().getPlayerManager().sendPacket(player, subtitlePacket);
         }
@@ -100,7 +173,8 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
 
     @Override
     public void kickPlayer(Player player, String reason) {
-        WrapperPlayServerDisconnect packet = new WrapperPlayServerDisconnect(Component.text(MessageUtil.formatMessage(reason)));
+        WrapperPlayServerDisconnect packet = new WrapperPlayServerDisconnect(
+                Component.text(MessageUtil.formatMessage(reason)));
         PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
     }
 

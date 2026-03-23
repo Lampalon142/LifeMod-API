@@ -12,7 +12,7 @@ public class ReplayManager {
     private final Map<UUID, ReplaySession> activeSessions = new ConcurrentHashMap<>();
     private final Map<Integer, ReplaySession> entityIdSessions = new ConcurrentHashMap<>();
     private final SkinManager skinManager = new SkinManager();
-    
+
     public SkinManager getSkinManager() {
         return skinManager;
     }

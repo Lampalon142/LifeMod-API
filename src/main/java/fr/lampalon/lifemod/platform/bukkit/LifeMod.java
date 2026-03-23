@@ -116,6 +116,9 @@ public class LifeMod extends JavaPlugin {
         registerCommands();
         setupMetrics();
 
+        // Start Replay Recorder
+        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 1L, 1L);
+
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);

@@ -3,6 +3,7 @@ package fr.lampalon.lifemod.common.replay.storage;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import java.io.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
@@ -26,6 +27,26 @@ public class BinaryReplayWriter implements ReplayWriter {
             LOGGER.info("[DEBUG] Initialized writer for file: " + sessionFile.getAbsolutePath());
         } catch (IOException e) {
             LOGGER.severe("[DEBUG] Failed to initialize writer for " + sessionName + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void writeHeader(UUID playerUUID, int entityId, String playerName, double x, double y, double z, float yaw, float pitch) {
+        if (outputStream == null) return;
+        try {
+            outputStream.writeUTF("LIFEREPLAY"); // Magic string
+            outputStream.writeInt(1); // Version
+            outputStream.writeLong(playerUUID.getMostSignificantBits());
+            outputStream.writeLong(playerUUID.getLeastSignificantBits());
+            outputStream.writeInt(entityId);
+            outputStream.writeUTF(playerName);
+            outputStream.writeDouble(x);
+            outputStream.writeDouble(y);
+            outputStream.writeDouble(z);
+            outputStream.writeFloat(yaw);
+            outputStream.writeFloat(pitch);
+            outputStream.flush();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
