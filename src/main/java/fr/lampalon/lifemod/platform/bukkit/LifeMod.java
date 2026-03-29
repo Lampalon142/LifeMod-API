@@ -231,6 +231,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new AntiAltListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         }

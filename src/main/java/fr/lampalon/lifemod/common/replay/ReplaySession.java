@@ -22,6 +22,7 @@ public class ReplaySession {
     private final int entityId;
     private final String playerName;
     private final String sessionName;
+    private String worldName;
     private final ReplayBuffer buffer;
     private final ReplayWriter writer;
     private final ScheduledExecutorService scheduler;
@@ -47,21 +48,14 @@ public class ReplaySession {
         this.writer.initialize(sessionName);
         this.writer.writeHeader(playerUUID, entityId, playerName, startX, startY, startZ, startYaw, startPitch);
         this.recording = true;
+    }
 
-        // Periodically flush some data or just keep it in memory?
-        // The user said "it doesn't save". Let's save every 5 seconds.
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                if (recording) {
-                    // We don't want to clear the buffer because we need it for /replay command (which reads from memory)
-                    // But if we want to save EVERYTHING to disk, we need to know what was already saved.
-                    // For now, let's just save the current buffer content when requested or on stop.
-                }
-            } catch (Exception e) {
-                LOGGER.severe("[DEBUG] Error during background task for " + sessionName + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        }, 5, 5, TimeUnit.SECONDS);
+    public void setWorldName(String worldName) {
+        this.worldName = worldName;
+    }
+
+    public String getWorldName() {
+        return worldName;
     }
 
     /**

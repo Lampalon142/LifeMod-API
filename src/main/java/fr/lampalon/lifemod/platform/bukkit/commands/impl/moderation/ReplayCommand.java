@@ -159,7 +159,14 @@ public class ReplayCommand extends LifeCommand {
         
         plugin.getReplayPlayerManager().enterReplay(mod);
         PlaybackManager playbackManager = new PlaybackManager(plugin);
-        playbackManager.startPlayback(mod, frames, session);
+        
+        // Ensure we use the correct world for start position
+        org.bukkit.World world = Bukkit.getWorld(session.getWorldName());
+        if (world == null) world = mod.getWorld();
+        
+        Location startLoc = new Location(world, session.getStartX(), session.getStartY(), session.getStartZ(), session.getStartYaw(), session.getStartPitch());
+        
+        playbackManager.startPlayback(mod, frames, session.getEntityId(), session.getPlayerUUID(), session.getPlayerName(), startLoc);
     }
 
     private long parseDuration(String input) {

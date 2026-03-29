@@ -32,6 +32,7 @@ public class ReplayAutoStartListener implements Listener {
             entityId,
             event.getPlayer().getName(),
             playerName + "_" + System.currentTimeMillis(),
+            loc.getWorld().getName(),
             loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch()
         );
     }

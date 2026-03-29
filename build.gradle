@@ -1,10 +1,11 @@
 plugins {
     id 'java'
     id 'com.gradleup.shadow' version '8.3.3'
+    id "com.modrinth.minotaur" version "2.8.7"
 }
 
 group = 'fr.lampalon.lifemod'
-version = '2.0.0-SNAPSHOT'
+version = '2.0.0-SNAPSHOT-DEV'
 
 java {
     toolchain {
@@ -53,6 +54,16 @@ shadowJar {
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "K3tLtfl0"
+    versionNumber = project.version
+    versionType = "beta"
+    uploadFile = shadowJar
+    gameVersions = ["1.20.1"]
+    loaders = ["spigot", "paper"]
 }
 
 tasks.register('deploy') {

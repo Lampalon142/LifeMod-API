@@ -23,8 +23,9 @@ public class ReplayManager {
      * @param entityId Entity ID of the player/bot.
      * @param sessionName Unique session name.
      */
-    public void startRecording(UUID playerUUID, int entityId, String playerName, String sessionName, double x, double y, double z, float yaw, float pitch) {
+    public void startRecording(UUID playerUUID, int entityId, String playerName, String sessionName, String worldName, double x, double y, double z, float yaw, float pitch) {
         ReplaySession session = new ReplaySession(playerUUID, entityId, playerName, sessionName);
+        session.setWorldName(worldName);
         session.setStartPosition(x, y, z, yaw, pitch);
         session.start();
         activeSessions.put(playerUUID, session);

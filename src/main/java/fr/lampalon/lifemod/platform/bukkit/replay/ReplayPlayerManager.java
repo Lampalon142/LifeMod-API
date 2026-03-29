@@ -36,6 +36,13 @@ public class ReplayPlayerManager {
         player.setAllowFlight(true);
         player.setFlying(true);
 
+        // Hide all real players to isolate the moderator
+        for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!online.equals(player)) {
+                player.hidePlayer(plugin, online);
+            }
+        }
+
         giveReplayItems(player);
     }
 
@@ -48,6 +55,13 @@ public class ReplayPlayerManager {
         PlaybackManager pm = activePlaybacks.remove(player.getUniqueId());
         if (pm != null) {
             pm.stopPlayback();
+        }
+
+        // Show players again
+        for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!online.equals(player)) {
+                player.showPlayer(plugin, online);
+            }
         }
 
         ReplayPlayerState state = savedStates.remove(player.getUniqueId());
@@ -67,12 +81,31 @@ public class ReplayPlayerManager {
         activePlaybacks.put(player.getUniqueId(), pm);
     }
 
+    public PlaybackManager getPlaybackManager(Player player) {
+        return activePlaybacks.get(player.getUniqueId());
+    }
+
     private void giveReplayItems(Player player) {
-        ItemStack exitReplay = new ItemBuilder(Material.BARRIER)
-                .setName("§cExit Replay §7(clic droit)")
+        ItemStack rewind = new ItemBuilder(Material.ARROW)
+                .setName("§bReculer de 5 secondes §7(clic droit)")
                 .toItemStack();
 
+        ItemStack forward = new ItemBuilder(Material.ARROW)
+                .setName("§bAvancer de 5 secondes §7(clic droit)")
+                .toItemStack();
+
+        ItemStack pause = new ItemBuilder(Material.CLOCK)
+                .setName("§ePause/Reprendre §7(clic droit)")
+                .toItemStack();
+
+        ItemStack exitReplay = new ItemBuilder(Material.BARRIER)
+                .setName("§cQuitter le Replay §7(clic droit)")
+                .toItemStack();
+
+        player.getInventory().setItem(0, rewind);
+        player.getInventory().setItem(1, forward);
+        player.getInventory().setItem(4, pause);
         player.getInventory().setItem(8, exitReplay);
-        player.getInventory().setHeldItemSlot(8);
+        player.getInventory().setHeldItemSlot(4);
     }
 }

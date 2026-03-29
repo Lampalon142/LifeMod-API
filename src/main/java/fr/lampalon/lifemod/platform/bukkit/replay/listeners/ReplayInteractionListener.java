@@ -30,28 +30,33 @@ public class ReplayInteractionListener implements Listener {
         ItemStack item = event.getItem();
         if (item == null || item.getType() == Material.AIR) return;
 
+        fr.lampalon.lifemod.platform.bukkit.replay.PlaybackManager pm = rpm.getPlaybackManager(player);
+        if (pm == null) return;
+
         event.setCancelled(true);
+        String name = item.getItemMeta().hasDisplayName() ? item.getItemMeta().getDisplayName() : "";
 
         switch (item.getType()) {
             case CLOCK:
-                player.sendMessage("§eToggling playback...");
-                // Handle pause/resume
+                boolean paused = !pm.isPaused();
+                pm.setPaused(paused);
+                player.sendMessage(paused ? "§eReplay mis en pause." : "§aReprise du replay.");
                 break;
             case ARROW:
-                if (item.getItemMeta().getDisplayName().contains("Rewind")) {
-                    player.sendMessage("§bRewinding 5 seconds...");
+                if (name.contains("Reculer")) {
+                    pm.seekTo(player, pm.getCurrentIndex() - 100);
+                    player.sendMessage("§bRecul de 5 secondes...");
                 } else {
-                    player.sendMessage("§bFast forwarding 5 seconds...");
+                    pm.seekTo(player, pm.getCurrentIndex() + 100);
+                    player.sendMessage("§bAvance de 5 secondes...");
                 }
                 break;
             case BOOK:
-                player.sendMessage("§dOpening speed control...");
-                // Here you could open a small chat-based speed control or similar, 
-                // but since the user doesn't want GUIs, maybe just cycle through speeds.
+                player.sendMessage("§dContrôle de vitesse non implémenté.");
                 break;
             case BARRIER:
                 rpm.exitReplay(player);
-                player.sendMessage("§aExited replay mode. Your state has been restored.");
+                player.sendMessage("§aSortie du mode replay. Votre état a été restauré.");
                 break;
             default:
                 break;

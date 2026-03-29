@@ -13,51 +13,63 @@ import java.util.logging.Logger;
 
 /**
  * Manages player skins for NPC injection in replays.
- * Stores skin data (textures/signatures) to ensure NPCs look like the recorded player.
- * Falls back to the Mojang API if the skin is not cached locally.
+ *
+ * For offline/cracked servers, skins must be cached when the player joins
+ * (via ReplayAutoStartListener or a dedicated join listener) because
+ * the Mojang API won't recognize offline-mode UUIDs.
+ *
+ * For online servers, falls back to the Mojang session API if not cached.
  */
 public class SkinManager {
 
     private static final Logger LOGGER = Logger.getLogger("SkinManager");
 
     private final Map<UUID, TextureProperty[]> skinCache = new ConcurrentHashMap<>();
+    // Secondary cache by player name, useful for offline servers
+    private final Map<String, TextureProperty[]> skinCacheByName = new ConcurrentHashMap<>();
 
-    /**
-     * Caches skin properties for a player.
-     */
     public void cacheSkin(UUID uuid, TextureProperty[] properties) {
         if (properties != null && properties.length > 0) {
             skinCache.put(uuid, properties);
         }
     }
 
-    /**
-     * Gets cached skin properties for a player.
-     * Returns null if not cached — use fetchAndCacheSkin() for a guaranteed result.
-     */
+    public void cacheSkinByName(String name, TextureProperty[] properties) {
+        if (properties != null && properties.length > 0) {
+            skinCacheByName.put(name.toLowerCase(), properties);
+        }
+    }
+
     public TextureProperty[] getSkin(UUID uuid) {
         return skinCache.get(uuid);
     }
 
+    public TextureProperty[] getSkinByName(String name) {
+        return skinCacheByName.get(name.toLowerCase());
+    }
+
     /**
-     * Returns the cached skin if available, otherwise fetches it from the Mojang API
-     * synchronously and caches it.
-     *
-     * IMPORTANT: call this from an async thread (e.g. BukkitRunnable async),
-     * never from the main thread, to avoid blocking the server.
-     *
-     * @param uuid Player UUID
-     * @return TextureProperty array, or empty array if fetch failed
+     * Returns cached skin by UUID. If not found, tries by name.
+     * For offline servers, the UUID cache may be empty but name cache works.
+     */
+    public TextureProperty[] getSkinOrByName(UUID uuid, String name) {
+        TextureProperty[] skin = skinCache.get(uuid);
+        if (skin != null && skin.length > 0) return skin;
+        if (name != null) return skinCacheByName.get(name.toLowerCase());
+        return null;
+    }
+
+    /**
+     * For ONLINE mode servers only.
+     * Fetches skin from Mojang session API if not cached.
+     * Do NOT call on the main thread.
      */
     public TextureProperty[] getOrFetchSkin(UUID uuid) {
         TextureProperty[] cached = skinCache.get(uuid);
-        if (cached != null && cached.length > 0) {
-            return cached;
-        }
+        if (cached != null && cached.length > 0) return cached;
 
         LOGGER.info("[SkinManager] Skin not cached for " + uuid + ", fetching from Mojang...");
         try {
-            // Step 1: Get the session profile which includes the skin texture
             String uuidNoDashes = uuid.toString().replace("-", "");
             String sessionUrl = "https://sessionserver.mojang.com/session/minecraft/profile/"
                     + uuidNoDashes + "?unsigned=false";
@@ -67,9 +79,10 @@ public class SkinManager {
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
 
-            if (conn.getResponseCode() != 200) {
-                LOGGER.warning("[SkinManager] Mojang API returned " + conn.getResponseCode()
-                        + " for " + uuid);
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                LOGGER.warning("[SkinManager] Mojang API returned " + code + " for " + uuid
+                        + " (offline server? Use cacheSkin() on join instead)");
                 return new TextureProperty[0];
             }
 
@@ -77,41 +90,31 @@ public class SkinManager {
                     new InputStreamReader(conn.getInputStream()));
             StringBuilder response = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
+            while ((line = reader.readLine()) != null) response.append(line);
             reader.close();
 
             String json = response.toString();
-
-            // Step 2: Parse the "properties" array manually (no external JSON lib needed)
-            // Expected format: "properties":[{"name":"textures","value":"...","signature":"..."}]
             String textureValue = extractJsonString(json, "value");
             String signature    = extractJsonString(json, "signature");
 
             if (textureValue == null || textureValue.isEmpty()) {
-                LOGGER.warning("[SkinManager] Could not parse texture value for " + uuid);
+                LOGGER.warning("[SkinManager] Could not parse texture for " + uuid);
                 return new TextureProperty[0];
             }
 
             TextureProperty prop = new TextureProperty("textures", textureValue,
                     signature != null ? signature : "");
-            TextureProperty[] result = new TextureProperty[]{prop};
+            TextureProperty[] result = {prop};
             skinCache.put(uuid, result);
-
-            LOGGER.info("[SkinManager] Successfully fetched and cached skin for " + uuid);
+            LOGGER.info("[SkinManager] Fetched and cached skin for " + uuid);
             return result;
 
         } catch (Exception e) {
-            LOGGER.warning("[SkinManager] Failed to fetch skin for " + uuid + ": " + e.getMessage());
+            LOGGER.warning("[SkinManager] Fetch failed for " + uuid + ": " + e.getMessage());
             return new TextureProperty[0];
         }
     }
 
-    /**
-     * Extracts the first occurrence of a JSON string value by key.
-     * Simple parser — works for flat Mojang API responses.
-     */
     private String extractJsonString(String json, String key) {
         String search = "\"" + key + "\":\"";
         int start = json.indexOf(search);
