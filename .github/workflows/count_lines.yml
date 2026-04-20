@@ -1,0 +1,95 @@
+name: Update LOC Badge
+
+on:
+
+  push:
+
+    branches: [v2]
+
+
+
+jobs:
+
+  update-badge:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+
+        uses: actions/checkout@v4
+
+
+
+      - name: Count Lines
+
+        id: loc
+
+        run: |
+
+          # On liste les fichiers en excluant spécifiquement tes dossiers et extensions
+
+          COUNT=$(find . -type f \
+
+            -not -path '*/.*' \
+
+            -not -name '*.md' \
+
+            -not -path './target/*' \
+
+            -not -path './build/*' \
+
+            -not -path './.gradle/*' \
+
+            -not -path './.idea/*' \
+
+            -not -path './.vscode/*' \
+
+            -not -path './.settings/*' \
+
+            -not -path './nbproject/*' \
+
+            -not -path './run/*' \
+
+            -not -name '*.iml' \
+
+            -not -name '*.iws' \
+
+            -not -name '*.ipr' \
+
+            -not -name '.classpath' \
+
+            -not -name '.project' \
+
+            -not -name '.DS_Store' \
+
+            | xargs wc -l | tail -1 | awk '{print $1}')
+
+          
+
+          # Si aucun fichier n'est trouvé, on met 0 par sécurité
+
+          if [ -z "$COUNT" ]; then COUNT=0; fi
+
+          
+
+          echo "total=$COUNT" >> $GITHUB_OUTPUT
+
+
+
+      - name: Update Gist
+
+        uses: schnerring/gist-set-json-value-action@v1
+
+        with:
+
+          file: lines.json
+
+          key: lines
+
+          value: ${{ steps.loc.outputs.total }}
+
+          gist_id: c398eb39d86a2f8a0cd9152209391547
+
+          token: ${{ secrets.GIST_TOKEN }}
