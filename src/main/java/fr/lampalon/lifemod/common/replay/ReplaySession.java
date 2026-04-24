@@ -2,6 +2,9 @@ package fr.lampalon.lifemod.common.replay;
 
 import fr.lampalon.lifemod.common.replay.buffer.ReplayBuffer;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.common.replay.storage.BinaryReplayWriter;
+import fr.lampalon.lifemod.common.replay.storage.ReplayWriter;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -19,7 +22,9 @@ public class ReplaySession {
     private final int entityId;
     private final String playerName;
     private final String sessionName;
+    private String worldName;
     private final ReplayBuffer buffer;
+    private final ReplayWriter writer;
     private final ScheduledExecutorService scheduler;
     private boolean recording;
     private double startX, startY, startZ;
@@ -31,6 +36,7 @@ public class ReplaySession {
         this.playerName = playerName;
         this.sessionName = sessionName;
         this.buffer = new ReplayBuffer();
+        this.writer = new BinaryReplayWriter();
         this.scheduler = Executors.newSingleThreadScheduledExecutor();
     }
 
@@ -39,21 +45,17 @@ public class ReplaySession {
      */
     public void start() {
         LOGGER.info("[DEBUG] Starting session: " + sessionName + " for " + playerUUID);
+        this.writer.initialize(sessionName);
+        this.writer.writeHeader(playerUUID, entityId, playerName, startX, startY, startZ, startYaw, startPitch);
         this.recording = true;
+    }
 
-        // Regular cleanup to ensure memory is managed even if no frames are added
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                if (recording) {
-                    // ReplayBuffer already handles cleanup on frame addition, 
-                    // but we can force it here for safety.
-                    // Since it has no public cleanup(), it's fine for now.
-                }
-            } catch (Exception e) {
-                LOGGER.severe("[DEBUG] Error during cleanup for " + sessionName + ": " + e.getMessage());
-                e.printStackTrace();
-            }
-        }, 1, 1, TimeUnit.MINUTES);
+    public void setWorldName(String worldName) {
+        this.worldName = worldName;
+    }
+
+    public String getWorldName() {
+        return worldName;
     }
 
     /**
@@ -62,6 +64,15 @@ public class ReplaySession {
     public void stop() {
         LOGGER.info("[DEBUG] Stopping session: " + sessionName);
         this.recording = false;
+        
+        // Save the whole buffer to disk before clearing!
+        List<ReplayFrame> allFrames = buffer.getFrames(3600000L);
+        if (!allFrames.isEmpty()) {
+            LOGGER.info("[DEBUG] Saving " + allFrames.size() + " frames to disk for " + sessionName);
+            writer.writeFrames(allFrames);
+        }
+        writer.close();
+        
         scheduler.shutdown();
         buffer.clear();
     }

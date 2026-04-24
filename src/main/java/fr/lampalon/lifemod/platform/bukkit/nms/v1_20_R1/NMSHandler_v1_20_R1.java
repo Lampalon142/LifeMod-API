@@ -7,7 +7,15 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerTi
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.World;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation for NMS capabilities using PacketEvents (v1_20_R1 compatible).
@@ -65,5 +73,24 @@ public class NMSHandler_v1_20_R1 implements NMSProvider {
     @Override
     public String getName() {
         return "v1_20_R1";
+    }
+
+    @Override
+    public List<Container> getLoadedContainers(World world) {
+        List<Container> containers = new ArrayList<>();
+
+        // Récupère les chunks déjà chargés seulement
+        for (Chunk chunk : world.getLoadedChunks()) {
+            try {
+                for (BlockState state : chunk.getTileEntities()) {
+                    if (state instanceof Container container) {
+                        containers.add(container);
+                    }
+                }
+            } catch (Exception e) {
+                Bukkit.getLogger().warning("[Scan] Erreur chunk: " + e.getMessage());
+            }
+        }
+        return containers;
     }
 }

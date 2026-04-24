@@ -1,10 +1,29 @@
 plugins {
     id 'java'
+    id 'jacoco'
     id 'com.gradleup.shadow' version '8.3.3'
+    id "com.modrinth.minotaur" version "2.8.7"
 }
 
 group = 'fr.lampalon.lifemod'
-version = '2.0.0-SNAPSHOT'
+version = '2.0.0-SNAPSHOT-DEV'
+
+jacoco {
+    toolchainSupport = true
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
+    }
+}
 
 java {
     toolchain {
@@ -29,20 +48,24 @@ dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
     compileOnly 'net.md-5:bungeecord-api:1.20-R0.2-SNAPSHOT'
     compileOnly 'net.luckperms:api:5.4'
+    compileOnly 'com.mysql:mysql-connector-j:8.3.0'
+    compileOnly 'org.xerial:sqlite-jdbc:3.45.1.0'
+    compileOnly("io.github.querz:nbt:6.1")
 
     implementation 'com.github.retrooper:packetevents-spigot:2.7.0'
     implementation 'com.github.retrooper:packetevents-bungeecord:2.7.0'
     implementation 'xyz.xenondevs.invui:invui:1.49'
     implementation 'redis.clients:jedis:5.1.0'
-    implementation 'com.zaxxer:HikariCP:5.1.0'
-    implementation 'com.mysql:mysql-connector-j:8.3.0'
+    implementation('com.zaxxer:HikariCP:5.1.0') {
+        exclude group: 'org.slf4j'
+    }
     implementation 'org.bstats:bstats-bukkit:3.0.2'
     implementation 'org.mindrot:jbcrypt:0.4'
-    implementation 'org.xerial:sqlite-jdbc:3.45.1.0'
 }
 
 shadowJar {
     archiveClassifier.set('')
+    minimize()
 
     relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
     relocate 'xyz.xenondevs.invui', 'fr.lampalon.lifemod.libs.invui'
@@ -53,6 +76,16 @@ shadowJar {
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN") ?: project.findProperty("modrinthToken")
+    projectId = "K3tLtfl0"
+    versionNumber = project.version
+    versionType = "beta"
+    uploadFile = shadowJar
+    gameVersions = ["1.20.1"]
+    loaders = ["spigot", "paper"]
 }
 
 tasks.register('deploy') {

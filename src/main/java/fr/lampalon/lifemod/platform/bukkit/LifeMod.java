@@ -17,8 +17,10 @@ import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
+import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
+import fr.lampalon.lifemod.common.service.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
@@ -60,6 +62,8 @@ public class LifeMod extends JavaPlugin {
     private StaffModeManager staffModeManager;
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
+    private fr.lampalon.lifemod.platform.bukkit.managers.ScanManager scanManager;
+    private fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager noClipManager;
     private fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager replayPlayerManager;
     private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
     private IVanishService vanishService;
@@ -96,6 +100,7 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
+        ServiceRegistry.register(IItemsAdderService.class, new BukkitItemsAdderService());
         
         setupRedis();
 
@@ -115,6 +120,9 @@ public class LifeMod extends JavaPlugin {
         registerEvents();
         registerCommands();
         setupMetrics();
+
+        // Start Replay Recorder
+        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 1L, 1L);
 
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
@@ -168,6 +176,11 @@ public class LifeMod extends JavaPlugin {
         staffModeManager = new StaffModeManager(this, staffItemManager);
         invseeManager = new InvseeManager();
         staffActionManager = new StaffActionManager();
+        scanManager = new fr.lampalon.lifemod.platform.bukkit.managers.ScanManager(this);
+        noClipManager = new NoClipManager(this);
+        getServer().getPluginManager().registerEvents(
+                new NoClipBukkitListener(noClipManager), this
+        );
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
         
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
@@ -228,6 +241,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new AntiAltListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         if (langConfig.getBoolean("system.update.enabled")) {
             pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         }
@@ -252,6 +266,7 @@ public class LifeMod extends JavaPlugin {
     @Override
     public void onDisable() {
         if (antiCheatService != null) antiCheatService.terminate();
+        noClipManager.shutdown();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
@@ -274,6 +289,8 @@ public class LifeMod extends JavaPlugin {
     public Map<UUID, Deque<Long>> getCpsMap() { return cpsMap; }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
     public InvseeManager getInvseeManager() { return invseeManager; }
+    public fr.lampalon.lifemod.platform.bukkit.managers.ScanManager getScanManager() { return scanManager; }
+    public fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager getNoClipManager() { return noClipManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager getAntiAltManager() { return antiAltManager; }
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }

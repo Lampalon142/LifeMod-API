@@ -21,6 +21,7 @@ public class DatabaseManager {
 
         try {
             switch (type) {
+                case "mariadb":
                 case "mysql":
                     databaseProvider = new MySQLManager();
                     break;

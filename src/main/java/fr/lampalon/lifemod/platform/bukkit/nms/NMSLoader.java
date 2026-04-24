@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.nms;
 
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.nms.v1_20_R1.NMSHandler_v1_20_R1;
 import fr.lampalon.lifemod.platform.bukkit.nms.v1_21_R1.NMSHandler_v1_21_R1;
 import org.bukkit.Bukkit;
@@ -24,13 +25,13 @@ public class NMSLoader {
             logger.info("Versioned package not found. Bukkit version: " + bukkitVersion);
             
             if (bukkitVersion.contains("1.21")) {
-                return new NMSHandler_v1_21_R1();
+                return new NMSHandler_v1_21_R1(LifeMod.getInstance());
             } else if (bukkitVersion.contains("1.20")) {
                 return new NMSHandler_v1_20_R1();
             }
             
             logger.warning("Unknown Bukkit version: " + bukkitVersion + ". Defaulting to v1_21_R1.");
-            return new NMSHandler_v1_21_R1();
+            return new NMSHandler_v1_21_R1(LifeMod.getInstance());
         }
 
         switch (version) {
@@ -41,12 +42,12 @@ public class NMSLoader {
             case "v1_21_R1":
             case "v1_21_R2":
             case "v1_21_R3":
-                return new NMSHandler_v1_21_R1();
+                return new NMSHandler_v1_21_R1(LifeMod.getInstance());
             default:
                 // Try to fallback to 1.21 if version is unknown or higher, 
                 // since PacketEvents might still handle it.
                 logger.warning("Unsupported or unknown NMS version: " + version + ". Attempting fallback to v1_21_R1.");
-                return new NMSHandler_v1_21_R1();
+                return new NMSHandler_v1_21_R1(LifeMod.getInstance());
         }
     }
 }

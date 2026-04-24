@@ -24,7 +24,9 @@ public interface NMSReplayHandler {
     /**
      * Removes a virtual player NPC.
      * @param spectator The mod viewing the replay.
+     * @param entityId NPC entity ID.
      * @param uuid NPC unique ID.
      */
-    void removeNPC(Player spectator, UUID uuid);
+    void removeNPC(Player spectator, int entityId, java.util.UUID uuid);
+
 }
