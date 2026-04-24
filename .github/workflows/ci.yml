@@ -45,7 +45,7 @@ jobs:
         with:
           name: LifeMod-ShadowJar
           path: build/libs/*-all.jar
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/v2')
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5

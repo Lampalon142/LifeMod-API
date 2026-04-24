@@ -9,7 +9,7 @@ group = 'fr.lampalon.lifemod'
 version = '2.0.0-SNAPSHOT-DEV'
 
 jacoco {
-    toolchainSupport = true
+    // toolchainSupport is not needed in Gradle 8.x
 }
 
 test {
