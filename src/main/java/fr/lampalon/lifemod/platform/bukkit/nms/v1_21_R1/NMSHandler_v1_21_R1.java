@@ -13,13 +13,14 @@ import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.World;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Optional;
-import java.util.UUID;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Implementation for NMS capabilities using PacketEvents (v1_21_R1 compatible).
@@ -48,9 +49,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
             profile.setTextureProperties(Arrays.asList(skin));
         }
 
-        // 2) PlayerInfoUpdate (replaces deprecated PlayerInfo for 1.19+)
-        //    listed=false → NPC won't appear in the tab list
-        //    We still need ADD_PLAYER so the client loads the skin before SpawnEntity
+        // 2) PlayerInfoUpdate
         WrapperPlayServerPlayerInfoUpdate.PlayerInfo playerInfo =
                 new WrapperPlayServerPlayerInfoUpdate.PlayerInfo(profile);
         playerInfo.setGameMode(GameMode.SURVIVAL);
@@ -80,7 +79,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
                 Optional.empty()
         );
 
-        // 4) Metadata — all skin layers visible (index 17, value 127)
+        // 4) Metadata
         WrapperPlayServerEntityMetadata metadata = new WrapperPlayServerEntityMetadata(
                 entityId,
                 Collections.singletonList(
@@ -92,7 +91,7 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
                 )
         );
 
-        // 5) Head look + teleport for correct initial orientation
+        // 5) Head look + teleport
         WrapperPlayServerEntityHeadLook headLook =
                 new WrapperPlayServerEntityHeadLook(entityId, location.getYaw());
         WrapperPlayServerEntityTeleport teleport =
@@ -102,10 +101,8 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
                         location.getYaw(), location.getPitch(), true
                 );
 
-        // Send ADD_PLAYER first — client needs the profile to render the skin
         PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetAddTab);
 
-        // Wait 3 ticks before spawning so the client processes the profile
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!spectator.isOnline()) return;
 
@@ -114,20 +111,13 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
             PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, headLook);
             PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, teleport);
 
-            LOGGER.info("[DEBUG] Sent spawn packets for " + name);
-
         }, 3L);
     }
 
     @Override
     public void removeNPC(Player spectator, int entityId, UUID uuid) {
-        LOGGER.info("[DEBUG] Removing NPC for " + spectator.getName() + ": ID " + entityId);
-
-        // Remove from tab list
         WrapperPlayServerPlayerInfoRemove packetRemoveTab =
                 new WrapperPlayServerPlayerInfoRemove(Collections.singletonList(uuid));
-
-        // Destroy entity
         WrapperPlayServerDestroyEntities packetDestroy =
                 new WrapperPlayServerDestroyEntities(entityId);
 
@@ -186,5 +176,23 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
     @Override
     public String getName() {
         return "v1_21_R1";
+    }
+
+    @Override
+    public List<Container> getLoadedContainers(World world) {
+        List<Container> containers = new ArrayList<>();
+        // On utilise l'API Bukkit de base mais de manière optimisée pour éviter la duplication d'objets
+        // Si les dépendances NMS ne sont pas présentes au compile-time, on utilise les méthodes natives de Bukkit
+        // qui sont déjà très performantes sur les versions récentes de Paper.
+        for (Chunk chunk : world.getLoadedChunks()) {
+            try {
+                for (BlockState state : chunk.getTileEntities()) {
+                    if (state instanceof Container container) {
+                        containers.add(container);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return containers;
     }
 }

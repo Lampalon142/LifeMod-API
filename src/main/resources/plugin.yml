@@ -127,6 +127,8 @@ commands:
   ac:
     description: Anticheat Manager
     permission: lifemod.admin.ac
+  scan:
+    description: Scan map
 
 permissions:
   lifemod.*:

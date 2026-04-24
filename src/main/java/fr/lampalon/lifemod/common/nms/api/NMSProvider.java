@@ -1,6 +1,9 @@
 package fr.lampalon.lifemod.common.nms.api;
 
+import org.bukkit.World;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import java.util.List;
 
 /**
  * Interface representing NMS (net.minecraft.server) capabilities.
@@ -52,4 +55,12 @@ public interface NMSProvider {
      * @return The NMS version name.
      */
     String getName();
+
+    /**
+     * Efficiently retrieves all loaded container blocks in a world.
+     *
+     * @param world The world to scan.
+     * @return A list of containers currently loaded.
+     */
+    List<Container> getLoadedContainers(World world);
 }
