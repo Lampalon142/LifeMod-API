@@ -34,7 +34,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build shadowJar
 
       - name: Run Tests
         run: ./gradlew test
@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: LifeMod-${{ github.ref_name }}
-          path: build/libs/*-all.jar
+          path: build/libs/*.jar
         if: github.event_name == 'push'
 
       - name: Upload coverage reports to Codecov
