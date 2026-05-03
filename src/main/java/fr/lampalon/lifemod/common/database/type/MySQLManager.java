@@ -41,11 +41,15 @@ public class MySQLManager implements DatabaseProvider {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid VARCHAR(36), server_name VARCHAR(64), inventory_data LONGBLOB NOT NULL, saved_at BIGINT, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid VARCHAR(36) PRIMARY KEY, world VARCHAR(64), x DOUBLE, y DOUBLE, z DOUBLE, yaw FLOAT, pitch FLOAT, saved_at BIGINT);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36), player_name VARCHAR(32), issuer_uuid VARCHAR(36), issuer_name VARCHAR(32), server_name VARCHAR(64), category VARCHAR(32), type VARCHAR(16), reason TEXT, created_at BIGINT, duration BIGINT, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid VARCHAR(36), removed_by_name VARCHAR(32), remove_reason TEXT, removed_at BIGINT);");
-                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, last_name VARCHAR(32), last_ip VARCHAR(45), last_seen BIGINT, in_staff_mode BOOLEAN DEFAULT FALSE);");
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid VARCHAR(36) PRIMARY KEY, last_name VARCHAR(32), last_ip VARCHAR(45), last_seen BIGINT, first_seen BIGINT, session_count INT DEFAULT 0, in_staff_mode BOOLEAN DEFAULT FALSE);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS antivpn_cache (ip VARCHAR(45) PRIMARY KEY, country_code VARCHAR(10), country_name VARCHAR(64), isp TEXT, is_proxy BOOLEAN, last_update BIGINT);");
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS alt_sessions (id INT AUTO_INCREMENT PRIMARY KEY, uuid VARCHAR(36) NOT NULL, ip VARCHAR(45) NOT NULL, subnet VARCHAR(12) NOT NULL, connected_at BIGINT NOT NULL, score_at_login INT DEFAULT 0, vpn_detected BOOLEAN DEFAULT FALSE, flags TEXT);");
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS ip_reputation (ip VARCHAR(45) PRIMARY KEY, subnet VARCHAR(12) NOT NULL, legitimate_accounts INT DEFAULT 0, banned_accounts INT DEFAULT 0, last_updated BIGINT, nat_suspected BOOLEAN DEFAULT FALSE);");
                         
                         // Mise à jour auto des colonnes si elles manquent
                         try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN in_staff_mode BOOLEAN DEFAULT FALSE;"); } catch (SQLException ignored) {}
+                        try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN first_seen BIGINT;"); } catch (SQLException ignored) {}
+                        try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN session_count INT DEFAULT 0;"); } catch (SQLException ignored) {}
                         try { stmt.executeUpdate("ALTER TABLE sanctions ADD COLUMN player_name VARCHAR(32) AFTER player_uuid;"); } catch (SQLException ignored) {}
                         
                         try {
@@ -349,12 +353,14 @@ public class MySQLManager implements DatabaseProvider {
 
     @Override
     public void savePlayerData(PlayerData data) {
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO player_data (uuid, last_name, last_ip, last_seen, in_staff_mode) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_name=VALUES(last_name), last_ip=VALUES(last_ip), last_seen=VALUES(last_seen), in_staff_mode=VALUES(in_staff_mode)")) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO player_data (uuid, last_name, last_ip, last_seen, first_seen, session_count, in_staff_mode) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE last_name=VALUES(last_name), last_ip=VALUES(last_ip), last_seen=VALUES(last_seen), first_seen=VALUES(first_seen), session_count=VALUES(session_count), in_staff_mode=VALUES(in_staff_mode)")) {
             ps.setString(1, data.getUuid().toString());
             ps.setString(2, data.getLastName());
             ps.setString(3, data.getLastIp());
             ps.setLong(4, data.getLastSeen());
-            ps.setBoolean(5, data.isInStaffMode());
+            ps.setLong(5, data.getFirstSeen());
+            ps.setInt(6, data.getSessionCount());
+            ps.setBoolean(7, data.isInStaffMode());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
@@ -364,10 +370,22 @@ public class MySQLManager implements DatabaseProvider {
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_data WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode"));
+                if (rs.next()) return mapResultSetToPlayerData(rs);
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
+    }
+
+    private PlayerData mapResultSetToPlayerData(ResultSet rs) throws SQLException {
+        return new PlayerData(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("last_name"),
+                rs.getString("last_ip"),
+                rs.getLong("last_seen"),
+                rs.getLong("first_seen"),
+                rs.getInt("session_count"),
+                rs.getBoolean("in_staff_mode")
+        );
     }
 
     @Override
@@ -376,10 +394,68 @@ public class MySQLManager implements DatabaseProvider {
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_data WHERE last_ip = ?")) {
             ps.setString(1, ip);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode")));
+                while (rs.next()) list.add(mapResultSetToPlayerData(rs));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
+    }
+
+    @Override
+    public int getLegitimateAccountCount(String ip) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM player_data WHERE last_ip = ? AND session_count > 5")) {
+            ps.setString(1, ip);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public void logAltSession(UUID uuid, String ip, String subnet, long connectedAt, int scoreAtLogin, boolean vpnDetected, String flags) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO alt_sessions (uuid, ip, subnet, connected_at, score_at_login, vpn_detected, flags) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, ip);
+            ps.setString(3, subnet);
+            ps.setLong(4, connectedAt);
+            ps.setInt(5, scoreAtLogin);
+            ps.setBoolean(6, vpnDetected);
+            ps.setString(7, flags);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void updateIPReputation(String ip, String subnet, int legitimateAccounts, int bannedAccounts, long lastUpdated, boolean natSuspected) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("INSERT INTO ip_reputation (ip, subnet, legitimate_accounts, banned_accounts, last_updated, nat_suspected) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE legitimate_accounts=VALUES(legitimate_accounts), banned_accounts=VALUES(banned_accounts), last_updated=VALUES(last_updated), nat_suspected=VALUES(nat_suspected)")) {
+            ps.setString(1, ip);
+            ps.setString(2, subnet);
+            ps.setInt(3, legitimateAccounts);
+            ps.setInt(4, bannedAccounts);
+            ps.setLong(5, lastUpdated);
+            ps.setBoolean(6, natSuspected);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public IPReputation getIPReputation(String ip) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM ip_reputation WHERE ip = ?")) {
+            ps.setString(1, ip);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new IPReputation(
+                            rs.getString("ip"),
+                            rs.getString("subnet"),
+                            rs.getInt("legitimate_accounts"),
+                            rs.getInt("banned_accounts"),
+                            rs.getLong("last_updated"),
+                            rs.getBoolean("nat_suspected")
+                    );
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
     }
 
     @Override

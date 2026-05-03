@@ -43,12 +43,6 @@ public class PlayerQuit implements Listener {
         // Remove from vanished list (Internal cleanup)
         plugin.getVanishService().getVanishedPlayers().remove(uuid);
 
-        // Remove AntiCheat Data
-        fr.lampalon.lifemod.common.anticheat.AntiCheatService acService = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.anticheat.AntiCheatService.class);
-        if (acService != null) {
-            acService.removePlayerData(uuid);
-        }
-
         debug.log("playerquit", player.getName() + " data saved on quit.");
     }
 }

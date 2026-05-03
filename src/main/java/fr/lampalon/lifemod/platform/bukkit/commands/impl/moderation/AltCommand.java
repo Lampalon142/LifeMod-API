@@ -27,14 +27,27 @@ public class AltCommand extends LifeCommand {
         String targetName = context.getArgs()[0];
         Player target = Bukkit.getPlayer(targetName);
         
+        java.util.UUID targetUuid;
         String ip = "127.0.0.1";
-        if (target != null && target.getAddress() != null) {
-            ip = target.getAddress().getAddress().getHostAddress();
+
+        if (target != null) {
+            targetUuid = target.getUniqueId();
+            if (target.getAddress() != null) {
+                ip = target.getAddress().getAddress().getHostAddress();
+            }
+        } else {
+            // Support pour les joueurs hors-ligne (si on a leurs données)
+            fr.lampalon.lifemod.common.database.DatabaseProvider db = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.database.DatabaseProvider.class);
+            // On peut chercher l'UUID par le nom si on avait une méthode pour ça, sinon on utilise un placeholder ou on refuse.
+            // Pour l'instant on se limite aux joueurs en ligne ou on cherche dans PlayerData si possible.
+            // Comme le moteur a besoin de l'UUID pour l'historique, c'est crucial.
+            context.getSender().sendMessage("§cNote: L'analyse de joueurs hors-ligne n'est supportée que s'ils ont déjà été connectés.");
+            return; // Simplification pour l'instant
         }
 
         context.getSender().sendMessage(context.getLang().getMessage("antialt.analyzing", "%player%", targetName));
 
-        context.getPlugin().getAntiAltManager().getEngine().analyze(targetName, ip).thenAccept(result -> {
+        context.getPlugin().getAntiAltManager().getEngine().analyze(targetUuid, targetName, ip).thenAccept(result -> {
             String rules = result.getTriggeredRules().isEmpty() 
                 ? context.getLang().getMessage("antialt.no-rules") 
                 : result.getTriggeredRules().stream()

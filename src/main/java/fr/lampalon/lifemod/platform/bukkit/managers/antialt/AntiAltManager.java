@@ -1,15 +1,28 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.antialt;
 
+import fr.lampalon.lifemod.common.antialt.AnalysisResult;
 import fr.lampalon.lifemod.common.antialt.HeuristicEngine;
+import fr.lampalon.lifemod.common.antialt.HeuristicRule;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.utils.NetworkUtil;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class AntiAltManager {
 
     private final LifeMod plugin;
     private final HeuristicEngine engine;
+    private final Map<String, AnalysisResult> analysisCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> cacheTimestamp = new ConcurrentHashMap<>();
+    private static final long CACHE_TTL = 300_000; // 5 minutes
 
     public AntiAltManager(LifeMod plugin) {
         this.plugin = plugin;
@@ -21,15 +34,93 @@ public class AntiAltManager {
     }
 
     public void handlePlayerJoin(Player player) {
-        if (!plugin.getConfigConfig().getBoolean("modules.antialt.enabled", true)) return;
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        if (config == null || !config.getBoolean("modules.antialt.enabled", true)) return;
         if (player.hasPermission("lifemod.antialt.bypass")) return;
 
         String ip = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "127.0.0.1";
         
-        // Appel asynchrone du moteur
-        engine.analyze(player.getName(), ip).thenAccept(result -> {
-            // Retour sur le thread principal pour les réactions si nécessaire (géré dans ReactionManager)
-            plugin.getReactionManager().executeReactions(result, player);
+        // Check Cache
+        if (analysisCache.containsKey(ip)) {
+            long ts = cacheTimestamp.getOrDefault(ip, 0L);
+            if (System.currentTimeMillis() - ts < CACHE_TTL) {
+                processDecision(player, analysisCache.get(ip), ip);
+                return;
+            }
+        }
+
+        engine.analyze(player.getUniqueId(), player.getName(), ip).thenAccept(result -> {
+            if (result == null) return;
+            
+            // Update Cache
+            analysisCache.put(ip, result);
+            cacheTimestamp.put(ip, System.currentTimeMillis());
+            
+            // 1. Log session
+            DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
+            if (db != null) {
+                String subnet = NetworkUtil.getSubnet(ip);
+                boolean vpnDetected = result.getTriggeredRules().contains(HeuristicRule.VPN_DETECTED);
+                String flags = result.getTriggeredRules().stream().map(HeuristicRule::getKey).collect(Collectors.joining(","));
+                db.logAltSession(player.getUniqueId(), ip, subnet, System.currentTimeMillis(), result.getDangerScore(), vpnDetected, flags);
+            }
+
+            // 2. Process Reactions based on Decision Matrix
+            processDecision(player, result, ip);
         });
+    }
+
+    private void processDecision(Player player, AnalysisResult result, String ip) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        int score = result.getDangerScore();
+
+        int logSilent = config.getInt("modules.antialt.thresholds.log-silent", 30);
+        int alertAdmin = config.getInt("modules.antialt.thresholds.alert-admin", 50);
+        int alertPriority = config.getInt("modules.antialt.thresholds.alert-priority", 70);
+        int suggestBan = config.getInt("modules.antialt.thresholds.suggest-ban", 85);
+
+        if (score >= suggestBan) {
+            sendAuditAlert(player, result, ip, "§c§lSUGGESTION DE BAN (Confirmation obligatoire)", true);
+        } else if (score >= alertPriority) {
+            sendAuditAlert(player, result, ip, "§6§lALERTE PRIORITAIRE + SURVEILLANCE", true);
+        } else if (score >= alertAdmin) {
+            sendAuditAlert(player, result, ip, "§eALERTE DÉTAILLÉE", false);
+        } else if (score >= logSilent) {
+            plugin.getLogger().info("[AntiAlt] Log Silencieux - Joueur: " + player.getName() + " Score: " + score + "/100");
+        }
+    }
+
+    private void sendAuditAlert(Player player, AnalysisResult result, String ip, String action, boolean priority) {
+        String signals = result.getTriggeredRules().stream()
+                .map(rule -> "  §7- §f" + rule.getReason())
+                .collect(Collectors.joining("\n"));
+
+        String message = "\n§8§m---------------------------------------\n" +
+                "§c§l[AntiAlt] §fJoueur: §b" + player.getName() + "\n" +
+                "§fScore: " + getScoreColor(result.getDangerScore()) + result.getDangerScore() + "§f/100\n" +
+                "§fUUID: §7" + player.getUniqueId() + "\n" +
+                "§fIP: §7" + ip + "\n\n" +
+                "§fSignaux déclenchés:\n" + signals + "\n\n" +
+                "§fAction recommandée: §a" + action + "\n" +
+                "§7Commande: /lifemod review " + player.getName() + "\n" +
+                "§8§m---------------------------------------\n";
+
+        Bukkit.getOnlinePlayers().stream()
+                .filter(p -> p.hasPermission("lifemod.antialt.alerts"))
+                .forEach(p -> p.sendMessage(MessageUtil.formatMessage(message)));
+        
+        if (priority) {
+            // Optionnel : Son pour les alertes prioritaires
+            Bukkit.getOnlinePlayers().stream()
+                    .filter(p -> p.hasPermission("lifemod.antialt.alerts"))
+                    .forEach(p -> p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 0.5f));
+        }
+    }
+
+    private String getScoreColor(int score) {
+        if (score >= 85) return "§4§l";
+        if (score >= 70) return "§c";
+        if (score >= 50) return "§6";
+        return "§e";
     }
 }

@@ -36,11 +36,15 @@ public class SQLiteManager implements DatabaseProvider {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid TEXT, server_name TEXT, inventory_data TEXT NOT NULL, saved_at INTEGER, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid TEXT PRIMARY KEY, world TEXT, x REAL, y REAL, z REAL, yaw REAL, pitch REAL, saved_at INTEGER);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid TEXT PRIMARY KEY, player_uuid TEXT, player_name TEXT, issuer_uuid TEXT, issuer_name TEXT, server_name TEXT, category TEXT, type TEXT, reason TEXT, created_at INTEGER, duration INTEGER, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid TEXT, removed_by_name TEXT, remove_reason TEXT, removed_at INTEGER);");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid TEXT PRIMARY KEY, last_name TEXT, last_ip TEXT, last_seen INTEGER, in_staff_mode BOOLEAN DEFAULT 0);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_data (uuid TEXT PRIMARY KEY, last_name TEXT, last_ip TEXT, last_seen INTEGER, first_seen INTEGER, session_count INTEGER DEFAULT 0, in_staff_mode BOOLEAN DEFAULT 0);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS antivpn_cache (ip TEXT PRIMARY KEY, country_code TEXT, country_name TEXT, isp TEXT, is_proxy BOOLEAN, last_update INTEGER);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS alt_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, uuid TEXT NOT NULL, ip TEXT NOT NULL, subnet TEXT NOT NULL, connected_at INTEGER NOT NULL, score_at_login INTEGER DEFAULT 0, vpn_detected BOOLEAN DEFAULT 0, flags TEXT);");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS ip_reputation (ip TEXT PRIMARY KEY, subnet TEXT NOT NULL, legitimate_accounts INTEGER DEFAULT 0, banned_accounts INTEGER DEFAULT 0, last_updated INTEGER, nat_suspected BOOLEAN DEFAULT 0);");
 
             // Migration pour les tables existantes
             try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN in_staff_mode BOOLEAN DEFAULT 0;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN first_seen INTEGER;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN session_count INTEGER DEFAULT 0;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE player_inventories ADD COLUMN server_name TEXT;"); } catch (SQLException ignored) {}
         } catch (SQLException e) {
             e.printStackTrace();
@@ -332,12 +336,14 @@ public class SQLiteManager implements DatabaseProvider {
 
     @Override
     public void savePlayerData(PlayerData data) {
-        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_data (uuid, last_name, last_ip, last_seen, in_staff_mode) VALUES (?, ?, ?, ?, ?)")) {
+        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO player_data (uuid, last_name, last_ip, last_seen, first_seen, session_count, in_staff_mode) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
             ps.setString(1, data.getUuid().toString());
             ps.setString(2, data.getLastName());
             ps.setString(3, data.getLastIp());
             ps.setLong(4, data.getLastSeen());
-            ps.setBoolean(5, data.isInStaffMode());
+            ps.setLong(5, data.getFirstSeen());
+            ps.setInt(6, data.getSessionCount());
+            ps.setBoolean(7, data.isInStaffMode());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
@@ -347,10 +353,22 @@ public class SQLiteManager implements DatabaseProvider {
         try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM player_data WHERE uuid = ?")) {
             ps.setString(1, uuid.toString());
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode"));
+                if (rs.next()) return mapResultSetToPlayerData(rs);
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
+    }
+
+    private PlayerData mapResultSetToPlayerData(ResultSet rs) throws SQLException {
+        return new PlayerData(
+                UUID.fromString(rs.getString("uuid")),
+                rs.getString("last_name"),
+                rs.getString("last_ip"),
+                rs.getLong("last_seen"),
+                rs.getLong("first_seen"),
+                rs.getInt("session_count"),
+                rs.getBoolean("in_staff_mode")
+        );
     }
 
     @Override
@@ -359,10 +377,68 @@ public class SQLiteManager implements DatabaseProvider {
         try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM player_data WHERE last_ip = ?")) {
             ps.setString(1, ip);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) list.add(new PlayerData(UUID.fromString(rs.getString("uuid")), rs.getString("last_name"), rs.getString("last_ip"), rs.getLong("last_seen"), rs.getBoolean("in_staff_mode")));
+                while (rs.next()) list.add(mapResultSetToPlayerData(rs));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
+    }
+
+    @Override
+    public int getLegitimateAccountCount(String ip) {
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT COUNT(*) FROM player_data WHERE last_ip = ? AND session_count > 5")) {
+            ps.setString(1, ip);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    @Override
+    public void logAltSession(UUID uuid, String ip, String subnet, long connectedAt, int scoreAtLogin, boolean vpnDetected, String flags) {
+        try (PreparedStatement ps = getConnection().prepareStatement("INSERT INTO alt_sessions (uuid, ip, subnet, connected_at, score_at_login, vpn_detected, flags) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, ip);
+            ps.setString(3, subnet);
+            ps.setLong(4, connectedAt);
+            ps.setInt(5, scoreAtLogin);
+            ps.setBoolean(6, vpnDetected);
+            ps.setString(7, flags);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void updateIPReputation(String ip, String subnet, int legitimateAccounts, int bannedAccounts, long lastUpdated, boolean natSuspected) {
+        try (PreparedStatement ps = getConnection().prepareStatement("INSERT OR REPLACE INTO ip_reputation (ip, subnet, legitimate_accounts, banned_accounts, last_updated, nat_suspected) VALUES (?, ?, ?, ?, ?, ?)")) {
+            ps.setString(1, ip);
+            ps.setString(2, subnet);
+            ps.setInt(3, legitimateAccounts);
+            ps.setInt(4, bannedAccounts);
+            ps.setLong(5, lastUpdated);
+            ps.setBoolean(6, natSuspected);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public IPReputation getIPReputation(String ip) {
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM ip_reputation WHERE ip = ?")) {
+            ps.setString(1, ip);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new IPReputation(
+                            rs.getString("ip"),
+                            rs.getString("subnet"),
+                            rs.getInt("legitimate_accounts"),
+                            rs.getInt("banned_accounts"),
+                            rs.getLong("last_updated"),
+                            rs.getBoolean("nat_suspected")
+                    );
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
     }
 
     @Override

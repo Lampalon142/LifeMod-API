@@ -3,8 +3,10 @@ package fr.lampalon.lifemod.common.service;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
+import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.utils.NetworkUtil;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
@@ -31,6 +33,18 @@ public class SanctionService implements ISanctionService {
         return CompletableFuture.supplyAsync(() -> {
             db.saveSanction(sanction);
             
+            // Mise à jour de la réputation IP si c'est un BAN
+            if (sanction.getType() == SanctionType.BAN) {
+                PlayerData data = db.getPlayerData(sanction.getPlayerUuid());
+                if (data != null && data.getLastIp() != null) {
+                    String ip = data.getLastIp();
+                    DatabaseProvider.IPReputation rep = db.getIPReputation(ip);
+                    int legits = db.getLegitimateAccountCount(ip);
+                    int bans = (rep != null ? rep.bannedAccounts : 0) + 1;
+                    db.updateIPReputation(ip, NetworkUtil.getSubnet(ip), legits, bans, System.currentTimeMillis(), false);
+                }
+            }
+
             // Broadcast local
             broadcastSanction(sanction);
 

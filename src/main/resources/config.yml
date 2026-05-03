@@ -166,66 +166,70 @@ modules:
   # Anti-Alt Heuristic Engine
   antialt:
     enabled: true
-    debug: false # Logs analysis score for every joining player
-    
-    # --- Heuristic Weights (0-100) ---
-    weights:
-      entropy: 40
-      bigram: 25
-      trigram: 35
-      casing: 15
-      suffix: 50
-      ip-history: 50 # Bonus penalty if IP is already flagged
+    debug: false
 
-    # --- Thresholds & Reactions ---
-    entropy-threshold: 3.8
-    
-    # Reaction thresholds (score is 0-100)
+    # Seuils de décision
     thresholds:
-      30: # Suspect
-        - "[LOG] Player %player% is suspect (Score: %score%, Reason: %reason%)"
-        - "[STAFF] &c[AntiAlt] &e%player% &cis suspect (Score: %score%, Reason: %reason%)."
-      60: # Critical
-        - "[STAFF] &c[AntiAlt] &4&lCRITICAL&c: &e%player% &cis a very likely alt (Score: %score%)."
-        - "[CONSOLE] mute %player% 1h Alt suspect (Automated)"
-      85: # High-Threat Alt
-        - "[CONSOLE] ban %player% 30d High-Threat Alt (Score: %score%, Reason: %reason%)"
-        - "[DISCORD] Player `%player%` was auto-banned (Score: %score%, Reason: %reason%)"
-        - "[CANCEL] &cAccess denied. Suspicious account detected by our security system.."
-        
-    whitelist:
-      - "PlayerToIgnore"
+      log-silent: 30
+      alert-admin: 50
+      alert-priority: 70
+      suggest-ban: 85
 
-  # AntiCheat Proactive (Feat-AC)
-  anticheat:
-    enabled: true
-    checks:
-      autoclicker:
-        enabled: true
-        sample_size: 50
-        min_deviation: 1.2
-        min_entropy: 0.5
-        threshold: 0.9
-        violation_weight: 5
-      reach:
-        enabled: true
-        max_distance: 3.2
-        threshold: 0.8
-        violation_weight: 5
-      hitbox:
-        enabled: true
-        max_range: 6.0
-        margin: 0.1
-        threshold: 0.9
-        violation_weight: 5
-      aimbot:
-        enabled: true
-        threshold: 0.8
-        violation_weight: 4
-      timer:
-        enabled: true
-        threshold: 0.8
-        violation_weight: 3
+    # Poids des signaux
+    weights:
+      ip-exact-banned: 60
+      ip-temporal-24h: 30
+      ip-temporal-week: 15
+      ip-subnet: 25
+      vpn-alone: 15
+      vpn-multiplier: 1.4
+      vpn-score-threshold: 30
+      pseudo-entropy: 20
+      pseudo-bigram: 15
+      pseudo-suffix: 15
+      pseudo-casing: 10
+      pseudo-troll: 25
+      ip-history-multiple: 20
+      sudden-vpn-switch: 20
+      sudden-vpn-days: 30
+
+    # Protection NAT automatique
+    nat-detection:
+      enabled: true
+      legitimate-threshold: 3
+
+    # Analyse pseudo
+    entropy-threshold: 3.8
+
+    # Mots troll universels — entièrement configurables
+    troll-patterns:
+      - "hack"
+      - "cheat"
+      - "grief"
+      - "ban"
+      - "admin"
+      - "owner"
+      - "op"
+      - "instaban"
+      - "troll"
+      - "bypass"
+
+    # Regex de détection — entièrement configurables
+    regex-patterns:
+      generated-suffix: "[_-][a-zA-Z0-9]{4,8}$"
+      numeric-suffix: "[a-zA-Z]{3,}[0-9]{2,4}$"
+      char-repetition: "(.)\\1{3,}"
+
+    # Fenêtres temporelles
+    temporal:
+      recent-ban-hours: 24
+      medium-ban-days: 7
+
+    # Whitelist
+    whitelist:
+      ips: []
+      uuids: []
+      subnets: []
 
   # AntiVPN & Network Security
   antivpn:
@@ -299,7 +303,6 @@ commands:
     invsee: true
     oinvsee: true
     otp: true
-    ac: true
     speed: true
     spectate: true
     hearts: true

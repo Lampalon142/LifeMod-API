@@ -50,11 +50,31 @@ public interface DatabaseProvider {
     void savePlayerData(PlayerData data);
     PlayerData getPlayerData(UUID uuid);
     List<PlayerData> getAlts(String ip);
+    int getLegitimateAccountCount(String ip);
+
+    // Anti-Alt Sessions & Reputation
+    void logAltSession(UUID uuid, String ip, String subnet, long connectedAt, int scoreAtLogin, boolean vpnDetected, String flags);
+    void updateIPReputation(String ip, String subnet, int legitimateAccounts, int bannedAccounts, long lastUpdated, boolean natSuspected);
+    IPReputation getIPReputation(String ip);
 
     // AntiVPN Cache
     void saveIPInfo(String ip, String countryCode, String countryName, String isp, boolean isProxy, long lastUpdate);
     fr.lampalon.lifemod.common.antivpn.data.IPInfo getIPInfo(String ip);
     void deleteExpiredIPInfo(long threshold);
+
+    class IPReputation {
+        public String ip;
+        public String subnet;
+        public int legitimateAccounts;
+        public int bannedAccounts;
+        public long lastUpdated;
+        public boolean natSuspected;
+
+        public IPReputation(String ip, String subnet, int legitimateAccounts, int bannedAccounts, long lastUpdated, boolean natSuspected) {
+            this.ip = ip; this.subnet = subnet; this.legitimateAccounts = legitimateAccounts; 
+            this.bannedAccounts = bannedAccounts; this.lastUpdated = lastUpdated; this.natSuspected = natSuspected;
+        }
+    }
 
     class StoredLocation {
         public String world;
