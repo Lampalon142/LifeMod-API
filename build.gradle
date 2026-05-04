@@ -87,35 +87,3 @@ modrinth {
     gameVersions = ["1.20.1"]
     loaders = ["spigot", "paper"]
 }
-
-tasks.register('deploy') {
-    dependsOn shadowJar
-    group = "deployment"
-
-    doLast {
-        def shadowJarFile = shadowJar.archiveFile.get().asFile
-        def destDir = file("${projectDir}/run/server/plugins")
-
-        if (!destDir.exists()) {
-            destDir.mkdirs()
-        }
-
-        copy {
-            from shadowJarFile
-            into destDir
-            rename { "LifeMod.jar" }
-        }
-
-        println "🐳 Déploiement Docker (Linux)..."
-
-        exec {
-            commandLine 'docker', 'compose', 'up', '-d'
-        }
-
-        exec {
-            commandLine 'docker', 'compose', 'restart', 'mc-server'
-        }
-
-        println "✅ Plugin déployé. Pour voir les logs : docker logs -f lifemod-server"
-    }
-}
