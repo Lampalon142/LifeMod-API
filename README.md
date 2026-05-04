@@ -1,4 +1,4 @@
-![Lines](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Lampalon142/c398eb39d86a2f8a0cd9152209391547/raw/lines.json&query=$.lines&color=black&labelColor=black&logo=github&logoColor=white&label=lines)
+![Lines](https://img.shields.io/badge/dynamic/json?url=https://gist.githubusercontent.com/Lampalon142/c398eb39d86a2f8a0cd9152209391547/raw/lines.json&query=$.lines&color=black&label=lines&logo=github)
 
 # LifeMod
 
