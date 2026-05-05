@@ -1,0 +1,400 @@
+## LifeMod - Configuration du Langage
+## Langue : Français (French)
+
+# --- SYSTEM MESSAGES ---
+system:
+  prefix: "&7[&6Moderation&7] &f» "
+  no-permission: "%prefix%&cVous n'avez pas la permission pour cela."
+  player-only: "%prefix%&cCette commande ne peut être exécutée que par un joueur."
+  player-not-found: "%prefix%&cCe joueur n'est pas connecté au serveur."
+  config-reloaded: "%prefix%&aConfiguration rechargée avec succès !"
+  date-format: "dd/MM/yyyy HH:mm:ss"
+  update:
+    enabled: true
+    failed: "&c[LifeMod] Échec de la récupération de la dernière version."
+    up-to-date: "&a[LifeMod] LifeMod est à jour."
+    unreleased: "&e[LifeMod] Vous utilisez une version non encore publiée."
+    error: "&c[LifeMod] Impossible de vérifier les mises à jour."
+    message: |
+      &dBonjour %player%
+      &bUne mise à jour de LifeMod est disponible !
+      &eVotre version : &c%current_version%
+      &eNouvelle version : &a%latest_version%
+      &eLien : &bhttps://bit.ly/lifemod-update
+      &r
+      &e===========================
+
+# --- SANCTIONS ---
+sanctions:
+  # Command logic
+  cmd:
+    usage: "&cUtilisation : /%cmd% <joueur> [raison] <temps> [-s]"
+    usage-no-time: "&cUtilisation : /%cmd% <joueur> [raison] [-s]"
+    default-reason: "Aucune raison spécifiée"
+    revoke-usage: "&cUtilisation : /%cmd% <joueur> [raison] [-s]"
+    revoke-success: "&aLa sanction (%type%) pour &e%player% &aa été révoquée."
+    revoke-silent: "&7[SILENCIEUX] &aLa sanction (%type%) pour &e%player% &aa été révoquée."
+    revoke-not-found: "&cCe joueur n'a aucune sanction active de type %type%."
+
+  # Specific Sanctions
+  ban:
+    success: "&aLe joueur &e%player% &aa été banni pour : &f%reason%"
+    received: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cVous avez été banni !
+      &7Raison : &f%reason%
+      &7Banni par : &e%issuer%
+      &7Temps restant : &f%time%
+      &8&m----------------------------------------
+    login: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cVous êtes banni de ce serveur !
+      &7Raison : &f%reason%
+      &7Expire le : &e%expiration%
+      &7ID de Sanction : &8#%id%
+      &8&m----------------------------------------
+    kick-message: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cVous avez été banni !
+      &7Raison : &f%reason%
+      &8&m----------------------------------------
+
+  mute:
+    success: "&aLe joueur &e%player% &aa été rendu muet pour : &f%reason%"
+    received: "&cVous avez été rendu muet ! Raison : &f%reason%"
+    title: "&d&lMUET"
+    subtitle: "&7%reason%"
+    blocked: |
+      &cVous êtes muet !
+      &7Raison : &f%reason%
+      &7Expire dans : &f%time%
+    chat-blocked: |
+      &cVous êtes réduit au silence !
+      &7Raison : &f%reason%
+      &7Expire le : &e%expiration%
+
+  kick:
+    success: "&aLe joueur &e%player% &aa été expulsé pour : &f%reason%"
+    message: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cVous avez été expulsé !
+      &7Raison : &f%reason%
+      &7Par : &e%issuer%
+      &8&m----------------------------------------
+
+  warn:
+    success: "&aAvertissement envoyé à &e%player% pour : &f%reason%"
+    received: "&c&lAVERTISSEMENT ! &7Raison : &f%reason%"
+    title: "&c&lAVERTISSEMENT"
+    subtitle: "&7%reason%"
+
+  # Broadcasts (Local & Network)
+  broadcast:
+    ban:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &aa été &c&lBANNI &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Durée : &f%time%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX] &c%issuer% &7a banni &c%target% &7(%time%) pour : &f%reason%"
+    mute:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &aa été &d&lRENDU MUET &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Durée : &f%time%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX] &c%issuer% &7a rendu muet &c%target% &7(%time%) pour : &f%reason%"
+    kick:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &aa été &c&lEXPULSÉ &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX] &c%issuer% &7a expulsé &c%target% &7pour : &f%reason%"
+    warn:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &aa été &e&lAVARTI &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX] &c%issuer% &7a averti &c%target% &7pour : &f%reason%"
+    unban:
+      public: "&a%target% a été débanni par %issuer%. Raison : %reason%"
+      silent: "&7[SILENCIEUX] &a%target% a été débanni par %issuer%. Raison : %reason%"
+    unmute:
+      public: "&a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
+      silent: "&7[SILENCIEUX] &a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
+
+# --- REPORTS ---
+reports:
+  submitted: "&aSignalement soumis contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
+  usage: "&eUtilisation : /report <joueur> <raison>"
+  yourself: "&cVous ne pouvez pas vous signaler vous-même !"
+  join-alert: "&aIl y a actuellement &e%open%&a signalements ouverts et &e%pending%&a signalements en attente."
+  not-found: "&cSignalement non trouvé."
+  no-reports: "&cAucun signalement trouvé correspondant à vos critères."
+  
+  status:
+    open: "&aOuvert"
+    pending: "&eEn attente"
+    in_progress: "&6En cours"
+    closed: "&cFermé"
+    rejected: "&8Rejeté"
+    archived: "&7Archivé"
+    online: "&aEn ligne"
+    offline: "&cHors ligne"
+
+  gui:
+    main-title: "&d&lSignalements &7(Page %page%/%total%)"
+    item-name: "&eSignalement : %uuid%"
+    item-lore:
+      - "&7Cible : &c%target% &7(%target_status%)"
+      - "&7Signaleur : &b%reporter% &7(%reporter_status%)"
+      - "&7Raison : &6%reason%"
+      - "&7Statut : &b%status%"
+      - "&7Serveur : &a%server%"
+      - "&7Date : &f%date%"
+      - "&8ID du Signalement : %uuid%"
+      - ""
+      - "&7[!] Clic-droit pour ouvrir les détails"
+      - "&7[!] Clic-gauche pour vous l'assigner"
+      - "&7[!] Shift-clic pour fermer le ticket"
+    
+    detail:
+      title: "&d&lDétails du Signalement &7- &e#%id%"
+      reporter: "&bSignaleur : &f%player%"
+      target: "&cCible : &f%player%"
+      info-title: "&bInformations du Signalement"
+      info-reason: "&7Raison : &f%reason%"
+      info-server: "&7Serveur : &a%server%"
+      info-status: "&7Statut : &e%status%"
+      info-date: "&7Date : &f%date%"
+      status-prefix: "&7Statut : "
+      title-prefix: "&dSignalement : &e#"
+      teleport: "&dTéléporter à la Position"
+      teleport-lore: [ "&7Cliquez pour vous téléporter", "&7où le signalement a été créé." ]
+      assign: "&aS'assigner"
+      assign-lore: [ "&7Cliquez pour prendre la", "&7responsabilité de ce signalement." ]
+      close: "&cFermer le Signalement"
+      close-lore: [ "&7Cliquez pour résoudre et", "&7fermer ce signalement." ]
+      back: "&7« Retour"
+      teleport-success: "&aTéléporté à la position du signalement."
+
+    notes:
+      title: "&6Notes : &e#%id%"
+      add: "&a✚ Ajouter une note"
+      prompt: "&aTapez votre note dans le chat (ou 'cancel' pour annuler)"
+      item-title: "&eNote par &f%author%"
+      item-date: "&7Date : &f%date%"
+      item-edit: "&eClic-gauche pour éditer"
+      item-delete: "&cClic-droit pour supprimer"
+      delete-success: "&aNote supprimée !"
+      chat-cancelled: "&eAction de note annulée."
+      chat-saved: "&aNote sauvegardée avec succès !"
+      errors:
+        empty: "&cVotre note ne peut pas être vide."
+      menu:
+        edit:
+          cancelled: "&eÉdition annulée."
+          saved: "&aNote mise à jour !"
+        chat:
+          cancelled: "&eCréation de note annulée."
+          saved: "&aNote ajoutée !"
+
+# --- TOOLS & GUIS ---
+gui:
+  pagination:
+    previous: "&c« Page Précédente"
+    next: "&aPage Suivante »"
+    first-page: "&8Vous êtes déjà sur la première page."
+    last-page: "&8Vous êtes déjà sur la dernière page."
+  
+  history:
+    title: "&6Historique : &e%target%"
+    usage: "&cUtilisation : /history <joueur>"
+    item:
+      title: "&6Sanction &8#&e%id%"
+      target: "&7 Cible : &e%target%"
+      type: "&7 Type : &f%type%"
+      reason: "&7 Raison : &f%reason%"
+      issuer: "&7 Par : &e%issuer%"
+      server: "&7 Serveur : &a%server%"
+      date: "&7 Date : &f%date%"
+      status-active: "&7 Statut : &a● ACTIVE"
+      status-revoked: "&7 Statut : &c● RÉVOQUÉE"
+      status-expired: "&7 Statut : &c● EXPIRÉE"
+      expire-date: "&7 Expire le : &e%date%"
+      expired-date: "&7 Expirée le : &e%date%"
+      permanent: "&7 Durée : &cPermanent"
+      revoked-by: "&7 Révoquée par : &e%player%"
+      revoke-reason: "&7 Raison : &f%reason%"
+      delete-info: "&c ⤷ Clic-droit pour supprimer"
+      delete-success: "&aSanction supprimée !"
+      separator: "&8&m--------------------------"
+
+  case:
+    usage: "&cUtilisation : /case <joueur>"
+    header: "&8&m----------------------------------------\n&6&lDossier : &e%target%\n "
+    footer: "\n&7Utilisez &6/history %target% &7pour l'historique complet.\n&8&m----------------------------------------"
+    ban-active: " &8• &7Statut Ban : &c&lBANNI &8(&f%reason%&8)\n   &7Expire dans : &e%time%"
+    ban-expired: " &8• &7Statut Ban : &eEXPIRÉ &8(&f%reason%&8)"
+    ban-none: " &8• &7Statut Ban : &aAucun actif"
+    mute-active: " &8• &7Statut Muet : &d&lMUET &8(&f%reason%&8)\n   &7Expire dans : &e%time%"
+    mute-expired: " &8• &7Statut Muet : &eEXPIRÉ &8(&f%reason%&8)"
+    mute-none: " &8• &7Statut Muet : &aAucun actif"
+    warns: " &8• &7Avertissements Actifs : &e%count%"
+    total: " &8• &7Total des Sanctions : &e%count%"
+
+  alts:
+    usage: "&cUtilisation : /alts <joueur/ip>"
+    title: "&6Comptes Liés : &e%ip%"
+    not-found: "&cCe joueur n'a jamais été enregistré."
+    status-online: "&a&lEN LIGNE"
+    status-offline: "&7HORS LIGNE"
+    status-banned: "&c&lBANNI"
+    status-online-color: "&a"
+    status-offline-color: "&7"
+    status-banned-color: "&c"
+    evasion-alert: |
+      &8&m----------------------------------------
+      &c&lALERTE D'ÉVASION
+      &eLe joueur &c%player% &es'est connecté avec un compte banni !
+      &7Liés : %accounts%
+      &7IP : &e%ip%
+      &8&m----------------------------------------
+    item-name: "&e%player%"
+    item-status: "&7Statut : %status%"
+    item-uuid: "&7UUID : &8%uuid%"
+    item-history: "&6⚡ Clic-gauche pour l'Historique"
+    item-case: "&6⚡ Clic-droit pour le Dossier"
+
+# --- MODERATION TOOLS ---
+mod:
+  enable: "%prefix%&aMode modération activé."
+  disable: "%prefix%&cMode modération désactivé."
+  enable-title: "&6Mode Staff"
+  enable-subtitle: "&aActivé"
+  actionbar-enabled: "&6Mode Staff : &aON"
+  disable-title: "&6Mode Staff"
+  disable-subtitle: "&cDésactivé"
+  actionbar-disabled: "&6Mode Staff : &cOFF"
+  items:
+    cooldown: "&cTemps de recharge actif..."
+    cps-start: "&aTest CPS démarré sur &e%player%"
+    cps-result: "&6Résultat CPS pour &e%player% : &b%cps% CPS"
+    freeze-on: "&cVous avez gelé &e%player%"
+    freeze-off: "&aVous avez dégelé &e%player%"
+    kill: "&cVous avez tué &e%player%"
+    vanish-on: "&aVanish activé"
+    vanish-off: "&cVanish désactivé"
+    no-target: "&cVous devez cliquer sur un joueur !"
+    cps:
+      already-active: "&cVous avez déjà un test CPS en cours."
+      start: "&aDémarrage du test CPS de &e%duration%s &asur &e%target%&a..."
+      finish-none: "&cTest terminé pour &e%target%&c : &60 CPS &7(Aucun clic détecté)"
+      result-header: "&8&m----------------------------------------"
+      result-title: "&6&lRésultat Test CPS &7- &e%target%"
+      result-avg: "&e• &fMoyenne CPS : &b%cps%"
+      result-total: "&e• &fTotal Clics : &b%clicks%"
+      result-autoclicker: "&e• &fAuto-Clicker : %result%"
+      result-footer: "&8&m----------------------------------------"
+      status:
+        suspected: "&c&lSUSPECTÉ"
+        unlikely: "&aPeu probable"
+    info:
+      usage: "&bFaites un clic-droit sur un joueur pour voir ses infos."
+      header: "&8&m----------------------------------------"
+      title: "&6&lVisualiseur d'Infos &7- &e%target%"
+      ping: "&e• &fPing : &b%ping%ms"
+      cps: "&e• &fCPS : &b%cps%"
+      gamemode: "&e• &fMode de jeu : &b%gamemode%"
+      gamemodes:
+        survival: "Survie"
+        creative: "Créatif"
+        adventure: "Aventure"
+        spectator: "Spectateur"
+      location: "&e• &fPosition : &b%world% %x%,%y%,%z%"
+      footer: "&8&m----------------------------------------"
+    inspector:
+      silent-open: "&bOuverture de %block% silencieusement..."
+      silent-title: "&7Silencieux : %block%"
+      inspect-player: "&bInspection de l'inventaire de &e%target%"
+    navigation:
+      jump: "&aSaut !"
+      thru: "&aTraversé !"
+      no-target: "&cAucun bloc cible trouvé."
+      no-safe-spot: "&cAucun endroit sûr trouvé pour traverser."
+    kb-tester:
+      applied: "&eRecul appliqué à %target%"
+    mount:
+      success: "&aMonté sur &e%target%"
+    random-tp:
+      no-players: "&cAucun autre joueur en ligne."
+      success: "&aTéléporté à &e%target%&a."
+    vanish:
+      visible: "&cVous êtes maintenant VISIBLE."
+      vanished: "&aVous êtes maintenant INVISIBLE."
+    restrictions:
+      no-external-put: "&cVous ne pouvez pas mettre les outils staff dans d'autres inventaires."
+      no-drop: "&cVous ne pouvez pas jeter les outils staff."
+
+# --- AUTRES COMMANDES ---
+commands:
+  fly:
+    usage: "%prefix%&cUtilisation : /fly <joueur>"
+    enabled: "%prefix%&aVol activé pour %player% !"
+    disabled: "%prefix%&cVol désactivé pour %player% !"
+    enabled-self: "%prefix%&aVol activé !"
+    disabled-self: "%prefix%&cVol désactivé !"
+
+  gamemode:
+    invalid: "%prefix%&cMode invalide !"
+    usage: "%prefix%&cUtilisation : /gm <0|1|2|3> [joueur]"
+    own: "%prefix%&7Votre mode de jeu a été changé en &b&l%gamemode%"
+    other: "%prefix%&7Mode de jeu changé en &b&l%gamemode% &7pour &c&l%player%"
+
+  chat:
+    cleared: "%prefix%&cLe chat a été vidé."
+    toggle-on: "&aLe chat global est maintenant &2activé&a."
+    toggle-off: "&cLe chat global est maintenant &4désactivé&c."
+    blocked: "&cLe chat est actuellement désactivé."
+    forbidden-word: "&c%player% a tenté d'envoyer un mot interdit !"
+
+  teleport:
+    usage: "%prefix%&cUtilisation : /tp <joueur> [cible] ou <x> <y> <z>"
+    success: "%prefix%&aTéléporté à &e%target%&a."
+    success-other: "%prefix%&aTéléporté &e%player1% &aà &e%player2%&a."
+    none: "%prefix%&cAucun joueur trouvé."
+    invalid-coords: "%prefix%&cCoordonnées invalides !"
+
+  utility:
+    feed-self: "%prefix%&aVotre appétit a été satisfait !"
+    feed-other: "%prefix%&aVous avez nourri &e%target%&a."
+    heal-self: "%prefix%&aVous avez été soigné !"
+    heal-other: "%prefix%&aVous avez soigné &e%target%&a."
+    god-on: "%prefix%&aMode Dieu activé !"
+    god-off: "%prefix%&cMode Dieu désactivé !"
+    speed-success: "%prefix%&aVitesse fixée à &e%speed%&a."
+    speed-invalid: "%prefix%&cVeuillez fournir une vitesse valide (1-10)."
+
+  hearts:
+    usage: "%prefix%&cUtilisation : /hearts <set|add> <joueur> <quantité>"
+    success: "%prefix%&a%action% %amount% cœurs à %target% !"
+    invalid: "%prefix%&cQuantité invalide !"
+
+  world:
+    time-set: "%prefix%&aHeure fixée à &e%time%&a."
+    difficulty-set: "%prefix%&aDifficulté fixée à &e%difficulty%&a."
+    weather-set: "%prefix%&aMétéo fixée à &e%weather%&a."
+
+  freeze:
+    usage: "%prefix%&cUtilisation : /freeze <joueur>"
+    yourself: "%prefix%&cVous ne pouvez pas vous geler vous-même !"
+    messages:
+      freeze:
+        mod: "%prefix%&cVous avez gelé &e%player%"
+        onfreeze:
+          - "&8&m----------------------------------------"
+          - "&c&lVOUS AVEZ ÉTÉ GELÉ !"
+          - "&7S'il vous plaît, ne vous déconnectez pas."
+          - "&7Suivez les instructions du modérateur."
+          - "&8&m----------------------------------------"
+      unfreeze:
+        mod: "%prefix%&aVous avez dégelé &e%player%"
+        target: "%prefix%&aVous avez été dégelé par &e%player%&a."
+
+  staffchat:
+    usage: "%prefix%&cUtilisation : /staffchat <message>"
+    success: "%prefix%&aMessage envoyé au chat staff."
+    message: "&7[&cStaffChat&7] &e%player%&f : %message%"
+
+# Metadata
+version: 200

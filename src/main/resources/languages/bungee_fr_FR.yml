@@ -1,0 +1,112 @@
+## LifeMod Proxy Langage
+## Synchronisation Multi-Serveurs
+
+# --- SYSTEM MESSAGES ---
+system:
+  prefix: "&7[&6Reseau&7] &f» "
+  no-permission: "%prefix%&cVous n'avez pas la permission pour cela."
+  player-only: "%prefix%&cCette commande ne peut être exécutée que par un joueur."
+  player-not-found: "%prefix%&cCe joueur n'est pas connecté au réseau."
+  config-reloaded: "%prefix%&aConfiguration du proxy rechargée avec succès !"
+  date-format: "dd/MM/yyyy HH:mm:ss"
+
+# --- SANCTIONS ---
+sanctions:
+  # Command logic
+  cmd:
+    usage: "&cUtilisation : /%cmd% <joueur> [raison] <temps> [-s]"
+    usage-no-time: "&cUtilisation : /%cmd% <joueur> [raison] [-s]"
+    default-reason: "Aucune raison spécifiée"
+    revoke-usage: "&cUtilisation : /%cmd% <joueur> [raison] [-s]"
+    revoke-success: "&aLa sanction (%type%) pour &e%player% &aa été révoquée sur le réseau."
+    revoke-silent: "&7[SILENCIEUX] &aLa sanction (%type%) pour &e%player% &aa été révoquée."
+    revoke-not-found: "&cCe joueur n'a aucune sanction réseau active de type %type%."
+
+  # Specific Sanctions
+  ban:
+    success: "&aLe joueur &e%player% &aa été banni du réseau pour : &f%reason%"
+    received: |
+      &8&m----------------------------------------
+      &6&lLifeMod Reseau
+      &cVous avez été banni !
+      &7Raison : &f%reason%
+      &7Banni par : &e%issuer%
+      &7Temps restant : &f%time%
+      &8&m----------------------------------------
+    login: |
+      &8&m----------------------------------------
+      &6&lLifeMod Reseau
+      &cVous êtes banni de tout le réseau !
+      &7Raison : &f%reason%
+      &7Expire le : &e%expiration%
+      &7ID de Sanction : &8#%id%
+      &8&m----------------------------------------
+
+  mute:
+    success: "&aLe joueur &e%player% &aa été rendu muet sur le réseau pour : &f%reason%"
+    received: "&cVous avez été rendu muet sur le réseau ! Raison : &f%reason%"
+    title: "&d&lMUET"
+    subtitle: "&7%reason%"
+    blocked: |
+      &cVous êtes muet !
+      &7Raison : &f%reason%
+      &7Expire dans : &f%time%
+    chat-blocked: |
+      &cVous êtes réduit au silence sur le réseau !
+      &7Raison : &f%reason%
+      &7Expire le : &e%expiration%
+
+  kick:
+    success: "&aLe joueur &e%player% &aa été expulsé du réseau pour : &f%reason%"
+    message: |
+      &8&m----------------------------------------
+      &6&lLifeMod Reseau
+      &cVous avez été expulsé !
+      &7Raison : &f%reason%
+      &7Par : &e%issuer%
+      &8&m----------------------------------------
+
+  warn:
+    success: "&aAvertissement envoyé à &e%player% sur le réseau pour : &f%reason%"
+    received: "&c&lAVERTISSEMENT RÉSEAU ! &7Raison : &f%reason%"
+    title: "&c&lAVERTISSEMENT"
+    subtitle: "&7%reason%"
+
+  # Broadcasts (Local & Network)
+  broadcast:
+    ban:
+      public: "&8&m----------------------------------------\n&6&lReseau &8» &e%target% &aa été &c&lBANNI &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Serveur : &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX-RESEAU] &c%issuer% &7a banni &c%target% &7de &e%server% pour : &f%reason%"
+    mute:
+      public: "&8&m----------------------------------------\n&6&lReseau &8» &e%target% &aa été &d&lRENDU MUET &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Serveur : &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX-RESEAU] &c%issuer% &7a rendu muet &c%target% &7sur &e%server% pour : &f%reason%"
+    kick:
+      public: "&8&m----------------------------------------\n&6&lReseau &8» &e%target% &aa été &c&lEXPULSÉ &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Serveur : &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX-RESEAU] &c%issuer% &7a expulsé &c%target% &7de &e%server% pour : &f%reason%"
+    warn:
+      public: "&8&m----------------------------------------\n&6&lReseau &8» &e%target% &aa été &e&lAVARTI &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Serveur : &e%server%\n&8&m----------------------------------------"
+      silent: "&7[SILENCIEUX-RESEAU] &c%issuer% &7a averti &c%target% &7sur &e%server% pour : &f%reason%"
+    unban:
+      public: "&6&lReseau &8» &a%target% a été débanni par %issuer%. Raison : %reason%"
+      silent: "&7[SILENCIEUX-RESEAU] &a%target% a été débanni par %issuer%. Raison : %reason%"
+    unmute:
+      public: "&6&lReseau &8» &a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
+      silent: "&7[SILENCIEUX-RESEAU] &a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
+
+# --- REPORTS ---
+reports:
+  submitted: "&aSignalement soumis contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
+  usage: "&eUtilisation : /report <joueur> <raison>"
+  yourself: "&cVous ne pouvez pas vous signaler vous-même !"
+  join-alert: "&aIl y a actuellement &e%open%&a signalements ouverts et &e%pending%&a signalements en attente sur le réseau."
+  not-found: "&cSignalement non trouvé."
+
+# --- OTHER COMMANDS ---
+commands:
+  staffchat:
+    usage: "%prefix%&cUtilisation : /staffchat <message>"
+    success: "%prefix%&aMessage envoyé au chat staff réseau."
+    message: "&7[&cReseau-SC&7] &e%player%&f : %message%"
+
+# Metadata
+version: 200

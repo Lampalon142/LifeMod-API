@@ -145,7 +145,35 @@ public class LifeMod extends JavaPlugin {
 
     private void loadConfigurations() {
         configConfig = loadConfig("config.yml");
-        langConfig = loadConfig("lang.yml");
+        
+        String langName = configConfig.getString("server.language", "en_US");
+        langConfig = loadLanguageConfig(langName);
+    }
+
+    private FileConfiguration loadLanguageConfig(String langName) {
+        File langFolder = new File(getDataFolder(), "languages");
+        if (!langFolder.exists()) langFolder.mkdirs();
+
+        File langFile = new File(langFolder, langName + ".yml");
+        if (!langFile.exists()) {
+            // Try to extract from resources if it exists
+            String resourcePath = "languages/" + langName + ".yml";
+            if (getResource(resourcePath) != null) {
+                saveResource(resourcePath, false);
+            } else {
+                // Fallback to en_US if the requested language doesn't exist
+                getLogger().warning("Language '" + langName + "' not found. Falling back to en_US.");
+                File fallbackFile = new File(langFolder, "en_US.yml");
+                if (!fallbackFile.exists()) {
+                    saveResource("languages/en_US.yml", false);
+                }
+                langFile = fallbackFile;
+            }
+        }
+        
+        FileConfiguration config = new YamlConfiguration();
+        try { config.load(langFile); } catch (Exception e) { e.printStackTrace(); }
+        return config;
     }
 
     private FileConfiguration loadConfig(String fileName) {
