@@ -40,12 +40,12 @@ public class StaffNoteItem extends AbstractItem {
         ItemBuilder builder = new ItemBuilder(Material.PAPER)
                 .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-title").replace("%author%", authorName)))
                 .addLoreLines(
-                        MessageUtil.formatMessage(lang.getMessage("report.detail.notes.item.date", "§7Date: §f%date%").replace("%date%", sdf.format(new Date(note.getCreatedAt())))),
+                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-date", "§7Date: §f%date%").replace("%date%", sdf.format(new Date(note.getCreatedAt())))),
                         "",
                         "§f" + note.getContent(),
                         "",
-                        MessageUtil.formatMessage(lang.getMessage("report.detail.notes.item.edit", "§eLeft-click to edit")),
-                        MessageUtil.formatMessage(lang.getMessage("report.detail.notes.item.delete", "§cRight-click to delete"))
+                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-edit", "§eLeft-click to edit")),
+                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-delete", "§cRight-click to delete"))
                 );
         
         return builder;

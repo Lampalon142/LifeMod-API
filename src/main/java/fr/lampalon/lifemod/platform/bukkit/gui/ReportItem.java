@@ -39,7 +39,7 @@ public class ReportItem extends AbstractItem {
         String targetStatus = (target != null && target.isOnline()) ? "§aOnline" : "§cOffline";
         String reporterStatus = (reporter != null && reporter.isOnline()) ? "§aOnline" : "§cOffline";
 
-        List<String> loreTemplate = LifeMod.getInstance().getLangConfig().getStringList("report.gui.lore");
+        List<String> loreTemplate = LifeMod.getInstance().getLangConfig().getStringList("reports.gui.item-lore");
         List<String> lore = loreTemplate.stream()
                 .map(line -> MessageUtil.formatMessage(line
                         .replace("%target%", targetName)
@@ -55,7 +55,7 @@ public class ReportItem extends AbstractItem {
                 .collect(Collectors.toList());
 
         String displayName = LifeMod.getInstance().getLangConfig()
-                .getString("report.gui.name")
+                .getString("reports.gui.item-name", "Report: %uuid%")
                 .replace("%uuid%", report.getUuid().toString().substring(0, 8));
 
         ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(MessageUtil.formatMessage(displayName));
