@@ -8,7 +8,7 @@ system:
   player-only: "%prefix%&cCette commande ne peut être exécutée que par un joueur."
   player-not-found: "%prefix%&cCe joueur n'est pas connecté au serveur."
   config-reloaded: "%prefix%&aConfiguration rechargée avec succès !"
-  date-format: "dd/MM/yyyy HH:mm:ss"
+  date-format: "dd/MM/yyyy HH:mm:ss" # Optional override
   update:
     enabled: true
     failed: "&c[LifeMod] Échec de la récupération de la dernière version."
@@ -91,6 +91,9 @@ sanctions:
     received: "&c&lAVERTISSEMENT ! &7Raison : &f%reason%"
     title: "&c&lAVERTISSEMENT"
     subtitle: "&7%reason%"
+
+  note:
+    success: "&aNote ajoutée pour &e%player% : &f%reason%"
 
   # Broadcasts (Local & Network)
   broadcast:
@@ -189,6 +192,46 @@ reports:
           cancelled: "&eCréation de note annulée."
           saved: "&aNote ajoutée !"
 
+# Legacy/Code Compatibility for Reports
+report:
+  status:
+    online: "&aEn ligne"
+    offline: "&cHors ligne"
+  detail:
+    title: "&d&lDétails du Signalement &7- &e#%id%"
+    reporter: "&bSignaleur : &f%player%"
+    target: "&cCible : &f%player%"
+    info: "&bInformations du Signalement"
+    reason: "&7Raison : &f%reason%"
+    server: "&7Serveur : &a%server%"
+    status: "&7Statut : &e%status%"
+    date: "&7Date : &f%date%"
+    teleport: "&dTéléporter à la Position"
+    teleport-lore: [ "&7Cliquez pour vous téléporter", "&7où le signalement a été créé." ]
+    assign: "&aS'assigner"
+    assign-lore: [ "&7Cliquez pour prendre la", "&7responsabilité de ce signalement." ]
+    close: "&cFermer le Signalement"
+    close-lore: [ "&7Cliquez pour résoudre et", "&7fermer ce signalement." ]
+    notes:
+      title: "§6Notes : §e"
+      item:
+        date: "§7Date : §f%date%"
+        edit: "§eClic-gauche pour éditer"
+        delete: "§cClic-droit pour supprimer"
+  gui:
+    lore:
+      - "&7Cible : &c%target% &7(%target_status%)"
+      - "&7Signaleur : &b%reporter% &7(%reporter_status%)"
+      - "&7Raison : &6%reason%"
+      - "&7Statut : &b%status%"
+      - "&7Serveur : &a%server%"
+      - "&7Date : &f%date%"
+      - "&8ID du Signalement : %uuid%"
+      - ""
+      - "&7[!] Clic-droit pour ouvrir les détails"
+      - "&7[!] Clic-gauche pour vous l'assigner"
+      - "&7[!] Shift-clic pour fermer le ticket"
+
 # --- TOOLS & GUIS ---
 gui:
   pagination:
@@ -255,6 +298,22 @@ gui:
     item-uuid: "&7UUID : &8%uuid%"
     item-history: "&6⚡ Clic-gauche pour l'Historique"
     item-case: "&6⚡ Clic-droit pour le Dossier"
+
+  staffhistory:
+    title: "&6Staff : &e%staff%"
+    usage: "&cUtilisation : /staffhistory <modérateur>"
+    gui-only: "&cCet interface est réservé aux joueurs."
+    no-sanctions: "&cAucune sanction trouvée pour ce modérateur."
+    filter-type: "&eFiltrer par Type"
+    filter-player: "&eFiltrer par Joueur"
+    filter-date: "&eFiltrer par Date"
+    current: "&7Actuel : &f%current%"
+    click-to-change: "&7Cliquez pour changer"
+    click-to-chat: "&7Cliquez pour définir (Chat)"
+    chat-prompt: "&aEntrez le nom du joueur (ou 'none' pour réinitialiser) :"
+    time-all: "Tout le temps"
+    time-since: "Depuis la date"
+    type-all: "Tous"
 
 # --- MODERATION TOOLS ---
 mod:
@@ -326,6 +385,36 @@ mod:
       no-external-put: "&cVous ne pouvez pas mettre les outils staff dans d'autres inventaires."
       no-drop: "&cVous ne pouvez pas jeter les outils staff."
 
+antialt:
+  usage: "&cUtilisation : /alt <joueur>"
+  analyzing: "&6[AntiAlt] &eAnalyse de &b%player%&e..."
+  header: "&8&m----------------------------------------"
+  title: "&6&lAnalyse AntiAlt : &b%player%"
+  score: "&e• &fScore de Danger : %color%%score%/100"
+  rules-triggered: "&e• &fRègles Déclenchées : &7%rules%"
+  fingerprint: "&e• &fEmpreinte : &7%fingerprint%"
+  footer: "&8&m----------------------------------------"
+  no-rules: "Aucune"
+  rule-separator: ", "
+  rules:
+    EntropyHigh: "Entropie Élevée"
+    BadBigram: "Bigrammes Inhabituels"
+    BadTrigram: "Trigrammes Inhabituels"
+    GeneratedSuffix: "Suffixe Généré"
+    RandomCasing: "Casse Aléatoire"
+    IPHistory: "Historique IP Suspect"
+    PatternMatch: "Correspondance de Modèle"
+
+antivpn:
+  kick-reason: "&c&lLifeMod &7- &cLes VPN/Proxy ne sont pas autorisés sur ce serveur."
+
+vanish:
+  activate: "&aVanish activé."
+  deactivate: "&cVanish désactivé."
+  usage: "&cUtilisation : /vanish [joueur]"
+  fake-join: "&e%player% a rejoint la partie"
+  fake-quit: "&e%player% a quitté la partie"
+
 # --- AUTRES COMMANDES ---
 commands:
   fly:
@@ -334,6 +423,8 @@ commands:
     disabled: "%prefix%&cVol désactivé pour %player% !"
     enabled-self: "%prefix%&aVol activé !"
     disabled-self: "%prefix%&cVol désactivé !"
+    enabled-by: "%prefix%&aVotre vol a été activé par %player% !"
+    disabled-by: "%prefix%&cVotre vol a été désactivé par %player% !"
 
   gamemode:
     invalid: "%prefix%&cMode invalide !"
@@ -364,16 +455,59 @@ commands:
     god-off: "%prefix%&cMode Dieu désactivé !"
     speed-success: "%prefix%&aVitesse fixée à &e%speed%&a."
     speed-invalid: "%prefix%&cVeuillez fournir une vitesse valide (1-10)."
+    feed:
+      yourself: "%prefix%&aVotre appétit a été satisfait !"
+      player: "%prefix%&aVotre appétit a été satisfait par un modérateur !"
+      mod: "%prefix%&aVous avez nourri &e%target%&a."
+      usage: "%prefix%&cUtilisation : /feed [joueur]"
+    heal:
+      player: "%prefix%&aVous avez été soigné !"
+      mod: "%prefix%&aVous avez soigné &e%player%&a."
+      usage: "%prefix%&cUtilisation : /heal [joueur]"
+    god:
+      activate:
+        own: "%prefix%&aMode Dieu activé !"
+        other: "%prefix%&aMode Dieu activé pour &e%player%&a."
+      deactivate:
+        own: "%prefix%&cMode Dieu désactivé !"
+        other: "%prefix%&cMode Dieu désactivé pour &e%player%&a."
 
   hearts:
     usage: "%prefix%&cUtilisation : /hearts <set|add> <joueur> <quantité>"
     success: "%prefix%&a%action% %amount% cœurs à %target% !"
+    max-reached: "%prefix%&cLe joueur a déjà le maximum de cœurs !"
     invalid: "%prefix%&cQuantité invalide !"
+    unit-info: "%prefix%&7Note : 2 unités = 1 cœur."
+    invalid-amount: "%prefix%&cQuantité invalide !"
+    half-heart-warning: "%prefix%&eAttention : L'utilisation de nombres impairs entraîne des demi-cœurs."
+    changed: "%prefix%&aVotre santé maximale a été changée à &e%amount% &apar un modérateur !"
 
   world:
     time-set: "%prefix%&aHeure fixée à &e%time%&a."
     difficulty-set: "%prefix%&aDifficulté fixée à &e%difficulty%&a."
     weather-set: "%prefix%&aMétéo fixée à &e%weather%&a."
+    difficulty:
+      usage: "%prefix%&cUtilisation : /difficulty <difficulté>"
+      success: "%prefix%&aDifficulté fixée à &e%difficulty%&a."
+      invalid: "%prefix%&cDifficulté invalide !"
+      current: "&eDifficulté actuelle : &a%difficulty% &7(Disponibles : &f%available%&7)"
+    time:
+      usage: "%prefix%&cUtilisation : /settime <heure|day|night>"
+      success: "%prefix%&aHeure fixée à &e%time%&a."
+      invalid: "%prefix%&cFormat d'heure invalide !"
+    weather:
+      usage: "%prefix%&cUtilisation : /weather <sun|rain|storm>"
+      sun: "%prefix%&aMétéo fixée sur BEAU TEMPS."
+      rain: "%prefix%&aMétéo fixée sur PLUIE."
+      storm: "%prefix%&aMétéo fixée sur ORAGE."
+
+  chatclear:
+    message: "%prefix%&cLe chat a été vidé."
+
+  reports:
+    usage: "&eUtilisation : /report <joueur> <raison>"
+    submitted: "&aSignalement soumis contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
+    yourself: "&cVous ne pouvez pas vous signaler vous-même !"
 
   freeze:
     usage: "%prefix%&cUtilisation : /freeze <joueur>"
@@ -391,10 +525,105 @@ commands:
         mod: "%prefix%&aVous avez dégelé &e%player%"
         target: "%prefix%&aVous avez été dégelé par &e%player%&a."
 
+  invsee:
+    usage: "%prefix%&cUtilisation : /invsee <joueur>"
+    name: "&6Inventaire : &e%player%"
+
+  oinvsee:
+    usage: "%prefix%&cUtilisation : /oinvsee <joueur>"
+    name: "&cInventaire Hors-ligne : &e%target%"
+    no-inventory: "&cAucun inventaire sauvegardé pour %target%."
+    success: "&aAffichage de l'inventaire hors-ligne de %target%."
+
+  auth:
+    login-required: "&cAuthentifiez-vous avec &e/modlogin <motdepasse>&c."
+    login-success: "&aConnexion réussie."
+    login-failed: "&cMot de passe incorrect ! Tentatives restantes : &e%attempts%"
+    login-locked: "&4Compte verrouillé suite à trop d'échecs."
+    not-registered: "&cAucun mot de passe défini. Utilisez &e/modregister <motdepasse>&c."
+    registered: "&aMot de passe défini. Utilisez &e/modlogin&a pour entrer."
+    reset-success: "&aMot de passe de &e%player% &aréinitialisé."
+    blocked-action: "&cVous devez être connecté pour faire cela !"
+    blocked-chat: "&cVous devez être connecté pour discuter !"
+    changepass-usage: "&cUtilisation : /modchangepass <ancien> <nouveau>"
+    incorrect-old-password: "&cAncien mot de passe incorrect."
+    password-changed: "&aMot de passe changé avec succès."
+    already-authenticated: "&cVous êtes déjà authentifié."
+    login-usage: "&cUtilisation : /modlogin <motdepasse>"
+    already-registered: "&cVous êtes déjà enregistré."
+    register-usage: "&cUtilisation : /modregister <motdepasse>"
+    reset-usage: "&cUtilisation : /modreset <joueur>"
+
   staffchat:
     usage: "%prefix%&cUtilisation : /staffchat <message>"
     success: "%prefix%&aMessage envoyé au chat staff."
     message: "&7[&cStaffChat&7] &e%player%&f : %message%"
 
+  stafflist:
+    online: "&6Staff en ligne : &f"
+    none: "&cAucun"
+
+  follow:
+    usage: "&cUtilisation : /follow <joueur>"
+    success: "&aVous suivez maintenant &e%target%&a."
+    actionbar: "&eSuivi de &6%target% &7| &bDistance : &f%distance%m &7| &cCPS : &f%cps%"
+    yourself: "%prefix%&cVous ne pouvez pas vous suivre vous-même !"
+    stopped: "&cVous ne suivez plus ce joueur."
+
+  broadcast:
+    usage: "%prefix%&cUtilisation : /broadcast <message>"
+    prefix: "&7[&6Annonce&7] &f» "
+
+  clearinv:
+    usage: "%prefix%&cUtilisation : /clearinv [joueur]"
+    message: "%prefix%&aInventaire vidé pour &e%target%&a."
+
+  ec:
+    usage: "%prefix%&cUtilisation : /ec [joueur]"
+    yourself: "%prefix%&cVous ne pouvez pas ouvrir votre propre enderchest avec cette commande."
+
+  lifemod:
+    reload: "%prefix%&aConfiguration rechargée !"
+    help:
+      header: "&6&lLifeMod &7- Aide"
+      reload: "&e/lifemod reload &7- Recharger la config"
+      info: "&e/lifemod info &7- Afficher les infos"
+
+  otp:
+    usage: "%prefix%&cUtilisation : /otp <joueur>"
+    player-not-found: "%prefix%&cLe joueur %target% n'existe pas ou ne s'est jamais connecté."
+    no-position: "%prefix%&cPas de position sauvegardée pour %target%."
+    teleported: "%prefix%&aVous avez été téléporté à la dernière position de %target%."
+
+  spectate:
+    usage: "%prefix%&cUtilisation : /spectate <joueur|leave|fp|random|back|list>"
+    player-not-found: "%prefix%&cJoueur &e%target% &cnon trouvé."
+    start: "%prefix%&aVous spectatez maintenant &e%target%&a."
+    stop: "%prefix%&cVous ne spectatez plus."
+    freecam: "%prefix%&aFreecam activée."
+    back: "%prefix%&aTéléporté à votre position précédente."
+    self: "%prefix%&cVous ne pouvez pas vous spectater vous-même !"
+    already: "%prefix%&cVous spectatez déjà quelqu'un."
+    not-spectating: "&cVous ne spectatez personne."
+    spectate-start: "&aVous spectatez maintenant &e%target%&a."
+    freecam-start: "&aMode Freecam activé."
+    spectate-leave: "&cVous avez quitté le mode spectateur."
+    spectate-leave-no-pos: "&cMode spectateur quitté, mais impossible de revenir à la position précédente."
+    random-error: "&cAucun joueur approprié trouvé à spectater."
+    random-success: "&aVous spectatez maintenant un joueur aléatoire : &e%target%&a."
+    back-error: "&cAucune position précédente enregistrée."
+    back-success: "&aTéléporté à l'endroit où vous étiez avant de spectater &e%target%&a."
+    list-header: "&6Joueurs en spectateur :"
+    list-player: "&7 - &e%player%"
+
 # Metadata
 version: 200
+
+bc:
+  tabcompleter:
+    - "&eEntrez votre message ici..."
+
+alts:
+  header: "&8&m----------------------------------------\n&6&lComptes Liés pour &e%ip%\n "
+  entry: " &8• %color%%name% &7(%uuid%...)"
+  footer: "&8&m----------------------------------------"
