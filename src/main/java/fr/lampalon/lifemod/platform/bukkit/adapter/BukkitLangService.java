@@ -1,38 +1,43 @@
 package fr.lampalon.lifemod.platform.bukkit.adapter;
 
 import fr.lampalon.lifemod.common.service.ILangService;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class BukkitLangService implements ILangService {
-    private final FileConfiguration lang;
+import java.util.List;
 
-    public BukkitLangService(FileConfiguration lang) {
-        this.lang = lang;
+public class BukkitLangService implements ILangService {
+    private final FileConfiguration langConfig;
+
+    public BukkitLangService(FileConfiguration langConfig) {
+        this.langConfig = langConfig;
     }
 
     @Override
     public String getMessage(String key) {
-        String message = lang.getString(key, key);
-        return MessageUtil.formatMessage(message);
+        String message = langConfig.getString(key);
+        return message != null ? message : key;
     }
 
     @Override
     public String getMessage(String key, String... placeholders) {
         String message = getMessage(key);
-        for (int i = 0; i < placeholders.length; i += 2) {
-            if (i + 1 < placeholders.length) {
-                String replacement = placeholders[i + 1];
-                if (replacement == null) replacement = "";
-                message = message.replace(placeholders[i], replacement);
+
+        if (message != null && placeholders != null && placeholders.length % 2 == 0) {
+            for (int i = 0; i < placeholders.length; i += 2) {
+                String placeholder = placeholders[i];
+                String value = placeholders[i + 1];
+                if (value != null) {
+                    message = message.replace(placeholder, value);
+                }
             }
         }
+
         return message;
     }
 
     @Override
-    public java.util.List<String> getStringList(String key) {
-        return lang.getStringList(key);
+    public List<String> getStringList(String key) {
+        List<String> list = langConfig.getStringList(key);
+        return list != null ? list : java.util.Collections.emptyList();
     }
 }
-

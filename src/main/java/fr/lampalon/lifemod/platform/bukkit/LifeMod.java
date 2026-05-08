@@ -34,6 +34,7 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -94,27 +95,27 @@ public class LifeMod extends JavaPlugin {
         saveDefaultConfig();
         new ConfigUpdater(this).updateConfigs();
         loadConfigurations();
-        
+
         BukkitPlatform bukkitPlatform = new BukkitPlatform(this);
         ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         ServiceRegistry.register(IItemsAdderService.class, new BukkitItemsAdderService());
-        
+
         setupRedis();
 
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
-        
+
         this.webHookUrl = configConfig.getString("modules.discord.webhook-url");
         this.spectateManager = new SpectateManager();
         this.debugManager = new DebugManager(this);
         initializeManagers();
-        
+
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
         PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
-        
+
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();
         registerCommands();
@@ -126,7 +127,7 @@ public class LifeMod extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);
-        
+
         long elapsed = System.currentTimeMillis() - start;
         printStartupMessage(elapsed, bukkitPlatform.getNmsProvider().getName());
     }
@@ -138,14 +139,14 @@ public class LifeMod extends JavaPlugin {
             String password = configConfig.getString("redis.password");
             IMessagingService redis = new RedisMessagingService(host, port, password);
             ServiceRegistry.register(IMessagingService.class, redis);
-            
+
             // Subscriptions logic would go here if needed
         }
     }
 
     private void loadConfigurations() {
         configConfig = loadConfig("config.yml");
-        
+
         String langName = configConfig.getString("server.language", "en_US");
         langConfig = loadLanguageConfig(langName);
     }
@@ -154,26 +155,72 @@ public class LifeMod extends JavaPlugin {
         File langFolder = new File(getDataFolder(), "languages");
         if (!langFolder.exists()) langFolder.mkdirs();
 
+        File defaultLangFile = new File(langFolder, "en_US.yml");
+        if (!defaultLangFile.exists()) {
+            saveResource("languages/en_US.yml", false);
+        }
+
+        FileConfiguration baseConfig = new YamlConfiguration();
+        try {
+            baseConfig.load(defaultLangFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (langName.equals("en_US")) {
+            getLogger().info("Using en_US directly (no merge needed)");
+            return baseConfig;
+        }
+
         File langFile = new File(langFolder, langName + ".yml");
+
         if (!langFile.exists()) {
-            // Try to extract from resources if it exists
             String resourcePath = "languages/" + langName + ".yml";
             if (getResource(resourcePath) != null) {
                 saveResource(resourcePath, false);
             } else {
-                // Fallback to en_US if the requested language doesn't exist
-                getLogger().warning("Language '" + langName + "' not found. Falling back to en_US.");
-                File fallbackFile = new File(langFolder, "en_US.yml");
-                if (!fallbackFile.exists()) {
-                    saveResource("languages/en_US.yml", false);
-                }
-                langFile = fallbackFile;
+                getLogger().warning("Language '" + langName + "' not found. Using en_US.");
+                return baseConfig;
             }
         }
-        
-        FileConfiguration config = new YamlConfiguration();
-        try { config.load(langFile); } catch (Exception e) { e.printStackTrace(); }
-        return config;
+
+        FileConfiguration specificConfig = new YamlConfiguration();
+        try {
+            specificConfig.load(langFile);
+        } catch (Exception e) {
+            getLogger().severe("Failed to load " + langName + ".yml");
+            e.printStackTrace();
+            return baseConfig;
+        }
+
+        int specificKeys = 0;
+
+        FileConfiguration mergedConfig = new YamlConfiguration();
+
+        for (String key : baseConfig.getKeys(true)) {
+            mergedConfig.set(key, baseConfig.get(key));
+        }
+
+        for (String key : specificConfig.getKeys(true)) {
+            if (!specificConfig.isConfigurationSection(key)) {
+                Object val = specificConfig.get(key);
+
+                if (val != null) {
+                    String stringValue;
+                    try {
+                        stringValue = val.toString();
+                    } catch (Exception e) {
+                        getLogger().warning("Error of conversion of key " + key);
+                        continue;
+                    }
+
+                    if (stringValue != null && !stringValue.trim().isEmpty()) {
+                        mergedConfig.set(key, stringValue);
+                    }
+                }
+            }
+        }
+        return baseConfig;
     }
 
     private FileConfiguration loadConfig(String fileName) {

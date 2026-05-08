@@ -1,6 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.utils;
 
-import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import net.md_5.bungee.api.ChatColor;
 
 import java.awt.*;
@@ -47,10 +49,8 @@ public class MessageUtil {
             return "";
         }
 
-        String prefix = LifeMod.getInstance().getConfigConfig().getString("prefix");
-        if (prefix == null) {
-            prefix = "";
-        }
+        IConfigurationService configService = ServiceRegistry.get(IConfigurationService.class);
+        String prefix = configService != null ? configService.getPrefix() : "";
 
         if (message.contains(PREFIX_PLACEHOLDER)) {
             message = message.replace(PREFIX_PLACEHOLDER, prefix);
@@ -61,8 +61,8 @@ public class MessageUtil {
 
     public static String getStatusDisplayName(fr.lampalon.lifemod.common.model.ReportStatus status) {
         String key = "report.report-status." + status.getConfigKey();
-        return formatMessage(LifeMod.getInstance().getLangConfig().getString(key, status.getConfigKey()));
+        ILangService langService = ServiceRegistry.get(ILangService.class);
+        String message = langService != null ? langService.getMessage(key) : status.getConfigKey();
+        return formatMessage(message);
     }
 }
-
-
