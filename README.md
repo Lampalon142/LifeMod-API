@@ -1,4 +1,4 @@
-![Lines](https://img.shields.io/badge/dynamic/json?url=https://gist.githubusercontent.com/Lampalon142/c398eb39d86a2f8a0cd9152209391547/raw/lines.json&query=$.lines&color=black&label=lines&logo=github)
+![Lines](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Lampalon142/c398eb39d86a2f8a0cd9152209391547/raw/lines.json&query=$.lines&color=black&labelColor=black&logo=github&logoColor=white&label=lines)
 
 # LifeMod
 
@@ -48,11 +48,11 @@ Open-source: Public codebase for transparency and potential improvements.
 /settime - nothing - Quickly set the world time to day, night, noon, or midnight. - lifemod.time  
 /difficulty - nothing - Change the server difficulty to peaceful, easy, normal, or hard. - lifemod.difficulty  
 /report - nothing - Report a player. - nothing
-/reports - nothing - View all reports. - lifemod.reports  
+/reports - nothing - View all reports. - lifemod.reports
 
 
 ## Permissions Management
- Permissions can be assigned using your permissions plugin (such as LuckPerms, PermissionsEx, etc.).
+Permissions can be assigned using your permissions plugin (such as LuckPerms, PermissionsEx, etc.).
 
 ## Technical Details
 Partial GUI: Only /reports have a GUI for the reports -- other moderation actions require typed

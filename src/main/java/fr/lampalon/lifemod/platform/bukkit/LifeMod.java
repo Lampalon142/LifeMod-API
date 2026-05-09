@@ -34,6 +34,7 @@ import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -94,27 +95,27 @@ public class LifeMod extends JavaPlugin {
         saveDefaultConfig();
         new ConfigUpdater(this).updateConfigs();
         loadConfigurations();
-        
+
         BukkitPlatform bukkitPlatform = new BukkitPlatform(this);
         ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
         ServiceRegistry.register(IItemsAdderService.class, new BukkitItemsAdderService());
-        
+
         setupRedis();
 
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
-        
+
         this.webHookUrl = configConfig.getString("modules.discord.webhook-url");
         this.spectateManager = new SpectateManager();
         this.debugManager = new DebugManager(this);
         initializeManagers();
-        
+
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
         PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
-        
+
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();
         registerCommands();
@@ -126,7 +127,7 @@ public class LifeMod extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);
-        
+
         long elapsed = System.currentTimeMillis() - start;
         printStartupMessage(elapsed, bukkitPlatform.getNmsProvider().getName());
     }
@@ -138,14 +139,88 @@ public class LifeMod extends JavaPlugin {
             String password = configConfig.getString("redis.password");
             IMessagingService redis = new RedisMessagingService(host, port, password);
             ServiceRegistry.register(IMessagingService.class, redis);
-            
+
             // Subscriptions logic would go here if needed
         }
     }
 
     private void loadConfigurations() {
         configConfig = loadConfig("config.yml");
-        langConfig = loadConfig("lang.yml");
+
+        String langName = configConfig.getString("server.language", "en_US");
+        langConfig = loadLanguageConfig(langName);
+    }
+
+    private FileConfiguration loadLanguageConfig(String langName) {
+        File langFolder = new File(getDataFolder(), "languages");
+        if (!langFolder.exists()) langFolder.mkdirs();
+
+        File defaultLangFile = new File(langFolder, "en_US.yml");
+        if (!defaultLangFile.exists()) {
+            saveResource("languages/en_US.yml", false);
+        }
+
+        FileConfiguration baseConfig = new YamlConfiguration();
+        try {
+            baseConfig.load(defaultLangFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (langName.equals("en_US")) {
+            getLogger().info("Using en_US directly (no merge needed)");
+            return baseConfig;
+        }
+
+        File langFile = new File(langFolder, langName + ".yml");
+
+        if (!langFile.exists()) {
+            String resourcePath = "languages/" + langName + ".yml";
+            if (getResource(resourcePath) != null) {
+                saveResource(resourcePath, false);
+            } else {
+                getLogger().warning("Language '" + langName + "' not found. Using en_US.");
+                return baseConfig;
+            }
+        }
+
+        FileConfiguration specificConfig = new YamlConfiguration();
+        try {
+            specificConfig.load(langFile);
+        } catch (Exception e) {
+            getLogger().severe("Failed to load " + langName + ".yml");
+            e.printStackTrace();
+            return baseConfig;
+        }
+
+        int specificKeys = 0;
+
+        FileConfiguration mergedConfig = new YamlConfiguration();
+
+        for (String key : baseConfig.getKeys(true)) {
+            mergedConfig.set(key, baseConfig.get(key));
+        }
+
+        for (String key : specificConfig.getKeys(true)) {
+            if (!specificConfig.isConfigurationSection(key)) {
+                Object val = specificConfig.get(key);
+
+                if (val != null) {
+                    String stringValue;
+                    try {
+                        stringValue = val.toString();
+                    } catch (Exception e) {
+                        getLogger().warning("Error of conversion of key " + key);
+                        continue;
+                    }
+
+                    if (stringValue != null && !stringValue.trim().isEmpty()) {
+                        mergedConfig.set(key, stringValue);
+                    }
+                }
+            }
+        }
+        return baseConfig;
     }
 
     private FileConfiguration loadConfig(String fileName) {
@@ -170,7 +245,7 @@ public class LifeMod extends JavaPlugin {
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
         reactionManager = new ReactionManager(this);
-        
+
         staffItemManager = new StaffItemManager(this);
         staffModeManager = new StaffModeManager(this, staffItemManager);
         invseeManager = new InvseeManager();
@@ -181,26 +256,26 @@ public class LifeMod extends JavaPlugin {
                 new NoClipBukkitListener(noClipManager), this
         );
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
-        
+
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
-            PacketListenerPriority.MONITOR
+                new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
+                PacketListenerPriority.MONITOR
         );
 
         // AntiVPN System
         this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(ServiceRegistry.get(ILifePlatform.class));
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
-            PacketListenerPriority.LOW
+                new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
+                PacketListenerPriority.LOW
         );
         ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
 
         vanishService = new VanishService(this);
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService), 
-            PacketListenerPriority.HIGH
+                new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService),
+                PacketListenerPriority.HIGH
         );
     }
 
@@ -219,11 +294,11 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new PluginDisable(), this);
         pm.registerEvents(new PlayerQuit(), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
-        
+
         CPSListener cpsListener = new CPSListener(cpsMap);
         pm.registerEvents(cpsListener, this);
         PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
-        
+
         pm.registerEvents(new GuiDetailListener(this), this);
         pm.registerEvents(new ChatAsyncListener(this), this);
         pm.registerEvents(new TicketJoinListener(this, updateChecker), this);

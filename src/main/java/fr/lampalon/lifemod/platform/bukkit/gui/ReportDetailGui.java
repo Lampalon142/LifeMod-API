@@ -26,7 +26,7 @@ public class ReportDetailGui extends AbstractGui {
     public Gui buildGui() {
         OfflinePlayer reporter = Bukkit.getOfflinePlayer(report.getReporterUuid());
         OfflinePlayer target = Bukkit.getOfflinePlayer(report.getTargetUuid());
-        
+
         String reporterName = reporter != null && reporter.getName() != null ? reporter.getName() : report.getReporterUuid().toString();
         String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
 
@@ -45,28 +45,28 @@ public class ReportDetailGui extends AbstractGui {
                         "# # # # B # # # #")
                 .addIngredient('#', createBorder())
                 .addIngredient('R', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.reporter", "%player%", reporterName)))
-                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (reporter != null && reporter.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.reporter", "%player%", reporterName)))
+                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (reporter != null && reporter.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline"))))))
                 .addIngredient('T', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.target", "%player%", targetName)))
-                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (target != null && target.isOnline() ? lang.getMessage("report.status.online", "&aOnline") : lang.getMessage("report.status.offline", "&cOffline"))))))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.target", "%player%", targetName)))
+                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (target != null && target.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline"))))))
                 .addIngredient('I', new SimpleItem(new ItemBuilder(Material.BOOK)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.info")))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-title")))
                         .addLoreLines(
-                                MessageUtil.formatMessage(lang.getMessage("report.detail.reason", "%reason%", report.getReason())),
-                                MessageUtil.formatMessage(lang.getMessage("report.detail.server", "%server%", report.getServerName())),
-                                MessageUtil.formatMessage(lang.getMessage("report.detail.status", "%status%", report.getStatus().name())),
-                                MessageUtil.formatMessage(lang.getMessage("report.detail.date", "%date%", sdf.format(new Date(report.getCreatedAt()))))
+                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-reason", "%reason%", report.getReason())),
+                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-server", "%server%", report.getServerName())),
+                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-status", "%status%", report.getStatus().name())),
+                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-date", "%date%", sdf.format(new Date(report.getCreatedAt()))))
                         )))
                 .addIngredient('L', new SimpleItem(new ItemBuilder(Material.COMPASS)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.teleport")))
-                        .addLoreLines(lang.getStringList("report.detail.teleport-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.teleport")))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.teleport-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
                 .addIngredient('A', new SimpleItem(new ItemBuilder(Material.LIME_DYE)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.assign")))
-                        .addLoreLines(lang.getStringList("report.detail.assign-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.assign")))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.assign-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
                 .addIngredient('C', new SimpleItem(new ItemBuilder(Material.RED_DYE)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("report.detail.close")))
-                        .addLoreLines(lang.getStringList("report.detail.close-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.close")))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.close-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
                 .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.back"))), click -> {
                     player.closeInventory();
                 }))

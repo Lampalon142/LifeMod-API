@@ -43,6 +43,10 @@ public class ModLoginCommand extends LifeCommand {
             if (context.getPlugin().getConfigConfig().getBoolean("modules.discord.enabled")) {
                 sendDiscordAlert(context, true);
             }
+            context.getPlugin().getLogger().info("=== LANG DEBUG ===");
+            context.getPlugin().getLogger().info("Raw from langConfig: " + context.getPlugin().getLangConfig().getString("commands.auth.login-success"));
+            context.getPlugin().getLogger().info("Via ILangService: " + context.getLang().getMessage("commands.auth.login-success"));
+            context.getPlugin().getLogger().info("==================");
         } else {
             int attemptsLeft = sessionManager.decrementAttempts(player.getUniqueId());
             if (attemptsLeft <= 0) {

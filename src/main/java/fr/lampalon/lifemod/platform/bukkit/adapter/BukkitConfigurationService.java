@@ -40,4 +40,3 @@ public class BukkitConfigurationService implements IConfigurationService {
         return config.getString("prefix");
     }
 }
-

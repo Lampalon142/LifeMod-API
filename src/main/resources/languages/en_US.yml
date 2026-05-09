@@ -1,0 +1,625 @@
+## LifeMod - Language Configuration
+## Default Language: English (Native)
+
+# --- SYSTEM MESSAGES ---
+system:
+  prefix: "&7[&6Moderation&7] &f» "
+  no-permission: "%prefix%&cYou don't have permission for this."
+  player-only: "%prefix%&cThis command can only be executed by a player."
+  player-not-found: "%prefix%&cThis player is not connected to the server."
+  config-reloaded: "%prefix%&aConfiguration reloaded successfully!"
+  date-format: "dd/MM/yyyy HH:mm:ss" # Optional override
+  update:
+    enabled: true
+    failed: "&c[LifeMod] Failed to retrieve the latest version."
+    up-to-date: "&a[LifeMod] LifeMod is up to date."
+    unreleased: "&e[LifeMod] You are using a version not yet released."
+    error: "&c[LifeMod] Unable to check for updates."
+    message: |
+      &dHello %player%
+      &bLifeMod has an available update!
+      &eYour version: &c%current_version%
+      &eNew version: &a%latest_version%
+      &eLink: &bhttps://bit.ly/lifemod-update
+      &r
+      &e===========================
+
+# --- SANCTIONS ---
+sanctions:
+  # Command logic
+  cmd:
+    usage: "&cUsage: /%cmd% <player> [reason] <time> [-s]"
+    usage-no-time: "&cUsage: /%cmd% <player> [reason] [-s]"
+    default-reason: "No reason specified"
+    revoke-usage: "&cUsage: /%cmd% <player> [reason] [-s]"
+    revoke-success: "&aThe sanction (%type%) for &e%player% &ahas been revoked."
+    revoke-silent: "&7[SILENT] &aThe sanction (%type%) for &e%player% &ahas been revoked."
+    revoke-not-found: "&cThis player has no active sanction of type %type%."
+
+  # Specific Sanctions
+  ban:
+    success: "&aPlayer &e%player% &ahas been banned for: &f%reason%"
+    received: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cYou have been banned!
+      &7Reason: &f%reason%
+      &7Banned by: &e%issuer%
+      &7Time remaining: &f%time%
+      &8&m----------------------------------------
+    login: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cYou are banned from this server!
+      &7Reason: &f%reason%
+      &7Expires on: &e%expiration%
+      &7Sanction ID: &8#%id%
+      &8&m----------------------------------------
+    kick-message: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cYou have been banned!
+      &7Reason: &f%reason%
+      &8&m----------------------------------------
+
+  mute:
+    success: "&aPlayer &e%player% &ahas been muted for: &f%reason%"
+    received: "&cYou have been muted! Reason: &f%reason%"
+    title: "&d&lMUTED"
+    subtitle: "&7%reason%"
+    blocked: |
+      &cYou are muted!
+      &7Reason: &f%reason%
+      &7Expires in: &f%time%
+    chat-blocked: |
+      &cYou are reduced to silence!
+      &7Reason: &f%reason%
+      &7Expires on: &e%expiration%
+
+  kick:
+    success: "&aPlayer &e%player% &ahas been kicked for: &f%reason%"
+    message: |
+      &8&m----------------------------------------
+      &6&lLifeMod
+      &cYou have been kicked!
+      &7Reason: &f%reason%
+      &7By: &e%issuer%
+      &8&m----------------------------------------
+
+  warn:
+    success: "&aWarning sent to &e%player% for: &f%reason%"
+    received: "&c&lWARNING! &7Reason: &f%reason%"
+    title: "&c&lWARNING"
+    subtitle: "&7%reason%"
+
+  # Broadcasts (Local & Network)
+  broadcast:
+    ban:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &ahas been &c&lBANNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Duration: &f%time%\n&8&m----------------------------------------"
+      silent: "&7[SILENT] &c%issuer% &7banned &c%target% &7(%time%) for: &f%reason%"
+    mute:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &ahas been &d&lMUTED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&7Duration: &f%time%\n&8&m----------------------------------------"
+      silent: "&7[SILENT] &c%issuer% &7muted &c%target% &7(%time%) for: &f%reason%"
+    kick:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &ahas been &c&lKICKED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&8&m----------------------------------------"
+      silent: "&7[SILENT] &c%issuer% &7kicked &c%target% &7for: &f%reason%"
+    warn:
+      public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &ahas been &e&lWARNED &aby &e%issuer%&a.\n&7Reason: &f%reason%\n&8&m----------------------------------------"
+      silent: "&7[SILENT] &c%issuer% &7warned &c%target% &7for: &f%reason%"
+    unban:
+      public: "&a%target% has been unbanned by %issuer%. Reason: %reason%"
+      silent: "&7[SILENT] &a%target% has been unbanned by %issuer%. Reason: %reason%"
+    unmute:
+      public: "&a%target% has been unmuted by %issuer%. Reason: %reason%"
+      silent: "&7[SILENT] &a%target% has been unmuted by %issuer%. Reason: %reason%"
+
+# --- REPORTS ---
+reports:
+  submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
+  usage: "&eUsage: /report <player> <reason>"
+  yourself: "&cYou cannot report yourself!"
+  join-alert: "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports."
+  not-found: "&cReport not found."
+  no-reports: "&cNo reports found matching your criteria."
+  
+  status:
+    open: "&aOpen"
+    pending: "&ePending"
+    in_progress: "&6In Progress"
+    closed: "&cClosed"
+    rejected: "&8Rejected"
+    archived: "&7Archived"
+    online: "&aOnline"
+    offline: "&cOffline"
+
+  gui:
+    main-title: "&d&lReports &7(Page %page%/%total%)"
+    item-name: "&eReport: %uuid%"
+    item-lore:
+      - "&7Target: &c%target% &7(%target_status%)"
+      - "&7Reporter: &b%reporter% &7(%reporter_status%)"
+      - "&7Reason: &6%reason%"
+      - "&7Status: &b%status%"
+      - "&7Server: &a%server%"
+      - "&7Date: &f%date%"
+      - "&8Report ID: %uuid%"
+      - ""
+      - "&7[!] Right-click to open details"
+      - "&7[!] Left-click to assign to yourself"
+      - "&7[!] Shift-click to close ticket"
+    
+    detail:
+      title: "&d&lReport Details &7- &e#%id%"
+      reporter: "&bReporter: &f%player%"
+      target: "&cTarget: &f%player%"
+      info-title: "&bReport Information"
+      info-reason: "&7Reason: &f%reason%"
+      info-server: "&7Server: &a%server%"
+      info-status: "&7Status: &e%status%"
+      info-date: "&7Date: &f%date%"
+      status-prefix: "&7Status: "
+      title-prefix: "&dReport: &e#"
+      teleport: "&dTeleport to Location"
+      teleport-lore: [ "&7Click to teleport to where", "&7the report was created." ]
+      assign: "&aAssign to Me"
+      assign-lore: [ "&7Click to take responsibility", "&7for this report." ]
+      close: "&cClose Report"
+      close-lore: [ "&7Click to resolve and", "&7close this report." ]
+      back: "&7« Back"
+      teleport-success: "&aTeleported to report location."
+
+    notes:
+      title: "&6Notes: &e#%id%"
+      add: "&a✚ Add a note"
+      prompt: "&aType your note in chat (or 'cancel' to abort)"
+      item-title: "&eNote by &f%author%"
+      item-date: "&7Date: &f%date%"
+      item-edit: "&eLeft-click to edit"
+      item-delete: "&cRight-click to delete"
+      delete-success: "&aNote deleted!"
+      chat-cancelled: "&eNote action cancelled."
+      chat-saved: "&aNote saved successfully!"
+      errors:
+        empty: "&cYour note cannot be empty."
+      menu:
+        edit:
+          cancelled: "&eEdit cancelled."
+          saved: "&aNote updated!"
+        chat:
+          cancelled: "&eNote creation cancelled."
+          saved: "&aNote added!"
+
+# Legacy/Code Compatibility for Reports
+report:
+  status:
+    online: "&aOnline"
+    offline: "&cOffline"
+  detail:
+    title: "&d&lReport Details &7- &e#%id%"
+    reporter: "&bReporter: &f%player%"
+    target: "&cTarget: &f%player%"
+    info: "&bReport Information"
+    reason: "&7Reason: &f%reason%"
+    server: "&7Server: &a%server%"
+    status: "&7Status: &e%status%"
+    date: "&7Date: &f%date%"
+    teleport: "&dTeleport to Location"
+    teleport-lore: [ "&7Click to teleport to where", "&7the report was created." ]
+    assign: "&aAssign to Me"
+    assign-lore: [ "&7Click to take responsibility", "&7for this report." ]
+    close: "&cClose Report"
+    close-lore: [ "&7Click to resolve and", "&7close this report." ]
+    notes:
+      title: "§6Notes: §e"
+      item:
+        date: "§7Date: §f%date%"
+        edit: "§eLeft-click to edit"
+        delete: "§cRight-click to delete"
+  gui:
+    lore:
+      - "&7Target: &c%target% &7(%target_status%)"
+      - "&7Reporter: &b%reporter% &7(%reporter_status%)"
+      - "&7Reason: &6%reason%"
+      - "&7Status: &b%status%"
+      - "&7Server: &a%server%"
+      - "&7Date: &f%date%"
+      - "&8Report ID: %uuid%"
+      - ""
+      - "&7[!] Right-click to open details"
+      - "&7[!] Left-click to assign to yourself"
+      - "&7[!] Shift-click to close ticket"
+
+# --- TOOLS & GUIS ---
+gui:
+  pagination:
+    previous: "&c« Previous Page"
+    next: "&aNext Page »"
+    first-page: "&8You are already on the first page."
+    last-page: "&8You are already on the last page."
+  
+  history:
+    title: "&6History: &e%target%"
+    usage: "&cUsage: /history <player>"
+    item:
+      title: "&6Sanction &8#&e%id%"
+      target: "&7 Target: &e%target%"
+      type: "&7 Type: &f%type%"
+      reason: "&7 Reason: &f%reason%"
+      issuer: "&7 By: &e%issuer%"
+      server: "&7 Server: &a%server%"
+      date: "&7 Date: &f%date%"
+      status-active: "&7 Status: &a● ACTIVE"
+      status-revoked: "&7 Status: &c● REVOKED"
+      status-expired: "&7 Status: &c● EXPIRED"
+      expire-date: "&7 Expires on: &e%date%"
+      expired-date: "&7 Expired on: &e%date%"
+      permanent: "&7 Duration: &cPermanent"
+      revoked-by: "&7 Revoked by: &e%player%"
+      revoke-reason: "&7 Reason: &f%reason%"
+      delete-info: "&c ⤷ Right-click to delete"
+      delete-success: "&aSanction deleted!"
+      separator: "&8&m--------------------------"
+
+  case:
+    usage: "&cUsage: /case <player>"
+    header: "&8&m----------------------------------------\n&6&lCase File: &e%target%\n "
+    footer: "\n&7Use &6/history %target% &7for full history.\n&8&m----------------------------------------"
+    ban-active: " &8• &7Ban Status: &c&lBANNED &8(&f%reason%&8)\n   &7Expires in: &e%time%"
+    ban-expired: " &8• &7Ban Status: &eEXPIRED &8(&f%reason%&8)"
+    ban-none: " &8• &7Ban Status: &aNone active"
+    mute-active: " &8• &7Mute Status: &d&lMUTED &8(&f%reason%&8)\n   &7Expires in: &e%time%"
+    mute-expired: " &8• &7Mute Status: &eEXPIRED &8(&f%reason%&8)"
+    mute-none: " &8• &7Mute Status: &aNone active"
+    warns: " &8• &7Active Warns: &e%count%"
+    total: " &8• &7Total Sanctions: &e%count%"
+
+  alts:
+    usage: "&cUsage: /alts <player/ip>"
+    title: "&6Linked Accounts: &e%ip%"
+    not-found: "&cThis player has never been recorded."
+    status-online: "&a&lONLINE"
+    status-offline: "&7OFFLINE"
+    status-banned: "&c&lBANNED"
+    status-online-color: "&a"
+    status-offline-color: "&7"
+    status-banned-color: "&c"
+    evasion-alert: |
+      &8&m----------------------------------------
+      &c&lEVASION ALERT
+      &ePlayer &c%player% &econnected with a banned account!
+      &7Linked: %accounts%
+      &7IP: &e%ip%
+      &8&m----------------------------------------
+    item-name: "&e%player%"
+    item-status: "&7Status: %status%"
+    item-uuid: "&7UUID: &8%uuid%"
+    item-history: "&6⚡ Left-click for History"
+    item-case: "&6⚡ Right-click for Case File"
+
+  staffhistory:
+    title: "&6Staff: &e%staff%"
+    usage: "&cUsage: /staffhistory <moderator>"
+    gui-only: "&cThis GUI is only available for players."
+    no-sanctions: "&cNo sanctions found for this moderator."
+    filter-type: "&eFilter by Type"
+    filter-player: "&eFilter by Player"
+    filter-date: "&eFilter by Date"
+    current: "&7Current: &f%current%"
+    click-to-change: "&7Click to change"
+    click-to-chat: "&7Click to set (Chat)"
+    chat-prompt: "&aEnter player name (or 'none' to reset):"
+    time-all: "All Time"
+    time-since: "Since Date"
+    type-all: "All"
+
+# --- MODERATION TOOLS ---
+mod:
+  enable: "%prefix%&aModeration mode enabled."
+  disable: "%prefix%&cModeration mode disabled."
+  enable-title: "&6Staff Mode"
+  enable-subtitle: "&aActivated"
+  actionbar-enabled: "&6Staff Mode: &aON"
+  disable-title: "&6Staff Mode"
+  disable-subtitle: "&cDeactivated"
+  actionbar-disabled: "&6Staff Mode: &cOFF"
+  items:
+    cooldown: "&cTool cooldown active..."
+    cps-start: "&aCPS test started on &e%player%"
+    cps-result: "&6CPS Result for &e%player%: &b%cps% CPS"
+    freeze-on: "&cYou froze &e%player%"
+    freeze-off: "&aYou unfroze &e%player%"
+    kill: "&cYou killed &e%player%"
+    vanish-on: "&aVanish enabled"
+    vanish-off: "&cVanish disabled"
+    no-target: "&cYou must click on a player!"
+    cps:
+      already-active: "&cYou already have an active CPS test."
+      start: "&aStarting &e%duration%s &aCPS test on &e%target%&a..."
+      finish-none: "&cTest finished for &e%target%&c: &60 CPS &7(No clicks detected)"
+      result-header: "&8&m----------------------------------------"
+      result-title: "&6&lCPS Test Result &7- &e%target%"
+      result-avg: "&e• &fAverage CPS: &b%cps%"
+      result-total: "&e• &fTotal Clicks: &b%clicks%"
+      result-autoclicker: "&e• &fAuto-Clicker: %result%"
+      result-footer: "&8&m----------------------------------------"
+      status:
+        suspected: "&c&lSUSPECTED"
+        unlikely: "&aUnlikely"
+    info:
+      usage: "&bRight-click a player to view their info."
+      header: "&8&m----------------------------------------"
+      title: "&6&lInformation Viewer &7- &e%target%"
+      ping: "&e• &fPing: &b%ping%ms"
+      cps: "&e• &fCPS: &b%cps%"
+      gamemode: "&e• &fGamemode: &b%gamemode%"
+      gamemodes:
+        survival: "Survival"
+        creative: "Creative"
+        adventure: "Adventure"
+        spectator: "Spectator"
+      location: "&e• &fLocation: &b%world% %x%,%y%,%z%"
+      footer: "&8&m----------------------------------------"
+    inspector:
+      silent-open: "&bOpening %block% silently..."
+      silent-title: "&7Silent: %block%"
+      inspect-player: "&bInspecting inventory of &e%target%"
+    navigation:
+      jump: "&aJumped!"
+      thru: "&aThru!"
+      no-target: "&cNo target block found."
+      no-safe-spot: "&cNo safe spot found to pass through."
+    kb-tester:
+      applied: "&eApplied Knockback to %target%"
+    mount:
+      success: "&aMounted on &e%target%"
+    random-tp:
+      no-players: "&cNo other players online."
+      success: "&aTeleported to &e%target%&a."
+    vanish:
+      visible: "&cYou are now VISIBLE."
+      vanished: "&aYou are now VANISHED."
+    restrictions:
+      no-external-put: "&cYou cannot put staff tools in other inventories."
+      no-drop: "&cYou cannot drop staff tools."
+
+antialt:
+  usage: "&cUsage: /alt <player>"
+  analyzing: "&6[AntiAlt] &eAnalyzing &b%player%&e..."
+  header: "&8&m----------------------------------------"
+  title: "&6&lAntiAlt Analysis: &b%player%"
+  score: "&e• &fDanger Score: %color%%score%/100"
+  rules-triggered: "&e• &fTriggered Rules: &7%rules%"
+  fingerprint: "&e• &fFingerprint: &7%fingerprint%"
+  footer: "&8&m----------------------------------------"
+  no-rules: "None"
+  rules:
+    EntropyHigh: "High Entropy"
+    BadBigram: "Uncommon Bigrams"
+    BadTrigram: "Uncommon Trigrams"
+    GeneratedSuffix: "Generated Suffix"
+    RandomCasing: "Random Casing"
+    IPHistory: "Suspicious IP History"
+    PatternMatch: "Pattern Match"
+
+antivpn:
+  kick-reason: "&c&lLifeMod &7- &cVPN/Proxy are not allowed on this server."
+
+vanish:
+  activate: "&aVanish activated."
+  deactivate: "&cVanish deactivated."
+  usage: "&cUsage: /vanish [player]"
+  fake-join: "&e%player% joined the game"
+  fake-quit: "&e%player% left the game"
+
+# --- OTHER COMMANDS ---
+commands:
+  fly:
+    usage: "%prefix%&cUsage: /fly <player>"
+    enabled: "%prefix%&aFlight enabled for %player%!"
+    disabled: "%prefix%&cFlight disabled for %player%!"
+    enabled-self: "%prefix%&aFlight enabled!"
+    disabled-self: "%prefix%&cFlight disabled!"
+    enabled-by: "%prefix%&aYour flight was enabled by %player%!"
+    disabled-by: "%prefix%&cYour flight was disabled by %player%!"
+
+  gamemode:
+    invalid: "%prefix%&cInvalid mode!"
+    usage: "%prefix%&cUsage: /gm <0|1|2|3> [player]"
+    own: "%prefix%&7Your game mode has been changed to &b&l%gamemode%"
+    other: "%prefix%&7Game mode changed to &b&l%gamemode% &7for &c&l%player%"
+
+  chat:
+    cleared: "%prefix%&cThe chat has been cleared."
+    toggle-on: "&aGlobal chat is now &2enabled&a."
+    toggle-off: "&cGlobal chat is now &4disabled&c."
+    blocked: "&cChat is currently disabled."
+    forbidden-word: "&c%player% attempted to send a forbidden word!"
+
+  teleport:
+    usage: "%prefix%&cUsage: /tp <player> [target] or <x> <y> <z>"
+    success: "%prefix%&aTeleported to &e%target%&a."
+    success-other: "%prefix%&aTeleported &e%player1% &ato &e%player2%&a."
+    none: "%prefix%&cNo players found."
+    invalid-coords: "%prefix%&cInvalid coordinates!"
+
+  utility:
+    feed-self: "%prefix%&aYour appetite has been satisfied!"
+    feed-other: "%prefix%&aYou fed &e%target%&a."
+    heal-self: "%prefix%&aYou have been healed!"
+    heal-other: "%prefix%&aYou healed &e%target%&a."
+    god-on: "%prefix%&aGod mode enabled!"
+    god-off: "%prefix%&cGod mode disabled!"
+    speed-success: "%prefix%&aSpeed set to &e%speed%&a."
+    speed-invalid: "%prefix%&cProvide a valid speed (1-10)."
+    feed:
+      yourself: "%prefix%&aYour appetite has been satisfied!"
+      player: "%prefix%&aYour appetite has been satisfied by a moderator!"
+      mod: "%prefix%&aYou fed &e%target%&a."
+      usage: "%prefix%&cUsage: /feed [player]"
+    heal:
+      player: "%prefix%&aYou have been healed!"
+      mod: "%prefix%&aYou healed &e%player%&a."
+      usage: "%prefix%&cUsage: /heal [player]"
+    god:
+      activate:
+        own: "%prefix%&aGod mode enabled!"
+        other: "%prefix%&aGod mode enabled for &e%player%&a."
+      deactivate:
+        own: "%prefix%&cGod mode disabled!"
+        other: "%prefix%&cGod mode disabled for &e%player%&a."
+
+  hearts:
+    usage: "%prefix%&cUsage: /hearts <set|add> <player> <amount>"
+    success: "%prefix%&a%action% %amount% hearts to %target%!"
+    max-reached: "%prefix%&cPlayer already has max hearts!"
+    invalid: "%prefix%&cInvalid amount!"
+    unit-info: "%prefix%&7Note: 2 units = 1 heart."
+    invalid-amount: "%prefix%&cInvalid amount!"
+    half-heart-warning: "%prefix%&eWarning: Using odd numbers results in half-hearts."
+    changed: "%prefix%&aYour max health was changed to &e%amount% &aby a moderator!"
+
+  world:
+    time-set: "%prefix%&aTime set to &e%time%&a."
+    difficulty-set: "%prefix%&aDifficulty set to &e%difficulty%&a."
+    weather-set: "%prefix%&aWeather set to &e%weather%&a."
+    difficulty:
+      usage: "%prefix%&cUsage: /difficulty <difficulty>"
+      success: "%prefix%&aDifficulty set to &e%difficulty%&a."
+      invalid: "%prefix%&cInvalid difficulty!"
+      current: "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)"
+    time:
+      usage: "%prefix%&cUsage: /settime <time|day|night>"
+      success: "%prefix%&aTime set to &e%time%&a."
+      invalid: "%prefix%&cInvalid time format!"
+    weather:
+      usage: "%prefix%&cUsage: /weather <sun|rain|storm>"
+      sun: "%prefix%&aWeather set to SUN."
+      rain: "%prefix%&aWeather set to RAIN."
+      storm: "%prefix%&aWeather set to STORM."
+
+  chatclear:
+    message: "%prefix%&cThe chat has been cleared."
+
+  reports:
+    usage: "&eUsage: /report <player> <reason>"
+    submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
+    yourself: "&cYou cannot report yourself!"
+
+  freeze:
+    usage: "%prefix%&cUsage: /freeze <player>"
+    yourself: "%prefix%&cYou cannot freeze yourself!"
+    messages:
+      freeze:
+        mod: "%prefix%&cYou froze &e%player%"
+        onfreeze:
+          - "&8&m----------------------------------------"
+          - "&c&lYOU HAVE BEEN FROZEN!"
+          - "&7Please do not disconnect."
+          - "&7Follow instructions from the moderator."
+          - "&8&m----------------------------------------"
+      unfreeze:
+        mod: "%prefix%&aYou unfroze &e%player%"
+        target: "%prefix%&aYou have been unfrozen by &e%player%&a."
+
+  invsee:
+    usage: "%prefix%&cUsage: /invsee <player>"
+    name: "&6Inventory: &e%player%"
+
+  oinvsee:
+    usage: "%prefix%&cUsage: /oinvsee <player>"
+    name: "&cOffline Inventory: &e%target%"
+    no-inventory: "&cNo saved inventory for %target%."
+    success: "&aViewing offline inventory of %target%."
+
+  auth:
+    login-required: "&cAuthenticate with &e/modlogin <password>&c."
+    login-success: "&aLogged in successfully."
+    login-failed: "&cIncorrect password! Attempts left: &e%attempts%"
+    login-locked: "&4Account locked due to failed attempts."
+    not-registered: "&cNo password set. Use &e/modregister <password>&c."
+    registered: "&aPassword set. Use &e/modlogin&a to enter."
+    reset-success: "&aPassword for &e%player% &areset."
+    blocked-action: "&cYou must be logged in to do this!"
+    blocked-chat: "&cYou must be logged in to chat!"
+    changepass-usage: "&cUsage: /modchangepass <old> <new>"
+    incorrect-old-password: "&cIncorrect old password."
+    password-changed: "&aPassword changed successfully."
+    already-authenticated: "&cYou are already authenticated."
+    login-usage: "&cUsage: /modlogin <password>"
+    already-registered: "&cYou are already registered."
+    register-usage: "&cUsage: /modregister <password>"
+    reset-usage: "&cUsage: /modreset <player>"
+
+  staffchat:
+    usage: "%prefix%&cUsage: /staffchat <message>"
+    success: "%prefix%&aMessage sent to staff chat."
+    message: "&7[&cStaffChat&7] &e%player%&f: %message%"
+
+  stafflist:
+    online: "&6Staff online: &f"
+    none: "&cNone"
+
+  follow:
+    usage: "&cUsage: /follow <player>"
+    success: "&aNow following &e%target%&a."
+    actionbar: "&eFollowing &6%target% &7| &bDistance: &f%distance%m &7| &cCPS: &f%cps%"
+    yourself: "%prefix%&cYou cannot follow yourself!"
+
+  broadcast:
+    usage: "%prefix%&cUsage: /broadcast <message>"
+    prefix: "&7[&6Broadcast&7] &f» "
+
+  clearinv:
+    usage: "%prefix%&cUsage: /clearinv [player]"
+    message: "%prefix%&aInventory cleared for &e%target%&a."
+
+  ec:
+    usage: "%prefix%&cUsage: /ec [player]"
+    yourself: "%prefix%&cYou cannot open your own enderchest with this command."
+
+  lifemod:
+    reload: "%prefix%&aConfiguration reloaded!"
+    help:
+      header: "&6&lLifeMod &7- Help"
+      reload: "&e/lifemod reload &7- Reload config"
+      info: "&e/lifemod info &7- Show info"
+
+  otp:
+    usage: "%prefix%&cUsage: /otp <player>"
+    player-not-found: "%prefix%&cPlayer %target% doesn't exist or has never connected."
+    no-position: "%prefix%&cNo saved position for %target%."
+    teleported: "%prefix%&aYou have been teleported to %target%'s last position."
+
+  spectate:
+    usage: "%prefix%&cUsage: /spectate <player|leave|fp|random|back|list>"
+    player-not-found: "%prefix%&cPlayer &e%target% &cnot found."
+    start: "%prefix%&aYou are now spectating &e%target%&a."
+    stop: "%prefix%&cYou are no longer spectating."
+    freecam: "%prefix%&aFreecam enabled."
+    back: "%prefix%&aTeleported back to your previous location."
+    self: "%prefix%&cYou cannot spectate yourself!"
+    already: "%prefix%&cYou are already spectating someone."
+    not-spectating: "%prefix%&cYou are not spectating."
+    spectate-start: "&aNow spectating &e%target%&a."
+    freecam-start: "&aFreecam mode activated."
+    spectate-leave: "&cYou have left spectate mode."
+    spectate-leave-no-pos: "&cLeft spectate mode, but could not return to previous position."
+    random-error: "&cNo suitable players found to spectate."
+    random-success: "&aNow spectating random player: &e%target%&a."
+    back-error: "&cNo previous position recorded."
+    back-success: "&aTeleported back to where you were before spectating &e%target%&a."
+    list-header: "&6Spectating Players:"
+    list-player: "&7 - &e%player%"
+
+# Metadata
+version: 200
+
+bc:
+  tabcompleter:
+    - "&eEnter your message here..."
+
+alts:
+  header: "&8&m----------------------------------------\n&6&lLinked Accounts for &e%ip%\n "
+  entry: " &8• %color%%name% &7(%uuid%...)"
+  footer: "&8&m----------------------------------------"
+

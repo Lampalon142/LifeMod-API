@@ -5,6 +5,8 @@
 # --- SERVER SETTINGS ---
 server:
   name: "Survival"
+  # Language file to use (located in languages/ folder, e.g., en_US, fr_FR)
+  language: "en_US"
   # Format for dates in GUI and messages
   date-format: "dd/MM/yyyy HH:mm:ss"
   # Global prefix for all messages

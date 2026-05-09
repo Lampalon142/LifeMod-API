@@ -77,10 +77,10 @@ public class BungeeLifeMod extends Plugin {
                 PacketListenerPriority.LOW
         );
         ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
-        
+
         this.antiAltManager = new BungeeAntiAltManager(this);
         this.reactionManager = new BungeeReactionManager(this);
-        
+
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
         getProxy().getPluginManager().registerListener(this, new BungeeConnectionListener());
@@ -105,7 +105,6 @@ public class BungeeLifeMod extends Plugin {
     private void loadConfigs() {
         if (!getDataFolder().exists()) getDataFolder().mkdir();
         File configFile = new File(getDataFolder(), "config.yml");
-        File langFile = new File(getDataFolder(), "lang.yml");
 
         try {
             if (!configFile.exists()) {
@@ -113,12 +112,39 @@ public class BungeeLifeMod extends Plugin {
                     java.nio.file.Files.copy(in, configFile.toPath());
                 }
             }
-            if (!langFile.exists()) {
-                try (InputStream in = getResourceAsStream("bungee-lang.yml")) {
+            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
+
+            String langName = config.getString("server.language", "en_US");
+            loadLanguageConfig(langName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadLanguageConfig(String langName) {
+        File langFolder = new File(getDataFolder(), "languages");
+        if (!langFolder.exists()) langFolder.mkdirs();
+
+        File langFile = new File(langFolder, langName + ".yml");
+        if (!langFile.exists()) {
+            String resourcePath = "languages/bungee_" + langName + ".yml";
+            if (getResourceAsStream(resourcePath) != null) {
+                try (InputStream in = getResourceAsStream(resourcePath)) {
                     java.nio.file.Files.copy(in, langFile.toPath());
+                } catch (IOException e) { e.printStackTrace(); }
+            } else {
+                // Fallback
+                getLogger().warning("Language '" + langName + "' not found. Falling back to en_US.");
+                langFile = new File(langFolder, "en_US.yml");
+                if (!langFile.exists()) {
+                    try (InputStream in = getResourceAsStream("languages/bungee_en_US.yml")) {
+                        java.nio.file.Files.copy(in, langFile.toPath());
+                    } catch (IOException e) { e.printStackTrace(); }
                 }
             }
-            config = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
+        }
+
+        try {
             lang = ConfigurationProvider.getProvider(YamlConfiguration.class).load(langFile);
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,7 +158,7 @@ public class BungeeLifeMod extends Plugin {
     public Configuration getConfig() {
         return config;
     }
-    
+
     public BungeeAntiAltManager getAntiAltManager() {
         return antiAltManager;
     }
