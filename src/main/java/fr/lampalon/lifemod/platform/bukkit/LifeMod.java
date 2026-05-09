@@ -245,7 +245,6 @@ public class LifeMod extends JavaPlugin {
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
         reactionManager = new ReactionManager(this);
-        
         staffItemManager = new StaffItemManager(this);
         staffModeManager = new StaffModeManager(this, staffItemManager);
         invseeManager = new InvseeManager();
@@ -256,26 +255,26 @@ public class LifeMod extends JavaPlugin {
                 new NoClipBukkitListener(noClipManager), this
         );
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
-        
+
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
-            PacketListenerPriority.MONITOR
+                new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
+                PacketListenerPriority.MONITOR
         );
 
         // AntiVPN System
         this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(ServiceRegistry.get(ILifePlatform.class));
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
-            PacketListenerPriority.LOW
+                new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
+                PacketListenerPriority.LOW
         );
         ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
 
         vanishService = new VanishService(this);
         PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService), 
-            PacketListenerPriority.HIGH
+                new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService),
+                PacketListenerPriority.HIGH
         );
     }
 
@@ -294,11 +293,11 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new PluginDisable(), this);
         pm.registerEvents(new PlayerQuit(), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
-        
+
         CPSListener cpsListener = new CPSListener(cpsMap);
         pm.registerEvents(cpsListener, this);
         PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
-        
+
         pm.registerEvents(new GuiDetailListener(this), this);
         pm.registerEvents(new ChatAsyncListener(this), this);
         pm.registerEvents(new TicketJoinListener(this, updateChecker), this);
