@@ -36,7 +36,7 @@ public class AntiVPNPacketListener implements PacketListener {
             antiVPNService.shouldAllowConnection(ip, name).thenAccept(allowed -> {
                 if (!allowed) {
                     ILangService lang = ServiceRegistry.get(ILangService.class);
-                    String reason = lang != null ? lang.getMessage("antivpn.kick-reason", "&cVPN/Proxy are not allowed on this server.") : "&cVPN/Proxy are not allowed on this server.";
+                    String reason = lang != null ? lang.getMessage("antivpn.kick-reason", "vpn.anti-vpn.default") : "vpn.anti-vpn.default";
                     
                     WrapperLoginServerDisconnect disconnect = new WrapperLoginServerDisconnect(Component.text(ColorUtil.format(reason)));
                     event.getUser().sendPacket(disconnect);

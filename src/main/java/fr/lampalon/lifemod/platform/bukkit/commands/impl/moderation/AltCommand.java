@@ -57,7 +57,7 @@ public class AltCommand extends LifeCommand {
             context.getSender().sendMessage(context.getLang().getMessage("antialt.header"));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.title", "%player%", result.getPlayerName()));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.score", 
-                "%color%", getScoreColor(result.getDangerScore()), 
+                "%color%", getScoreColor(result.getDangerScore(), context),
                 "%score%", String.valueOf(result.getDangerScore())));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.rules-triggered", "%rules%", rules));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.fingerprint", "%fingerprint%", result.getFingerprint()));
@@ -65,10 +65,10 @@ public class AltCommand extends LifeCommand {
         });
     }
 
-    private String getScoreColor(int score) {
-        if (score < 30) return "&a";
-        if (score < 60) return "&e";
-        if (score < 85) return "&c";
+    private String getScoreColor(int score, CommandContext context) {
+        if (score < 30) return context.getLang().getMessage("antialt.score.low");
+        if (score < 60) return context.getLang().getMessage("antialt.score.medium");
+        if (score < 85) return context.getLang().getMessage("antialt.score.high");
         return "&4&l";
     }
 

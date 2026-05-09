@@ -37,7 +37,7 @@ public class PlayerJoin implements Listener {
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getLangConfig().getString("system.update.failed")));
                         debug.log("update", "Failed to retrieve latest version for player " + player.getName());
                     } else if (result == UpdateChecker.UpdateCheckResult.OUT_DATED) {
-                        String rawMessage = plugin.getLangConfig().getString("system.update.message");
+                        String rawMessage = plugin.getLangConfig().getString("system.playerjoin.update-message");
                         if (rawMessage == null) {
                             rawMessage = "&dHello %player%\n" +
                                     "&bLifeMod plugin has an available update!\n" +
