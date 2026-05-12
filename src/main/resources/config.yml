@@ -315,6 +315,7 @@ commands:
     modregister: true
     modchangepass: true
     modreset: true
+    auth: true
 
 # Metadata
 version: 200

@@ -129,6 +129,8 @@ commands:
     permission: lifemod.admin.ac
   scan:
     description: Scan map
+  auth:
+    description: Authentification system
 
 permissions:
   lifemod.*:
