@@ -68,25 +68,6 @@ commands:
     description: Report a player
   reports:
     description: see all reports
-  modlogin:
-    description: Authenticate as a moderator.
-    usage: /modlogin <password>
-    permission: lifemod.moderator
-  modregister:
-    description: Register your moderator password.
-    usage: /modregister <password>
-    permission: lifemod.moderator
-  modchangepass:
-    description: Change your moderator password.
-    usage: /modchangepass <old> <new>
-    permission: lifemod.moderator
-  modreset:
-    description: Reset a moderator's password (admin only).
-    usage: /modreset <player>
-    permission: lifemod.admin
-  follow:
-    description: follow a player with somes informations.
-    usage: /<command>
   ban:
     description: Ban a player from the server.
     usage: /ban <player> <reason> [duration] [-s]
