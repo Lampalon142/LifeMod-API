@@ -23,13 +23,14 @@ public class BukkitCommandAdapter implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         if (lifeCommand.getPermission() != null && !sender.hasPermission(lifeCommand.getPermission())) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.no-permission")));
+            sender.sendMessage(lang.getMessage("system.no-permission"));
             return true;
         }
 
         if (lifeCommand.isPlayerOnly() && !(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("system.player-only")));
+            sender.sendMessage(lang.getMessage("system.player-only"));
             return true;
         }
 

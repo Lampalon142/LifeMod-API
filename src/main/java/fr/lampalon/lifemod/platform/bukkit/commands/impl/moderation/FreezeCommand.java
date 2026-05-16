@@ -51,13 +51,8 @@ public class FreezeCommand extends LifeCommand {
             context.getDebug().log("freeze", context.getSender().getName() + " unfroze " + target.getName());
         } else {
             freezeManager.freezePlayer(context.getPlayer(), target);
-            // This still uses getLangConfig, which should be replaced by context.getLang()
-            // However, getStringList is not directly available on ILangService as it stands.
-            // I need to consider adding a method to ILangService for lists or handling this
-            // in a Bukkit-specific way within the command. For now, I'll keep the direct
-            // access but mark it for future refactoring.
-            plugin.getLangConfig().getStringList("commands.freeze.messages.freeze.onfreeze")
-                    .forEach(msg -> target.sendMessage(context.getLang().getMessage(msg))); // Still using MessageUtil.formatMessage implicit via getLang().getMessage
+            context.getLang().getStringList("commands.freeze.messages.freeze.onfreeze")
+                    .forEach(target::sendMessage);
             context.getSender().sendMessage(context.getLang().getMessage("commands.freeze.messages.freeze.mod", "%target%", target.getName()));
             context.getDebug().log("freeze", context.getSender().getName() + " froze " + target.getName());
         }

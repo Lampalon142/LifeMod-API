@@ -17,16 +17,18 @@ public class BanCommand extends BaseSanctionCommand {
 
     @Override
     protected void onSanctionApplied(CommandContext context, OfflinePlayer target, Sanction sanction) {
-        String success = context.getLang().getMessage("sanctions.ban.success", "%player%", target.getName(), "%reason%", sanction.getReason());
+        String success = context.getLang().getMessage("sanctions.ban.success",
+                "%player%", target.getName(),
+                "%reason%", sanction.getReason());
         context.getSender().sendMessage(success);
-        
+
         if (target.isOnline()) {
             Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
-                String kickMsg = context.getLang().getMessage("sanctions.ban.received", 
-                    "%reason%", sanction.getReason(), 
-                    "%issuer%", sanction.getIssuerName(), 
-                    "%time%", fr.lampalon.lifemod.common.utils.TimeUtil.formatTime(sanction.getDuration()));
-                
+                String kickMsg = context.getLang().getMessage("sanctions.ban.received",
+                        "%reason%", sanction.getReason(),
+                        "%issuer%", sanction.getIssuerName(),
+                        "%time%", fr.lampalon.lifemod.common.utils.TimeUtil.formatTime(sanction.getDuration()));
+
                 ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
                 if (platform instanceof BukkitPlatform) {
                     NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();

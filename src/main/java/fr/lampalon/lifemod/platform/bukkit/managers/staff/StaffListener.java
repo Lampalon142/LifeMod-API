@@ -147,14 +147,16 @@ public class StaffListener implements Listener {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
         }
         else if (upper.startsWith("[MESSAGE]")) {
-            player.sendMessage(MessageUtil.formatMessage(script.substring(9).trim()));
+            fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            player.sendMessage(lang.getMessage(script.substring(9).trim()));
         }
         else if (upper.startsWith("[ACTIONBAR]")) {
+            fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
             ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
             if (platform instanceof BukkitPlatform) {
                 NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
                 if (nms != null) {
-                    nms.sendActionBar(player, script.substring(11).trim());
+                    nms.sendActionBar(player, lang.getMessage(script.substring(11).trim()));
                 }
             }
         }
@@ -206,7 +208,8 @@ public class StaffListener implements Listener {
         if (clickedInventory != null && !clickedInventory.equals(player.getInventory())) {
             if (cursorItem != null && staffItemManager.getStaffItem(cursorItem) != null) {
                 event.setCancelled(true);
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.restrictions.no-external-put")));
+                fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                player.sendMessage(lang.getMessage("mod.items.restrictions.no-external-put"));
                 return;
             }
         }
@@ -228,7 +231,8 @@ public class StaffListener implements Listener {
             ItemStack dropped = event.getItemDrop().getItemStack();
             if (staffItemManager.getStaffItem(dropped) != null) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.restrictions.no-drop")));
+                fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                event.getPlayer().sendMessage(lang.getMessage("mod.items.restrictions.no-drop"));
             }
         }
     }

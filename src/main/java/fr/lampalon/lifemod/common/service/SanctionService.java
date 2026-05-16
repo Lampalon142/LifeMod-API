@@ -106,16 +106,14 @@ public class SanctionService implements ISanctionService {
             String targetName = platform.getPlayerName(sanction.getPlayerUuid());
 
             String path = "sanctions.broadcast." + sanction.getType().name().toLowerCase() + (sanction.isSilent() ? ".silent" : ".public");
-            String template = lang.getMessage(path);
+            String message = lang.getMessage(path,
+                    "%target%", targetName,
+                    "%issuer%", sanction.getIssuerName(),
+                    "%reason%", sanction.getReason(),
+                    "%time%", TimeUtil.formatTime(sanction.getDuration()),
+                    "%server%", sanction.getServerName());
             
-            if (template == null) return;
-
-            String message = template
-                    .replace("%target%", targetName)
-                    .replace("%issuer%", sanction.getIssuerName())
-                    .replace("%reason%", sanction.getReason())
-                    .replace("%time%", TimeUtil.formatTime(sanction.getDuration()))
-                    .replace("%server%", sanction.getServerName());
+            if (message.equals(path)) return;
 
             if (sanction.isSilent()) {
                 platform.broadcast(message, "lifemod.sanctions.see-silent");
@@ -130,16 +128,20 @@ public class SanctionService implements ISanctionService {
             String targetName = platform.getPlayerName(playerUuid);
 
             String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
-            String template = lang.getMessage(path);
-            if (template == null) {
-                template = lang.getMessage("sanctions.broadcast.un" + type.name().toLowerCase());
+            String message = lang.getMessage(path,
+                    "%target%", targetName,
+                    "%issuer%", removedByName,
+                    "%reason%", reason);
+            
+            if (message.equals(path)) {
+                path = "sanctions.broadcast.un" + type.name().toLowerCase();
+                message = lang.getMessage(path,
+                        "%target%", targetName,
+                        "%issuer%", removedByName,
+                        "%reason%", reason);
             }
-            if (template == null) return;
-
-            String message = template
-                    .replace("%target%", targetName)
-                    .replace("%issuer%", removedByName)
-                    .replace("%reason%", reason);
+            
+            if (message.equals(path)) return;
 
             if (silent) {
                 platform.broadcast(message, "lifemod.sanctions.see-silent");

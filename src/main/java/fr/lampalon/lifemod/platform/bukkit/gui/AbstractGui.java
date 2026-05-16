@@ -34,13 +34,20 @@ public abstract class AbstractGui {
     }
 
     public void open() {
-        Window window = Window.single()
-                .setViewer(player)
-                .setTitle(getTitle())
-                .setGui(buildGui())
-                .build();
-        
-        window.open();
+        org.bukkit.Bukkit.getLogger().info("[DEBUG] AbstractGui.open() called for " + player.getName() + " with title " + getTitle());
+        try {
+            Window window = Window.single()
+                    .setViewer(player)
+                    .setTitle(getTitle())
+                    .setGui(buildGui())
+                    .build();
+
+            org.bukkit.Bukkit.getLogger().info("[DEBUG] Window built, opening for " + player.getName());
+            window.open();
+        } catch (Exception e) {
+            org.bukkit.Bukkit.getLogger().severe("[DEBUG] Failed to open GUI for " + player.getName());
+            e.printStackTrace();
+        }
     }
 
     protected Item createBorder() {
@@ -52,26 +59,20 @@ public abstract class AbstractGui {
     }
 
     protected Item createItem(Material material, String displayName, List<String> lore) {
-        ItemBuilder builder = new ItemBuilder(material).setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(displayName));
+        ItemBuilder builder = new ItemBuilder(material).setDisplayName(displayName);
         for (String line : lore) {
-            builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(line));
+            builder.addLoreLines(line);
         }
         return new SimpleItem(builder);
     }
 
     protected Item createActionItem(Material material, String nameKey, String loreKey, String... placeholders) {
         String name = lang.getMessage(nameKey);
-        String loreRaw = lang.getMessage(loreKey);
-        
-        for (int i = 0; i < placeholders.length; i += 2) {
-            if (i + 1 < placeholders.length) {
-                loreRaw = loreRaw.replace(placeholders[i], placeholders[i+1]);
-            }
-        }
+        String loreRaw = lang.getMessage(loreKey, placeholders);
 
         ItemBuilder builder = new ItemBuilder(material).setDisplayName(name);
         for (String line : loreRaw.split("\n")) {
-            builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(line));
+            builder.addLoreLines(line);
         }
         
         return new SimpleItem(builder);

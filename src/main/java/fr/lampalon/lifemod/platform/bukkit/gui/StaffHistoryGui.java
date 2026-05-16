@@ -92,13 +92,13 @@ public class StaffHistoryGui extends PagedAbstractGui {
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.pagination.previous")));
+                        return new ItemBuilder(Material.ARROW).setDisplayName(lang.getMessage("gui.pagination.previous"));
                     }
                 })
                 .addIngredient('>', new PageItem(true) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.pagination.next")));
+                        return new ItemBuilder(Material.ARROW).setDisplayName(lang.getMessage("gui.pagination.next"));
                     }
                 })
                 .addIngredient('F', new AbstractItem() { // Filter Type

@@ -1,16 +1,19 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
+import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.common.database.DatabaseManager;
+import org.bukkit.Bukkit;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 
-public class ModeratorAuthService {
+public class ModeratorAuthService implements IPinService {
     private final LifeMod plugin;
     private final DatabaseManager dbManager;
 
@@ -18,6 +21,44 @@ public class ModeratorAuthService {
         this.plugin = plugin;
         this.dbManager = plugin.getDatabaseManager();
         createTableIfNotExists();
+    }
+
+    @Override
+    public void registerPin(UUID uuid, String pin) {
+        // We need the name for registration. If not available, we try to get it from Bukkit.
+        String name = Bukkit.getOfflinePlayer(uuid).getName();
+        if (name == null) name = "UNKNOWN";
+        String ip = "UNKNOWN";
+        if (Bukkit.getPlayer(uuid) != null) {
+            ip = Bukkit.getPlayer(uuid).getAddress().getAddress().getHostAddress();
+        }
+        registerModerator(uuid, name, pin, ip);
+    }
+
+    @Override
+    public boolean verifyPin(UUID uuid, String enteredPin) {
+        return checkPassword(uuid, enteredPin);
+    }
+
+    @Override
+    public boolean resetPin(UUID uuid, String newPin) {
+        changePassword(uuid, newPin);
+        return true;
+    }
+
+    @Override
+    public Optional<String> getPinStatus(UUID uuid) {
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT password_hash FROM moderator_auth WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(rs.getString("password_hash"));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[LifeMod] getPinStatus error: " + e.getMessage());
+        }
+        return Optional.empty();
     }
 
     private void createTableIfNotExists() {

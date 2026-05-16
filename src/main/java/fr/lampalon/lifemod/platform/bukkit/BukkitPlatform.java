@@ -28,7 +28,8 @@ public class BukkitPlatform implements ILifePlatform {
 
     @Override
     public void broadcast(String message, String permission) {
-        String formatted = MessageUtil.formatMessage(message);
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String formatted = lang.formatMessage(message);
         if (permission == null) {
             Bukkit.broadcastMessage(formatted);
         } else {
@@ -44,7 +45,8 @@ public class BukkitPlatform implements ILifePlatform {
         runTask(() -> {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
-                player.kickPlayer(MessageUtil.formatMessage(reason));
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                player.kickPlayer(lang.formatMessage(reason));
             }
         });
     }
@@ -53,7 +55,8 @@ public class BukkitPlatform implements ILifePlatform {
     public void sendMessage(UUID uuid, String message) {
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) {
-            player.sendMessage(MessageUtil.formatMessage(message));
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            player.sendMessage(lang.formatMessage(message));
         }
     }
 

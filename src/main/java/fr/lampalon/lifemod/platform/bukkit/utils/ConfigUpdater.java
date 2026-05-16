@@ -23,7 +23,16 @@ public class ConfigUpdater {
 
     public void updateConfigs() {
         updateFile("config.yml");
-        updateFile("lang.yml");
+        
+        File langDir = new File(plugin.getDataFolder(), "languages");
+        if (langDir.exists() && langDir.isDirectory()) {
+            File[] files = langDir.listFiles((dir, name) -> name.endsWith(".yml"));
+            if (files != null) {
+                for (File file : files) {
+                    updateFile("languages/" + file.getName());
+                }
+            }
+        }
     }
 
     private void updateFile(String fileName) {

@@ -38,14 +38,14 @@ public class StaffNoteItem extends AbstractItem {
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 
         ItemBuilder builder = new ItemBuilder(Material.PAPER)
-                .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-title").replace("%author%", authorName)))
+                .setDisplayName(lang.getMessage("reports.gui.notes.item-title", "%author%", authorName))
                 .addLoreLines(
-                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-date", "§7Date: §f%date%").replace("%date%", sdf.format(new Date(note.getCreatedAt())))),
+                        lang.getMessage("reports.gui.notes.item-date", "%date%", sdf.format(new Date(note.getCreatedAt()))),
                         "",
                         "§f" + note.getContent(),
                         "",
-                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-edit", "§eLeft-click to edit")),
-                        MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.item-delete", "§cRight-click to delete"))
+                        lang.getMessage("reports.gui.notes.item-edit"),
+                        lang.getMessage("reports.gui.notes.item-delete")
                 );
 
         return builder;
@@ -57,11 +57,11 @@ public class StaffNoteItem extends AbstractItem {
         if (clickType.isLeftClick()) {
             player.closeInventory();
             LifeMod.getInstance().getNoteInputManager().startNoteEdit(player, report, note);
-            player.sendMessage(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.prompt")));
+            player.sendMessage(lang.getMessage("reports.gui.notes.prompt"));
         } else if (clickType.isRightClick()) {
             report.removeStaffNote(note);
             LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().deleteStaffNote(note.getNoteId());
-            player.sendMessage(MessageUtil.formatMessage(lang.getMessage("reports.gui.notes.delete-success")));
+            player.sendMessage(lang.getMessage("reports.gui.notes.delete-success"));
             new StaffNotesGui(player, report).open();
         }
     }

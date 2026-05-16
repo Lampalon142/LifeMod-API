@@ -26,7 +26,10 @@ public class ConnectionListener implements Listener {
         String ip = event.getAddress().getHostAddress();
 
         // Enregistrement async des données du joueur
+        if (LifeMod.getInstance().getDatabaseManager() == null) return;
         DatabaseProvider db = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider();
+        if (db == null) return;
+        
         PlayerData existing = db.getPlayerData(uuid);
         
         long firstSeen = existing != null ? existing.getFirstSeen() : System.currentTimeMillis();
@@ -47,17 +50,20 @@ public class ConnectionListener implements Listener {
 
         // Vérification des bans
         ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
+        if (sanctionService == null) return;
+        
         Sanction activeBan = sanctionService.getActiveSanction(uuid, name, SanctionType.BAN).join();
 
         if (activeBan != null) {
-            String message = LifeMod.getInstance().getLangConfig().getString("sanctions.ban.login");
-            message = message
-                    .replace("%reason%", activeBan.getReason())
-                    .replace("%issuer%", activeBan.getIssuerName())
-                    .replace("%time%", TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()))
-                    .replace("%server%", activeBan.getServerName());
-            
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, MessageUtil.formatMessage(message));
+            fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            String message = lang.getMessage("sanctions.ban.login",
+                    "%reason%", activeBan.getReason(),
+                    "%issuer%", activeBan.getIssuerName(),
+                    "%expiration%", activeBan.isPermanent() ? "Permanent" : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()),
+                    "%id%", activeBan.getUuid().toString().substring(0, 8),
+                    "%server%", activeBan.getServerName());
+
+            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message);
         }
     }
 

@@ -36,29 +36,11 @@ public class AuthCommand extends LifeCommand {
             }
 
             if (sessionManager.isAuthenticated(player.getUniqueId())) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.already-authenticated"));
+                context.getSender().sendMessage(context.getLang().getMessage("auth.already-authenticated"));
                 return;
             }
 
-            if (context.getArgs().length != 2) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.login-usage"));
-                return;
-            }
-
-            String password = context.getArgs()[1];
-
-            if (authService.checkPassword(player.getUniqueId(), password)) {
-                sessionManager.authenticate(player.getUniqueId());
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.login-success"));
-            } else {
-                int attemptsLeft = sessionManager.decrementAttempts(player.getUniqueId());
-                if (attemptsLeft <= 0) {
-                    sessionManager.lock(player.getUniqueId());
-                    context.getSender().sendMessage(context.getLang().getMessage("commands.auth.login-locked"));
-                } else {
-                    context.getSender().sendMessage(context.getLang().getMessage("commands.auth.login-failed", "%attempts%", String.valueOf(attemptsLeft)));
-                }
-            }
+            new fr.lampalon.lifemod.platform.bukkit.gui.PinGui(player).open();
         }else if (context.getArgs()[0].equalsIgnoreCase("register")){
             if (!context.isPlayer()){
                 context.getSender().sendMessage(context.getLang().getMessage("system.player-only"));
@@ -66,20 +48,11 @@ public class AuthCommand extends LifeCommand {
             }
 
             if (authService.isRegistered(player.getUniqueId())) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.already-registered"));
+                context.getSender().sendMessage(context.getLang().getMessage("auth.already-registered"));
                 return;
             }
 
-            if (context.getArgs().length != 2) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.register-usage"));
-                return;
-            }
-
-            String password = context.getArgs()[1];
-            String ip = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "UNKNOWN";
-
-            authService.registerModerator(player.getUniqueId(), player.getName(), password, ip);
-            context.getSender().sendMessage(context.getLang().getMessage("commands.auth.registered"));
+            new fr.lampalon.lifemod.platform.bukkit.gui.PinGui(player).open();
         } else if (context.getArgs()[0].equalsIgnoreCase("changepass")){
             if (!context.isPlayer()){
                 context.getSender().sendMessage(context.getLang().getMessage("system.player-only"));
@@ -87,7 +60,7 @@ public class AuthCommand extends LifeCommand {
             }
 
             if (context.getArgs().length != 3) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.changepass-usage"));
+                context.getSender().sendMessage(context.getLang().getMessage("auth.changepass-usage"));
                 return;
             }
 
@@ -95,15 +68,15 @@ public class AuthCommand extends LifeCommand {
             String newPass = context.getArgs()[2];
 
             if (!authService.checkPassword(player.getUniqueId(), oldPass)) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.incorrect-old-password"));
+                context.getSender().sendMessage(context.getLang().getMessage("auth.incorrect-old-password"));
                 return;
             }
 
             authService.changePassword(player.getUniqueId(), newPass);
-            context.getSender().sendMessage(context.getLang().getMessage("commands.auth.password-changed"));
+            context.getSender().sendMessage(context.getLang().getMessage("auth.password-changed"));
         } else if (context.getArgs()[0].equalsIgnoreCase("reset")){
             if (context.getArgs().length != 2) {
-                context.getSender().sendMessage(context.getLang().getMessage("commands.auth.reset-usage"));
+                context.getSender().sendMessage(context.getLang().getMessage("auth.reset-usage"));
                 return;
             }
 
@@ -117,7 +90,7 @@ public class AuthCommand extends LifeCommand {
 
             authService.resetModeratorPassword(targetUUID);
 
-            context.getSender().sendMessage(context.getLang().getMessage("commands.auth.reset-success", "%player%", targetName));
+            context.getSender().sendMessage(context.getLang().getMessage("auth.reset-success", "%player%", targetName));
         }
     }
-}
+    }

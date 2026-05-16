@@ -10,7 +10,8 @@ public class FreezeAction implements IStaffAction {
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.no-target")));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        player.sendMessage(lang.getMessage("mod.items.no-target"));
     }
 
     @Override
@@ -18,13 +19,14 @@ public class FreezeAction implements IStaffAction {
         if (event.getRightClicked() instanceof Player) {
             Player target = (Player) event.getRightClicked();
             LifeMod plugin = LifeMod.getInstance();
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
             
             if (plugin.getFreezeManager().isPlayerFrozen(target.getUniqueId())) {
                 plugin.getFreezeManager().unfreezePlayer(player, target);
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.items.freeze-off").replace("%player%", target.getName())));
+                player.sendMessage(lang.getMessage("mod.items.freeze-off", "%player%", target.getName()));
             } else {
                 plugin.getFreezeManager().freezePlayer(player, target);
-                player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.items.freeze-on").replace("%player%", target.getName())));
+                player.sendMessage(lang.getMessage("mod.items.freeze-on", "%player%", target.getName()));
             }
         }
     }

@@ -16,19 +16,22 @@ public class WarnCommand extends BaseSanctionCommand {
 
     @Override
     protected void onSanctionApplied(CommandContext context, OfflinePlayer target, Sanction sanction) {
-        String success = context.getLang().getMessage("sanctions.warn.success", "%player%", target.getName(), "%reason%", sanction.getReason());
+        String success = context.getLang().getMessage("sanctions.warn.success",
+                "%player%", target.getName(),
+                "%reason%", sanction.getReason());
         context.getSender().sendMessage(success);
-        
+
         if (target.isOnline()) {
-            String received = context.getLang().getMessage("sanctions.warn.received").replace("%reason%", sanction.getReason());
+            String received = context.getLang().getMessage("sanctions.warn.received",
+                    "%reason%", sanction.getReason());
             target.getPlayer().sendMessage(received);
 
             ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
             if (platform instanceof BukkitPlatform) {
                 NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
                 if (nms != null) {
-                    nms.sendTitle(target.getPlayer(), context.getLang().getMessage("sanctions.warn.title"), 
-                        context.getLang().getMessage("sanctions.warn.subtitle").replace("%reason%", sanction.getReason()), 10, 40, 10);
+                    nms.sendTitle(target.getPlayer(), context.getLang().getMessage("sanctions.warn.title"),
+                            context.getLang().getMessage("sanctions.warn.subtitle", "%reason%", sanction.getReason()), 10, 40, 10);
                     nms.sendActionBar(target.getPlayer(), received);
                 }
             }

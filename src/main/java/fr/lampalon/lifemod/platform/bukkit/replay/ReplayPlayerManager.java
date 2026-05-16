@@ -86,20 +86,22 @@ public class ReplayPlayerManager {
     }
 
     private void giveReplayItems(Player player) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        
         ItemStack rewind = new ItemBuilder(Material.ARROW)
-                .setName("§bReculer de 5 secondes §7(clic droit)")
+                .setName(lang.getMessage("replay.items.rewind"))
                 .toItemStack();
 
         ItemStack forward = new ItemBuilder(Material.ARROW)
-                .setName("§bAvancer de 5 secondes §7(clic droit)")
+                .setName(lang.getMessage("replay.items.forward"))
                 .toItemStack();
 
         ItemStack pause = new ItemBuilder(Material.CLOCK)
-                .setName("§ePause/Reprendre §7(clic droit)")
+                .setName(lang.getMessage("replay.items.pause"))
                 .toItemStack();
 
         ItemStack exitReplay = new ItemBuilder(Material.BARRIER)
-                .setName("§cQuitter le Replay §7(clic droit)")
+                .setName(lang.getMessage("replay.items.exit"))
                 .toItemStack();
 
         player.getInventory().setItem(0, rewind);

@@ -37,15 +37,15 @@ public class BungeeConnectionListener implements Listener {
 
                 if (activeBan != null) {
                     ProxyServer.getInstance().getLogger().info("[LifeMod-Debug] " + name + " is BANNED. Reason: " + activeBan.getReason());
-                    String message = lang.getMessage("sanctions.ban.login");
-                    message = message
-                            .replace("%reason%", activeBan.getReason())
-                            .replace("%issuer%", activeBan.getIssuerName())
-                            .replace("%time%", TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()))
-                            .replace("%server%", activeBan.getServerName());
+                    String message = lang.getMessage("sanctions.ban.login",
+                            "%reason%", activeBan.getReason(),
+                            "%issuer%", activeBan.getIssuerName(),
+                            "%expiration%", activeBan.isPermanent() ? "Jamais" : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()),
+                            "%id%", activeBan.getUuid().toString().substring(0, 8),
+                            "%server%", activeBan.getServerName());
                     
                     event.setCancelled(true);
-                    event.setCancelReason(new TextComponent(ChatColor.translateAlternateColorCodes('&', message)));
+                    event.setCancelReason(new TextComponent(message));
                 } else {
                     ProxyServer.getInstance().getLogger().info("[LifeMod-Debug] No ban found for " + name);
                 }

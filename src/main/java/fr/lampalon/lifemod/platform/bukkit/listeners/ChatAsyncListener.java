@@ -31,22 +31,22 @@ public class ChatAsyncListener implements Listener {
 
         Bukkit.getScheduler().runTask(plugin, () -> {
             String message = event.getMessage();
-            FileConfiguration lang = plugin.getLangConfig();
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
             NoteInputManager.NoteContext context = noteInputManager.getContext(player);
             noteInputManager.remove(player);
 
             if (message.equalsIgnoreCase("cancel")) {
                 String cancelMsg = context.isEditMode()
-                        ? MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.edit.cancelled"))
-                        : MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.chat.cancelled"));
+                        ? lang.getMessage("reports.gui.notes.menu.edit.cancelled")
+                        : lang.getMessage("reports.gui.notes.menu.chat.cancelled");
                 player.sendMessage(cancelMsg);
                 plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());
                 return;
             }
 
             if (message.trim().isEmpty()) {
-                player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.errors.empty")));
+                player.sendMessage(lang.getMessage("reports.gui.notes.menu.errors.empty"));
                 plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());
                 return;
             }
@@ -56,12 +56,12 @@ public class ChatAsyncListener implements Listener {
                 note.setContent(message);
                 note.setUpdatedAt(System.currentTimeMillis());
                 plugin.getDatabaseManager().getDatabaseProvider().updateStaffNote(note);
-                player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.edit.saved")));
+                player.sendMessage(lang.getMessage("reports.gui.notes.menu.edit.saved"));
             } else {
                 StaffNote newNote = new StaffNote(player.getUniqueId(), message);
                 context.getReport().addStaffNote(newNote);
                 plugin.getDatabaseManager().getDatabaseProvider().addStaffNote(context.getReport().getUuid(), newNote);
-                player.sendMessage(MessageUtil.formatMessage(lang.getString("reports.gui.notes.menu.chat.saved")));
+                player.sendMessage(lang.getMessage("reports.gui.notes.menu.chat.saved"));
             }
 
             plugin.getGuiManager().openStaffNotesMenu(player, context.getReport());

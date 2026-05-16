@@ -57,6 +57,8 @@ public class StaffModeManager {
     public void enableStaffMode(Player player) {
         if (isMod(player)) return;
 
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+
         // 1. Sauvegarder Globalement
         setStaffModeState(player, true);
 
@@ -68,12 +70,14 @@ public class StaffModeManager {
         
         moderators.add(player.getUniqueId());
         
-        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.enable")));
+        player.sendMessage(lang.getMessage("mod.enable"));
         debug.log("mod", player.getName() + " enabled staff mode.");
     }
 
     public void disableStaffMode(Player player) {
         if (!isMod(player)) return;
+
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
         // 1. Sauvegarder Globalement
         setStaffModeState(player, false);
@@ -86,12 +90,13 @@ public class StaffModeManager {
 
         moderators.remove(player.getUniqueId());
 
-        player.sendMessage(MessageUtil.formatMessage(plugin.getLangConfig().getString("mod.disable")));
+        player.sendMessage(lang.getMessage("mod.disable"));
         debug.log("mod", player.getName() + " disabled staff mode.");
     }
 
     // Applique uniquement les effets visuels et donne les items
     private void applyStaffState(Player player) {
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         player.getInventory().clear();
         player.setGameMode(GameMode.SURVIVAL);
         player.setAllowFlight(true);
@@ -106,14 +111,15 @@ public class StaffModeManager {
         if (platform instanceof BukkitPlatform) {
             NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
             if (nms != null) {
-                nms.sendTitle(player, plugin.getLangConfig().getString("mod.enable-title"),
-                        plugin.getLangConfig().getString("mod.enable-subtitle"), 10, 40, 10);
-                nms.sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-enabled"));
+                nms.sendTitle(player, lang.getMessage("mod.enable-title"),
+                        lang.getMessage("mod.enable-subtitle"), 10, 40, 10);
+                nms.sendActionBar(player, lang.getMessage("mod.actionbar-enabled"));
             }
         }
     }
 
     private void removeStaffState(Player player) {
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         player.getInventory().clear();
         player.setAllowFlight(false);
         player.setFlying(false);
@@ -125,9 +131,9 @@ public class StaffModeManager {
         if (platform instanceof BukkitPlatform) {
             NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
             if (nms != null) {
-                nms.sendTitle(player, plugin.getLangConfig().getString("mod.disable-title"),
-                        plugin.getLangConfig().getString("mod.disable-subtitle"), 10, 40, 10);
-                nms.sendActionBar(player, plugin.getLangConfig().getString("mod.actionbar-disabled"));
+                nms.sendTitle(player, lang.getMessage("mod.disable-title"),
+                        lang.getMessage("mod.disable-subtitle"), 10, 40, 10);
+                nms.sendActionBar(player, lang.getMessage("mod.actionbar-disabled"));
             }
         }
     }

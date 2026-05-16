@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -68,10 +69,10 @@ public class FollowCommand extends LifeCommand {
                 double distance = player.getLocation().distance(targetPlayer.getLocation());
                 int cps = getCPS(targetPlayer);
 
-                String msg = context.getLang().getMessage("commands.follow.actionbar")
-                                .replace("%target%", targetPlayer.getName())
-                                .replace("%distance%", String.format("%.1f", distance))
-                                .replace("%cps%", String.valueOf(cps));
+                String msg = context.getLang().getMessage("commands.follow.actionbar",
+                        "%target%", targetPlayer.getName(),
+                        "%distance%", String.format("%.1f", distance),
+                        "%cps%", String.valueOf(cps));
 
                 ActionBarUtil.sendActionBar(player, msg);
             }
@@ -104,7 +105,7 @@ public class FollowCommand extends LifeCommand {
         if (tasks.containsKey(follower.getUniqueId())) {
             tasks.get(follower.getUniqueId()).cancel();
             tasks.remove(follower.getUniqueId());
-            follower.sendMessage(plugin.getLangConfig().getString("commands.follow.stopped"));
+            follower.sendMessage(ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("commands.follow.stopped"));
         }
     }
 }

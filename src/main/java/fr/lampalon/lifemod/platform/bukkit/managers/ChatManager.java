@@ -66,10 +66,13 @@ public class ChatManager implements Listener {
     }
 
     private void notifyViewers(Player sender, String word) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("lifemod.chat.views")) {
-                String notificationMessage = plugin.getConfigConfig().getString("chatManager.notification");
-                player.sendMessage(MessageUtil.formatMessage("%prefix%" + notificationMessage.replace("%player%", sender.getName()).replace("%word%", word)));
+                String notification = lang.getMessage("chatManager.notification",
+                        "%player%", sender.getName(),
+                        "%word%", word);
+                player.sendMessage(notification);
             }
         }
     }

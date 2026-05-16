@@ -27,12 +27,24 @@ jacocoTestReport {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+processResources {
+    def props = [VERSION: version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+    filesMatching('bungee.yml') {
+        expand props
+    }
 }
 
 repositories {
@@ -45,7 +57,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
     compileOnly 'net.md-5:bungeecord-api:1.20-R0.2-SNAPSHOT'
     compileOnly 'net.luckperms:api:5.4'
     compileOnly 'com.mysql:mysql-connector-j:8.3.0'
@@ -65,10 +77,10 @@ dependencies {
 
 shadowJar {
     archiveClassifier.set('')
-    minimize()
 
     relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
     relocate 'xyz.xenondevs.invui', 'fr.lampalon.lifemod.libs.invui'
+    relocate 'xyz.xenondevs.inventoryaccess', 'fr.lampalon.lifemod.libs.inventoryaccess'
     relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
     relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
     relocate 'org.bstats', 'fr.lampalon.lifemod.libs.bstats'

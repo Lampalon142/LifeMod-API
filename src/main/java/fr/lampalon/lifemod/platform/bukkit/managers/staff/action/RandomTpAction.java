@@ -15,17 +15,18 @@ public class RandomTpAction implements IStaffAction {
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         List<Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
         online.remove(player);
         
         if (online.isEmpty()) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.random-tp.no-players")));
+            player.sendMessage(lang.getMessage("mod.items.random-tp.no-players"));
             return;
         }
         
         Player target = online.get(new Random().nextInt(online.size()));
         player.teleport(target.getLocation());
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.random-tp.success").replace("%target%", target.getName())));
+        player.sendMessage(lang.getMessage("mod.items.random-tp.success", "%target%", target.getName()));
     }
 
     @Override

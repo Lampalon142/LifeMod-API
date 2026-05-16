@@ -37,20 +37,17 @@ public class DebugManager {
 
     public void log(String module, String message) {
         if (!isEnabled() || !isModuleEnabled(module)) return;
-        String prefix = MessageUtil.formatMessage(plugin.getConfigConfig().getString("debug.messages.prefix"));
-        Bukkit.getLogger().log(getLogLevel(), prefix + "[" + module.toUpperCase() + "] " + MessageUtil.formatMessage(message));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String prefix = lang.getMessage("debug.messages.prefix");
+        Bukkit.getLogger().log(getLogLevel(), prefix + "[" + module.toUpperCase() + "] " + message);
     }
 
     public void userError(CommandSender sender, String context, Exception e) {
-        if (plugin.getConfigConfig() == null) {
-            plugin.getLogger().severe("[LifeMod] Config is null in DebugManager.userError!");
-            return;
-        }
-
-        String prefix = safeFormat(plugin.getConfigConfig().getString("debug.messages.prefix"));
-        String userMsg = safeFormat(plugin.getConfigConfig().getString("debug.messages.user-error"))
-                .replace("%context%", context != null ? context : "unknown");
-        String helpMsg = safeFormat(plugin.getConfigConfig().getString("debug.messages.user-help"));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        
+        String prefix = lang.getMessage("debug.messages.prefix");
+        String userMsg = lang.getMessage("debug.messages.user-error", "%context%", context != null ? context : "unknown");
+        String helpMsg = lang.getMessage("debug.messages.user-help");
 
         if (sender != null) {
             sender.sendMessage(prefix + userMsg);
@@ -66,21 +63,16 @@ public class DebugManager {
         }
     }
 
-    private String safeFormat(String message) {
-        String formatted = MessageUtil.formatMessage(message);
-        return formatted != null ? formatted : "";
-    }
-
     public void sendAdminError(CommandSender sender, Exception e) {
-        String adminMsg = MessageUtil.formatMessage(plugin.getConfigConfig().getString("debug.messages.admin-error"))
-                .replace("%error%", e.getClass().getSimpleName())
-                .replace("%message%", e.getMessage() == null ? "No message" : e.getMessage());
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String adminMsg = lang.getMessage("debug.messages.admin-error",
+                "%error%", e.getClass().getSimpleName(),
+                "%message%", e.getMessage() == null ? "No message" : e.getMessage());
         sender.sendMessage(adminMsg);
 
         StackTraceElement top = e.getStackTrace().length > 0 ? e.getStackTrace()[0] : null;
         if (top != null) {
-            String locMsg = MessageUtil.formatMessage(plugin.getConfigConfig().getString("debug.messages.admin-location"))
-                    .replace("%location%", top.toString());
+            String locMsg = lang.getMessage("debug.messages.admin-location", "%location%", top.toString());
             sender.sendMessage(locMsg);
         }
     }

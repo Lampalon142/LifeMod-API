@@ -21,13 +21,14 @@ public class VanishAction implements IStaffAction {
 
     private void toggleVanish(Player player) {
         IVanishService vanishService = LifeMod.getInstance().getVanishService();
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         boolean currentState = vanishService.isVanished(player.getUniqueId());
         vanishService.setVanished(player, !currentState, false);
         
         if (currentState) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish.visible")));
+            player.sendMessage(lang.getMessage("mod.items.vanish.visible"));
         } else {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.vanish.vanished")));
+            player.sendMessage(lang.getMessage("mod.items.vanish.vanished"));
         }
     }
 }

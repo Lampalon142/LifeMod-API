@@ -57,11 +57,11 @@ public class BungeeReactionManager {
         if (upper.startsWith("[CONSOLE]")) {
             plugin.getProxy().getPluginManager().dispatchCommand(plugin.getProxy().getConsole(), formatted.substring(9).trim());
         } else if (upper.startsWith("[STAFF]")) {
-            TextComponent msg = new TextComponent(MessageUtil.formatMessage(formatted.substring(7).trim()));
+            TextComponent msg = new TextComponent(lang.formatMessage(formatted.substring(7).trim()));
             plugin.getProxy().getPlayers().stream().filter(p -> p.hasPermission("lifemod.antialt.notify")).forEach(p -> p.sendMessage(msg));
         } else if (upper.startsWith("[CANCEL]") || upper.startsWith("[KICK]")) {
             String reason = upper.startsWith("[CANCEL]") ? formatted.substring(8).trim() : formatted.substring(6).trim();
-            connection.disconnect(new TextComponent(MessageUtil.formatMessage(reason)));
+            connection.disconnect(new TextComponent(lang.formatMessage(reason)));
         } else if (upper.startsWith("[LOG]")) {
             plugin.getLogger().warning("[AntiAlt-Bungee] " + formatted.substring(5).trim());
         }

@@ -28,9 +28,10 @@ public class KnockbackAction implements IStaffAction {
     }
 
     private void applyKnockback(Player player, Player target) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         // Simulating Knockback
         target.setVelocity(player.getLocation().getDirection().multiply(0.5).setY(0.4));
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.kb-tester.applied").replace("%target%", target.getName())));
+        player.sendMessage(lang.getMessage("mod.items.kb-tester.applied", "%target%", target.getName()));
     }
 }
 

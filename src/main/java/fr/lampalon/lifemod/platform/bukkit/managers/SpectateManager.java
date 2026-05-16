@@ -15,17 +15,17 @@ public class SpectateManager {
     private final Map<UUID, Boolean> isFreecam = new HashMap<>();
     private final Map<UUID, UUID> spectateTarget = new HashMap<>();
 
-    private String getLang(String key) {
-        return fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage(key);
+    private String getLang(String key, String... placeholders) {
+        return fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage(key, placeholders);
     }
 
     public void startSpectate(Player staff, Player target) {
         if (staff.equals(target)) {
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.self")));
+            staff.sendMessage(getLang("commands.spectate.self"));
             return;
         }
         if (isSpectating(staff)) {
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.already")));
+            staff.sendMessage(getLang("commands.spectate.already"));
             return;
         }
         originalLocations.put(staff.getUniqueId(), staff.getLocation());
@@ -40,15 +40,14 @@ public class SpectateManager {
 
         staff.setGameMode(GameMode.SPECTATOR);
         staff.setSpectatorTarget(target);
-        staff.sendMessage(MessageUtil.formatMessage(
-                getLang("commands.spectate.spectate-start").replace("%target%", target.getName())));
+        staff.sendMessage(getLang("commands.spectate.spectate-start", "%target%", target.getName()));
     }
 
     public void startFreecam(Player staff) {
         if (isSpectating(staff) && !isFreecam.get(staff.getUniqueId())) {
             isFreecam.put(staff.getUniqueId(), true);
             staff.setSpectatorTarget(null);
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.freecam-start")));
+            staff.sendMessage(getLang("commands.spectate.freecam-start"));
             return;
         }
         if (!isSpectating(staff)) {
@@ -58,12 +57,12 @@ public class SpectateManager {
         spectateTarget.remove(staff.getUniqueId());
         staff.setGameMode(GameMode.SPECTATOR);
         staff.setSpectatorTarget(null);
-        staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.freecam-start")));
+        staff.sendMessage(getLang("commands.spectate.freecam-start"));
     }
 
     public void leaveSpectate(Player staff) {
         if (!isSpectating(staff)) {
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.not-spectating")));
+            staff.sendMessage(getLang("commands.spectate.not-spectating"));
             return;
         }
 
@@ -77,9 +76,9 @@ public class SpectateManager {
 
         if (originalLocation != null && originalLocation.getWorld() != null) {
             staff.teleport(originalLocation);
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.spectate-leave")));
+            staff.sendMessage(getLang("commands.spectate.spectate-leave"));
         } else {
-            staff.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.spectate-leave-no-pos")));
+            staff.sendMessage(getLang("commands.spectate.spectate-leave-no-pos"));
         }
     }
 
@@ -91,45 +90,43 @@ public class SpectateManager {
             }
         }
         if (candidates.isEmpty()) {
-            spectator.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.random-error")));
+            spectator.sendMessage(getLang("commands.spectate.random-error"));
             return;
         }
         Player target = candidates.get(new Random().nextInt(candidates.size()));
         startSpectate(spectator, target);
-        spectator.sendMessage(MessageUtil.formatMessage(
-                getLang("commands.spectate.random-success").replace("%target%", target.getName())));
+        spectator.sendMessage(getLang("commands.spectate.random-success", "%target%", target.getName()));
     }
 
     public void spectateBack(Player spectator) {
         UUID last = lastTargets.get(spectator.getUniqueId());
         if (last == null) {
-            spectator.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.back-error")));
+            spectator.sendMessage(getLang("commands.spectate.back-error"));
             return;
         }
         Player target = Bukkit.getPlayer(last);
         if (target == null || !target.isOnline()) {
-            spectator.sendMessage(MessageUtil.formatMessage(
-                    getLang("commands.spectate.player-not-found").replace("%target%", "last")));
+            spectator.sendMessage(getLang("commands.spectate.player-not-found", "%target%", "last"));
             return;
         }
         startSpectate(spectator, target);
-        spectator.sendMessage(MessageUtil.formatMessage(
-                getLang("commands.spectate.back-success").replace("%target%", target.getName())));
+        spectator.sendMessage(getLang("commands.spectate.back-success", "%target%", target.getName()));
     }
 
     public void sendPlayerList(Player spectator) {
-        spectator.sendMessage(MessageUtil.formatMessage(getLang("commands.spectate.list-header")));
+        spectator.sendMessage(getLang("commands.spectate.list-header"));
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (!p.equals(spectator)) {
-                String display = MessageUtil.formatMessage(
-                        getLang("commands.spectate.list-player").replace("%player%", p.getName()));
+                String display = getLang("commands.spectate.list-player", "%player%", p.getName());
                 net.md_5.bungee.api.chat.TextComponent msg =
                         new net.md_5.bungee.api.chat.TextComponent(display);
                 msg.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                         net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND, "/spectate " + p.getName()));
+                
+                String hoverText = getLang("commands.spectate.list-hover", "%player%", p.getName());
                 msg.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                         net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                        new net.md_5.bungee.api.chat.ComponentBuilder("Click to spectate " + p.getName()).create()));
+                        new net.md_5.bungee.api.chat.ComponentBuilder(hoverText).create()));
                 spectator.spigot().sendMessage(msg);
             }
         }

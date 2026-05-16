@@ -58,11 +58,13 @@ public class ReactionManager {
         if (upper.startsWith("[CONSOLE]")) {
             Bukkit.getScheduler().runTask(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), formatted.substring(9).trim()));
         } else if (upper.startsWith("[STAFF]")) {
-            String msg = MessageUtil.formatMessage(formatted.substring(7).trim());
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            String msg = lang.formatMessage(formatted.substring(7).trim());
             Bukkit.getOnlinePlayers().stream().filter(p -> p.hasPermission("lifemod.antialt.notify")).forEach(p -> p.sendMessage(msg));
         } else if (upper.startsWith("[CANCEL]")) {
             if (targetPlayer != null) {
-                Bukkit.getScheduler().runTask(plugin, () -> targetPlayer.kickPlayer(MessageUtil.formatMessage(formatted.substring(8).trim())));
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                Bukkit.getScheduler().runTask(plugin, () -> targetPlayer.kickPlayer(lang.formatMessage(formatted.substring(8).trim())));
             }
         } else if (upper.startsWith("[LOG]")) {
             plugin.getLogger().warning("[AntiAlt] " + formatted.substring(5).trim());

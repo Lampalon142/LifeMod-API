@@ -27,12 +27,11 @@ public class BungeeChatListener implements Listener {
         Sanction activeMute = sanctionService.getActiveSanction(player.getUniqueId(), player.getName(), SanctionType.MUTE).join();
 
         if (activeMute != null) {
-            String message = lang.getMessage("sanctions.mute.blocked");
-            message = message
-                    .replace("%reason%", activeMute.getReason())
-                    .replace("%time%", TimeUtil.formatTime(activeMute.getExpirationTime() - System.currentTimeMillis()));
+            String message = lang.getMessage("sanctions.mute.chat-blocked",
+                    "%reason%", activeMute.getReason(),
+                    "%expiration%", activeMute.isPermanent() ? "Jamais" : TimeUtil.formatTime(activeMute.getExpirationTime() - System.currentTimeMillis()));
             
-            player.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&', message)));
+            player.sendMessage(new TextComponent(message));
             event.setCancelled(true);
         }
     }

@@ -20,25 +20,28 @@ public class Staffchatevent implements Listener {
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        String playermsg = plugin.getLangConfig().getString("commands.staffchat.message");
-        String prefix = MessageUtil.parseColors(plugin.getConfigConfig().getString("prefix"));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+        
+        String prefix = config.getPrefix();
 
         if (player.hasPermission("lifemod.staffchat")) {
             String message = event.getMessage();
 
             if (message.startsWith(prefix)) {
                 event.setCancelled(true);
+                String rawMsg = message.substring(prefix.length());
 
-                String staffMessage = MessageUtil.parseColors(
-                        playermsg.replace("%player%", player.getName()) + "» " + message.substring(prefix.length())
-                );
+                String staffMessage = lang.getMessage("commands.staffchat.format",
+                        "%player%", player.getName(),
+                        "%message%", rawMsg);
 
                 for (Player recipient : plugin.getServer().getOnlinePlayers()) {
                     if (recipient.hasPermission("lifemod.staffchat")) {
                         recipient.sendMessage(staffMessage);
                     }
                 }
-                debug.log("staffchat", player.getName() + " sent staffchat message: " + message.substring(prefix.length()));
+                debug.log("staffchat", player.getName() + " sent staffchat message: " + rawMsg);
             }
         }
     }

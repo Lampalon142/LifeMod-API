@@ -22,12 +22,16 @@ public class KickCommand extends BaseSanctionCommand {
 
     @Override
     protected void onSanctionApplied(CommandContext context, OfflinePlayer target, Sanction sanction) {
-        String successMsg = context.getLang().getMessage("sanctions.kick.success", "%target%", target.getName(), "%reason%", sanction.getReason());
+        String successMsg = context.getLang().getMessage("sanctions.kick.success",
+                "%player%", target.getName(),
+                "%reason%", sanction.getReason());
         context.getSender().sendMessage(successMsg);
         if (target.isOnline()) {
             Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
-                String kickMsg = context.getLang().getMessage("sanctions.kick.message", "%reason%", sanction.getReason(), "%issuer%", sanction.getIssuerName());
-                
+                String kickMsg = context.getLang().getMessage("sanctions.kick.message",
+                        "%reason%", sanction.getReason(),
+                        "%issuer%", sanction.getIssuerName());
+
                 ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
                 if (platform instanceof BukkitPlatform) {
                     NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();

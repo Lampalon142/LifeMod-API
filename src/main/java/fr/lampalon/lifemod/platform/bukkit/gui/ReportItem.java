@@ -36,12 +36,13 @@ public class ReportItem extends AbstractItem {
         String targetName = target != null && target.getName() != null ? target.getName() : report.getTargetUuid().toString();
         String reporterName = reporter != null && reporter.getName() != null ? reporter.getName() : report.getReporterUuid().toString();
 
-        String targetStatus = (target != null && target.isOnline()) ? "§aOnline" : "§cOffline";
-        String reporterStatus = (reporter != null && reporter.isOnline()) ? "§aOnline" : "§cOffline";
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String targetStatus = (target != null && target.isOnline()) ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline");
+        String reporterStatus = (reporter != null && reporter.isOnline()) ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline");
 
-        List<String> loreTemplate = LifeMod.getInstance().getLangConfig().getStringList("reports.gui.item-lore");
+        List<String> loreTemplate = lang.getStringList("reports.gui.item-lore");
         List<String> lore = loreTemplate.stream()
-                .map(line -> MessageUtil.formatMessage(line
+                .map(line -> line
                         .replace("%target%", targetName)
                         .replace("%target_status%", targetStatus)
                         .replace("%reporter%", reporterName)
@@ -51,14 +52,12 @@ public class ReportItem extends AbstractItem {
                         .replace("%server%", report.getServerName())
                         .replace("%date%", new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date(report.getCreatedAt())))
                         .replace("%uuid%", report.getUuid().toString())
-                ))
+                )
                 .collect(Collectors.toList());
 
-        String displayName = LifeMod.getInstance().getLangConfig()
-                .getString("reports.gui.item-name", "Report: %uuid%")
-                .replace("%uuid%", report.getUuid().toString().substring(0, 8));
+        String displayName = lang.getMessage("reports.gui.item-name", "%uuid%", report.getUuid().toString().substring(0, 8));
 
-        ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(MessageUtil.formatMessage(displayName));
+        ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(displayName);
         for (String line : lore) {
             builder.addLoreLines(line);
         }

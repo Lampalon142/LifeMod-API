@@ -15,9 +15,10 @@ public class JumpAction implements IStaffAction {
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         Block target = player.getTargetBlock((Set<Material>) null, 100);
         if (target == null || target.getType() == Material.AIR) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.no-target")));
+            player.sendMessage(lang.getMessage("mod.items.navigation.no-target"));
             return;
         }
         
@@ -25,7 +26,7 @@ public class JumpAction implements IStaffAction {
         loc.setYaw(player.getLocation().getYaw());
         loc.setPitch(player.getLocation().getPitch());
         player.teleport(loc);
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.jump")));
+        player.sendMessage(lang.getMessage("mod.items.navigation.jump"));
     }
 
     @Override

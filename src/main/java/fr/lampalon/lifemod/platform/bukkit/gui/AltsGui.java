@@ -61,7 +61,6 @@ public class AltsGui extends PagedAbstractGui {
             Material material;
             
             ISanctionService ss = ServiceRegistry.get(ISanctionService.class);
-            fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
             Sanction ban = ss.getActiveSanction(data.getUuid(), data.getLastName(), SanctionType.BAN).join();
             
             if (ban != null && !ban.isExpired()) {
@@ -76,13 +75,13 @@ public class AltsGui extends PagedAbstractGui {
             }
 
             return new ItemBuilder(material)
-                    .setDisplayName(MessageUtil.formatMessage(lang.getMessage("gui.alts.item-name", "%player%", data.getLastName())))
+                    .setDisplayName(lang.getMessage("gui.alts.item-name", "%player%", data.getLastName()))
                     .addLoreLines(
-                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-status", "%status%", status)),
-                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-uuid", "%uuid%", data.getUuid().toString())),
+                            lang.getMessage("gui.alts.item-status", "%status%", status),
+                            lang.getMessage("gui.alts.item-uuid", "%uuid%", data.getUuid().toString()),
                             "",
-                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-history")),
-                            MessageUtil.formatMessage(lang.getMessage("gui.alts.item-case"))
+                            lang.getMessage("gui.alts.item-history"),
+                            lang.getMessage("gui.alts.item-case")
                     );
         }
 

@@ -34,12 +34,12 @@ public class BukkitCommandWrapper extends Command {
         ILangService lang = ServiceRegistry.get(ILangService.class);
 
         if (lifeCommand.getPermission() != null && !sender.hasPermission(lifeCommand.getPermission())) {
-            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("system.no-permission")));
+            sender.sendMessage(lang.getMessage("system.no-permission"));
             return true;
         }
 
         if (lifeCommand.isPlayerOnly() && !(sender instanceof Player)) {
-            sender.sendMessage(MessageUtil.formatMessage(lang.getMessage("system.player-only")));
+            sender.sendMessage(lang.getMessage("system.player-only"));
             return true;
         }
 

@@ -14,6 +14,7 @@ public class ThruAction implements IStaffAction {
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         // Simple passthrough logic
         BlockIterator iterator = new BlockIterator(player, 10); // Max 10 blocks depth
         Block lastSolid = null;
@@ -28,11 +29,11 @@ public class ThruAction implements IStaffAction {
                 loc.setYaw(player.getLocation().getYaw());
                 loc.setPitch(player.getLocation().getPitch());
                 player.teleport(loc);
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.thru")));
+                player.sendMessage(lang.getMessage("mod.items.navigation.thru"));
                 return;
             }
         }
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.navigation.no-safe-spot")));
+        player.sendMessage(lang.getMessage("mod.items.navigation.no-safe-spot"));
     }
 
     @Override

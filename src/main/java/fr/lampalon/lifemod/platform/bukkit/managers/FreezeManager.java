@@ -35,8 +35,9 @@ public class FreezeManager {
             frozenPlayers.put(target.getUniqueId(), target.getLocation());
             target.getInventory().setHelmet(new ItemStack(Material.PACKED_ICE));
             
-            for (String line : LifeMod.getInstance().getLangConfig().getStringList("commands.freeze.messages.freeze.onfreeze")) {
-                target.sendMessage(MessageUtil.formatMessage(line));
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            for (String line : lang.getStringList("commands.freeze.messages.freeze.onfreeze")) {
+                target.sendMessage(line);
             }
             
             debug.log("freeze", moderator.getName() + " froze " + target.getName());
@@ -54,7 +55,8 @@ public class FreezeManager {
                     playerHelmets.remove(target.getUniqueId());
                 }
                 frozenPlayers.remove(target.getUniqueId());
-                target.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("commands.freeze.messages.unfreeze.target").replace("%player%", moderator.getName())));
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                target.sendMessage(lang.getMessage("commands.freeze.messages.unfreeze.target", "%player%", moderator.getName()));
                 debug.log("freeze", moderator.getName() + " unfroze " + target.getName());
             }
         } catch (Exception e) {

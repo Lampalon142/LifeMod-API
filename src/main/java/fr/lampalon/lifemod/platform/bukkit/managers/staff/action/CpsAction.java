@@ -18,23 +18,25 @@ public class CpsAction implements IStaffAction {
 
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.no-target")));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        player.sendMessage(lang.getMessage("mod.items.no-target"));
     }
 
     @Override
     public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
         if (!(event.getRightClicked() instanceof Player)) return;
         Player target = (Player) event.getRightClicked();
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
 
         if (activeTests.containsKey(player.getUniqueId())) {
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.already-active")));
+            player.sendMessage(lang.getMessage("mod.items.cps.already-active"));
             return;
         }
 
         int duration = 10; // Could be from config
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.start")
-                .replace("%duration%", String.valueOf(duration))
-                .replace("%target%", target.getName())));
+        player.sendMessage(lang.getMessage("mod.items.cps.start",
+                "%duration%", String.valueOf(duration),
+                "%target%", target.getName()));
 
         activeTests.put(player.getUniqueId(), target.getUniqueId());
 
@@ -44,8 +46,8 @@ public class CpsAction implements IStaffAction {
 
             Deque<Long> clicks = LifeMod.getInstance().getCpsMap().get(target.getUniqueId());
             if (clicks == null || clicks.isEmpty()) {
-                player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.finish-none")
-                        .replace("%target%", target.getName())));
+                player.sendMessage(lang.getMessage("mod.items.cps.finish-none",
+                        "%target%", target.getName()));
                 return;
             }
 
@@ -58,15 +60,15 @@ public class CpsAction implements IStaffAction {
             boolean suspectedAutoClicker = cps > 15.0; // Simple threshold
 
             String statusKey = suspectedAutoClicker ? "mod.items.cps.status.suspected" : "mod.items.cps.status.unlikely";
-            String resultStatus = MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString(statusKey));
+            String resultStatus = lang.getMessage(statusKey);
 
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-header")));
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-title").replace("%target%", target.getName())));
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-avg").replace("%cps%", String.format("%.2f", cps))));
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-total").replace("%clicks%", String.valueOf(clicksDuringTest.size()))));
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-autoclicker")
-                    .replace("%result%", resultStatus)));
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.cps.result-footer")));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-header"));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-title", "%target%", target.getName()));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-avg", "%cps%", String.format("%.2f", cps)));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-total", "%clicks%", String.valueOf(clicksDuringTest.size())));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-autoclicker",
+                    "%result%", resultStatus));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-footer"));
 
         }, duration * 20L);
     }

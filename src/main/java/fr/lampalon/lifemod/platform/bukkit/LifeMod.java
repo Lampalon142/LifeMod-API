@@ -13,7 +13,9 @@ import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
+import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
+import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
@@ -53,6 +55,7 @@ public class LifeMod extends JavaPlugin {
     private DatabaseManager databaseManager;
     private UpdateChecker updateChecker;
     private DebugManager debugManager;
+    private IPinService pinService;
     private ChatManager chatManager;
     private GuiManager guiManager;
     private NoteInputManager noteInputManager;
@@ -112,7 +115,7 @@ public class LifeMod extends JavaPlugin {
         this.debugManager = new DebugManager(this);
         initializeManagers();
 
-        ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
+        ServiceRegistry.register(IPinService.class, moderatorAuthService);
 
         PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
 
@@ -220,7 +223,7 @@ public class LifeMod extends JavaPlugin {
                 }
             }
         }
-        return baseConfig;
+        return mergedConfig;
     }
 
     private FileConfiguration loadConfig(String fileName) {
@@ -239,7 +242,10 @@ public class LifeMod extends JavaPlugin {
         chatManager = new ChatManager(this);
         databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
-        ServiceRegistry.register(DatabaseProvider.class, databaseManager.getDatabaseProvider());
+        DatabaseProvider dbProvider = databaseManager.getDatabaseProvider();
+        ServiceRegistry.register(DatabaseProvider.class, dbProvider);
+        ServiceRegistry.register(ISanctionService.class, new SanctionService(dbProvider));
+        
         guiManager = new GuiManager(this);
         noteInputManager = new NoteInputManager(this);
         moderatorAuthService = new ModeratorAuthService(this);
@@ -366,7 +372,6 @@ public class LifeMod extends JavaPlugin {
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
-    public void reloadLangConfig() { langConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "lang.yml")); }
 
     public fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager getReplayPlayerManager() {
         return replayPlayerManager;

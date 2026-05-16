@@ -17,7 +17,9 @@ public class ModeratorSessionManager {
     }
 
     public boolean isAuthenticated(UUID uuid) {
-        return authenticated.contains(uuid);
+        boolean auth = authenticated.contains(uuid);
+        //org.bukkit.Bukkit.getLogger().info("[DEBUG] SessionManager: isAuthenticated(" + uuid + ") = " + auth);
+        return auth;
     }
 
     public void authenticate(UUID uuid) {

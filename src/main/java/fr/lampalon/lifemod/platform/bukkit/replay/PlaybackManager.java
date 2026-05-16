@@ -160,7 +160,8 @@ public class PlaybackManager {
         }
 
         LOGGER.info("[DEBUG] Block restore: " + count + " blocks for " + spectator.getName());
-        spectator.sendMessage("§7Scène initialisée §e(" + count + " blocs restaurés)");
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        spectator.sendMessage(lang.getMessage("replay.playback.blocks-restored", "%count%", String.valueOf(count)));
     }
 
     // -------------------------------------------------------------------------
@@ -237,7 +238,8 @@ public class PlaybackManager {
                     LOGGER.info("[DEBUG] Replay finished for " + spectator.getName());
                     cleanup(spectator, realPlayer);
                     plugin.getReplayPlayerManager().exitReplay(spectator);
-                    spectator.sendMessage("§aReplay terminé. Votre état a été restauré.");
+                    fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                    spectator.sendMessage(lang.getMessage("replay.playback.finished"));
                     this.cancel();
                     return;
                 }
@@ -251,8 +253,9 @@ public class PlaybackManager {
                 currentIndex++;
 
                 if (currentIndex % 200 == 0) {
-                    spectator.sendMessage("§7Replay: §e"
-                            + (int)((currentIndex / (double) frames.size()) * 100) + "%");
+                    fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                    spectator.sendMessage(lang.getMessage("replay.playback.progress",
+                            "%percent%", String.valueOf((int)((currentIndex / (double) frames.size()) * 100))));
                 }
             }
         }.runTaskTimer(plugin, 0L, 1L);

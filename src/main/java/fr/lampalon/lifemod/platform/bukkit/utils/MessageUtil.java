@@ -45,12 +45,10 @@ public class MessageUtil {
     }
 
     public static String formatMessage(String message) {
-        if (message == null) {
-            return "";
-        }
+        if (message == null) return "";
 
-        IConfigurationService configService = ServiceRegistry.get(IConfigurationService.class);
-        String prefix = configService != null ? configService.getPrefix() : "";
+        ILangService langService = ServiceRegistry.get(ILangService.class);
+        String prefix = langService != null ? langService.getPrefix() : "";
 
         if (message.contains(PREFIX_PLACEHOLDER)) {
             message = message.replace(PREFIX_PLACEHOLDER, prefix);

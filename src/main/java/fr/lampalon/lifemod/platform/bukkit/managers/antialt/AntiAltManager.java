@@ -72,6 +72,7 @@ public class AntiAltManager {
 
     private void processDecision(Player player, AnalysisResult result, String ip) {
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         int score = result.getDangerScore();
 
         int logSilent = config.getInt("modules.antialt.thresholds.log-silent", 30);
@@ -80,34 +81,35 @@ public class AntiAltManager {
         int suggestBan = config.getInt("modules.antialt.thresholds.suggest-ban", 85);
 
         if (score >= suggestBan) {
-            sendAuditAlert(player, result, ip, "§c§lSUGGESTION DE BAN (Confirmation obligatoire)", true);
+            sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.ban"), true);
         } else if (score >= alertPriority) {
-            sendAuditAlert(player, result, ip, "§6§lALERTE PRIORITAIRE + SURVEILLANCE", true);
+            sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.priority"), true);
         } else if (score >= alertAdmin) {
-            sendAuditAlert(player, result, ip, "§eALERTE DÉTAILLÉE", false);
+            sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.admin"), false);
         } else if (score >= logSilent) {
             plugin.getLogger().info("[AntiAlt] Log Silencieux - Joueur: " + player.getName() + " Score: " + score + "/100");
         }
     }
 
     private void sendAuditAlert(Player player, AnalysisResult result, String ip, String action, boolean priority) {
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        
         String signals = result.getTriggeredRules().stream()
-                .map(rule -> "  §7- §f" + rule.getReason())
+                .map(rule -> lang.getMessage("antialt.signal-format", "%reason%", rule.getReason()))
                 .collect(Collectors.joining("\n"));
 
-        String message = "\n§8§m---------------------------------------\n" +
-                "§c§l[AntiAlt] §fJoueur: §b" + player.getName() + "\n" +
-                "§fScore: " + getScoreColor(result.getDangerScore()) + result.getDangerScore() + "§f/100\n" +
-                "§fUUID: §7" + player.getUniqueId() + "\n" +
-                "§fIP: §7" + ip + "\n\n" +
-                "§fSignaux déclenchés:\n" + signals + "\n\n" +
-                "§fAction recommandée: §a" + action + "\n" +
-                "§7Commande: /lifemod review " + player.getName() + "\n" +
-                "§8§m---------------------------------------\n";
+        String message = lang.getMessage("antialt.audit-alert",
+                "%player%", player.getName(),
+                "%score_color%", getScoreColor(result.getDangerScore()),
+                "%score%", String.valueOf(result.getDangerScore()),
+                "%uuid%", player.getUniqueId().toString(),
+                "%ip%", ip,
+                "%signals%", signals,
+                "%action%", action);
 
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> p.hasPermission("lifemod.antialt.alerts"))
-                .forEach(p -> p.sendMessage(MessageUtil.formatMessage(message)));
+                .forEach(p -> p.sendMessage(message));
         
         if (priority) {
             // Optionnel : Son pour les alertes prioritaires

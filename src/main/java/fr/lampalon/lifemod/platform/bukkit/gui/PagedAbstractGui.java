@@ -36,9 +36,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
-                        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.previous")));
-                        if (!gui.hasPreviousPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.first-page")));
+                        builder.setDisplayName(lang.getMessage("gui.pagination.previous"));
+                        if (!gui.hasPreviousPage()) builder.addLoreLines(lang.getMessage("gui.pagination.first-page"));
                         return builder;
                     }
                 })
@@ -46,9 +45,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
                         ItemBuilder builder = new ItemBuilder(Material.ARROW);
-                        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                        builder.setDisplayName(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.next")));
-                        if (!gui.hasNextPage()) builder.addLoreLines(fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil.formatMessage(lang.getMessage("gui.pagination.last-page")));
+                        builder.setDisplayName(lang.getMessage("gui.pagination.next"));
+                        if (!gui.hasNextPage()) builder.addLoreLines(lang.getMessage("gui.pagination.last-page"));
                         return builder;
                     }
                 })

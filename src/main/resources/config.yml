@@ -9,8 +9,6 @@ server:
   language: "en_US"
   # Format for dates in GUI and messages
   date-format: "dd/MM/yyyy HH:mm:ss"
-  # Global prefix for all messages
-  prefix: "&7[&6Moderation&7] &f» "
 
 # --- DATABASE ---
 database:

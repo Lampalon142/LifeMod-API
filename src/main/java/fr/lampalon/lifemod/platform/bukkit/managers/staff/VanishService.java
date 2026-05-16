@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.events.vanish.PlayerVanishStateChangeEvent;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
@@ -111,16 +112,16 @@ public class VanishService implements IVanishService {
     }
 
     private void broadcastFakeQuit(Player player) {
-        String msg = plugin.getLangConfig().getString("vanish.fake-quit");
-        String formatted = MessageUtil.formatMessage(msg.replace("%player%", player.getName()));
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String formatted = lang.getMessage("vanish.fake-quit", "%player%", player.getName());
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))
                 .forEach(p -> p.sendMessage(formatted));
     }
 
     private void broadcastFakeJoin(Player player) {
-        String msg = plugin.getLangConfig().getString("vanish.fake-join");
-        String formatted = MessageUtil.formatMessage(msg.replace("%player%", player.getName()));
+        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String formatted = lang.getMessage("vanish.fake-join", "%player%", player.getName());
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))
                 .forEach(p -> p.sendMessage(formatted));

@@ -29,13 +29,13 @@ public class LifemodCommand extends LifeCommand {
                 return;
             }
             context.getPlugin().reloadPluginConfig();
-            context.getPlugin().reloadLangConfig();
             context.getSender().sendMessage(context.getLang().getMessage("commands.lifemod.reload"));
             return;
         }
 
         if (context.getArgs()[0].equalsIgnoreCase("info")) {
-            for (String line : context.getPlugin().getConfigConfig().getStringList("lifemod.info")) {
+            List<String> infoLines = context.getLang().getStringList("commands.lifemod.info");
+            for (String line : infoLines) {
                 context.getSender().sendMessage(line);
             }
             return;

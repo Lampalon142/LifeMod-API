@@ -52,9 +52,8 @@ public class NoClipManager {
         //    avec la valeur du gamemode d'origine → le client affiche toujours le bon HUD
         spoofClientGameMode(player, original);
 
-        player.sendMessage(plugin.getLangConfig().getString(
-                "commands.noclip.activate",
-                "§aNoClip §7activé — tu traverses les blocs !"));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        player.sendMessage(lang.getMessage("commands.noclip.activate"));
     }
 
     // -------------------------------------------------------------------------
@@ -70,9 +69,8 @@ public class NoClipManager {
         // Re-synchronise le GameMode côté client (remet le bon HUD)
         spoofClientGameMode(player, original != null ? original : GameMode.SURVIVAL);
 
-        player.sendMessage(plugin.getLangConfig().getString(
-                "commands.noclip.deactivate",
-                "§cNoClip §7désactivé"));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        player.sendMessage(lang.getMessage("commands.noclip.deactivate"));
     }
 
     // -------------------------------------------------------------------------

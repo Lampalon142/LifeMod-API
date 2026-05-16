@@ -33,18 +33,17 @@ public class BroadcastCommand extends LifeCommand {
             return;
         }
 
-        String message = String.join(" ", context.getArgs()).replace(" ", " ");
-        String prefix = context.getLang().getMessage("commands.broadcast.prefix");
-        String broadcast = MessageUtil.parseColors(prefix + message); // Still using MessageUtil for color parsing
+        String message = String.join(" ", context.getArgs());
+        String formatted = context.getLang().getMessage("commands.broadcast.format", "%message%", message);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendMessage(broadcast);
+            player.sendMessage(formatted);
         }
-        Bukkit.getConsoleSender().sendMessage(broadcast);
+        Bukkit.getConsoleSender().sendMessage(formatted);
 
         context.getDebug().log("broadcast", "Broadcast sent by " + context.getSender().getName() + ": " + message);
 
-        if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
+        if (context.getPlugin().getConfigConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context.getSender().getName(), message, context);
         }
     }
@@ -53,17 +52,17 @@ public class BroadcastCommand extends LifeCommand {
         try {
             DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
             webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.broadcast.title", ""))
-                    .setDescription(context.getConfig().getString("discord.broadcast.description", "")
+                    .setTitle(context.getConfig().getString("modules.discord.broadcast.title", ""))
+                    .setDescription(context.getConfig().getString("modules.discord.broadcast.description", "")
                             .replace("%player%", playerName)
                             .replace("%message%", message))
                     .setFooter(
-                            context.getConfig().getString("discord.broadcast.footer.title", ""),
-                            context.getConfig().getString("discord.broadcast.footer.logo", "")
+                            context.getConfig().getString("modules.discord.broadcast.footer.title", ""),
+                            context.getConfig().getString("modules.discord.broadcast.footer.logo", "")
                                     .replace("%player%", playerName)
                     )
                     .setColor(Color.decode(Objects.requireNonNull(
-                            context.getConfig().getString("discord.broadcast.color", "")
+                            context.getConfig().getString("modules.discord.broadcast.color", "#60a5fa")
                     ))));
             webhook.execute();
         } catch (IOException e) {
@@ -76,8 +75,7 @@ public class BroadcastCommand extends LifeCommand {
     @Override
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1) {
-            // Assuming "bc.tabcompleter" is a list of default suggestions for the message
-            List<String> suggestions = context.getPlugin().getLangConfig().getStringList("bc.tabcompleter"); // Still direct config access
+            List<String> suggestions = context.getLang().getStringList("commands.broadcast.tab-completer");
             return TabCompleterUtils.filter(suggestions, context.getArgs()[0]);
         }
         return super.onTabComplete(context);

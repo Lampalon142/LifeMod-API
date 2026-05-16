@@ -15,8 +15,9 @@ public class MountAction implements IStaffAction {
 
     @Override
     public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         Entity target = event.getRightClicked();
         target.addPassenger(player);
-        player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.mount.success").replace("%target%", target.getName())));
+        player.sendMessage(lang.getMessage("mod.items.mount.success", "%target%", target.getName()));
     }
 }

@@ -18,13 +18,10 @@ public class BungeePlatform implements ILifePlatform {
         this.plugin = plugin;
     }
 
-    private String format(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
-    }
-
     @Override
     public void broadcast(String message, String permission) {
-        TextComponent component = new TextComponent(format(message));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        TextComponent component = new TextComponent(lang.formatMessage(message));
         if (permission == null) {
             ProxyServer.getInstance().broadcast(component);
         } else {
@@ -39,7 +36,8 @@ public class BungeePlatform implements ILifePlatform {
     public void kickPlayer(UUID uuid, String reason) {
         ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
         if (player != null) {
-            player.disconnect(new TextComponent(format(reason)));
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            player.disconnect(new TextComponent(lang.formatMessage(reason)));
         }
     }
 
@@ -47,7 +45,8 @@ public class BungeePlatform implements ILifePlatform {
     public void sendMessage(UUID uuid, String message) {
         ProxiedPlayer player = ProxyServer.getInstance().getPlayer(uuid);
         if (player != null) {
-            player.sendMessage(new TextComponent(format(message)));
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            player.sendMessage(new TextComponent(lang.formatMessage(message)));
         }
     }
 

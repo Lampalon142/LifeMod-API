@@ -23,12 +23,14 @@ public class InspectorAction implements IStaffAction {
             Container container = (Container) block.getState();
             Inventory realInv = container.getInventory();
             
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            
             // Create a virtual inventory to be truly silent
-            Inventory virtualInv = Bukkit.createInventory(null, realInv.getSize(), MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.silent-title").replace("%block%", block.getType().name())));
+            Inventory virtualInv = Bukkit.createInventory(null, realInv.getSize(), lang.getMessage("mod.items.inspector.silent-title", "%block%", block.getType().name()));
             virtualInv.setContents(realInv.getContents());
             
             player.openInventory(virtualInv);
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.silent-open").replace("%block%", block.getType().name())));
+            player.sendMessage(lang.getMessage("mod.items.inspector.silent-open", "%block%", block.getType().name()));
         }
     }
 
@@ -36,9 +38,10 @@ public class InspectorAction implements IStaffAction {
     public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
         if (event.getRightClicked() instanceof Player) {
             Player target = (Player) event.getRightClicked();
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
             // Open real inventory for real-time interaction
             player.openInventory(target.getInventory());
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("mod.items.inspector.inspect-player").replace("%target%", target.getName())));
+            player.sendMessage(lang.getMessage("mod.items.inspector.inspect-player", "%target%", target.getName()));
         }
     }
 }

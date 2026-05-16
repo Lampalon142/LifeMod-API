@@ -31,11 +31,16 @@ public class HistoryCommand extends LifeCommand {
         OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
         UUID targetUuid = offlineTarget.getUniqueId();
 
-        ServiceRegistry.get(ISanctionService.class).getHistory(targetUuid).thenAccept(history -> {
-            Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
-                new HistoryGui(context.getPlayer(), history, targetName, targetUuid).open();
-            });
-        });
+        ServiceRegistry.get(ISanctionService.class).getHistory(targetUuid)
+                .thenAccept(history -> {
+                    Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
+                        new HistoryGui(context.getPlayer(), history, targetName, targetUuid).open();
+                    });
+                })
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return null;
+                });
     }
 
     @Override

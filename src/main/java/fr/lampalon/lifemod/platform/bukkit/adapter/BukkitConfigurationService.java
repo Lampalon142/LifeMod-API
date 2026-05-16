@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.adapter;
 
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public class BukkitConfigurationService implements IConfigurationService {

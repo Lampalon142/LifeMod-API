@@ -44,12 +44,13 @@ public class StaffItemManager {
             if (itemSec == null || !itemSec.getBoolean("enabled", true)) continue;
 
             try {
+                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
                 // Build ItemStack
                 Material material = Material.valueOf(itemSec.getString("material"));
                 int slot = itemSec.getInt("slot", 0);
-                String name = MessageUtil.formatMessage(itemSec.getString("name", key));
+                String name = lang.formatMessage(itemSec.getString("name", key));
                 List<String> loreRaw = itemSec.getStringList("lore");
-                String[] lore = loreRaw.stream().map(MessageUtil::formatMessage).toArray(String[]::new);
+                String[] lore = loreRaw.stream().map(lang::formatMessage).toArray(String[]::new);
 
                 ItemBuilder builder = new ItemBuilder(material)
                         .setName(name)

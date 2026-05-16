@@ -24,6 +24,40 @@ system:
       &r
       &e===========================
 
+# --- AUTHENTICATION ---
+auth:
+  login-required: "&cAuthentication required! Please use the PIN menu."
+  login-success: "&aLogged in successfully."
+  login-failed: "&cIncorrect PIN! Attempts left: &e%attempts%"
+  login-locked: "&4Account locked due to failed attempts."
+  not-registered: "&cNo PIN set. Please set it in the authentication menu."
+  registered: "&aPIN set successfully. You can now log in."
+  reset-success: "&aPIN for &e%player% has been reset."
+  blocked-action: "&cYou must be logged in to do this!"
+  blocked-chat: "&cYou must be logged in to chat!"
+  changepass-usage: "&cUsage: /auth changepass <old> <new>"
+  incorrect-old-password: "&cIncorrect old PIN."
+  password-changed: "&aPIN changed successfully."
+  already-authenticated: "&cYou are already authenticated."
+  login-usage: "&cUsage: /auth login"
+  already-registered: "&cYou are already registered."
+  register-usage: "&cUsage: /auth register"
+  reset-usage: "&cUsage: /auth reset <player>"
+  gui:
+    title-login: "&6&lAuthentication - Login"
+    title-register: "&6&lAuthentication - Register"
+    digit-name: "&eDigit &6%digit%"
+    digit-lore: [ "&7Click to enter this digit." ]
+    validate-name: "&a&lVALIDATE"
+    validate-lore: [ "&7Click to confirm your PIN." ]
+    clear-name: "&c&lCLEAR"
+    clear-lore: [ "&7Click to reset the PIN." ]
+    delete-name: "&e&lDELETE"
+    delete-lore: [ "&7Click to remove last digit." ]
+    progress-entered: "&a●"
+    progress-empty: "&7○"
+    progress-name: "&fPIN Progress: %progress%"
+
 # --- SANCTIONS ---
 sanctions:
   # Command logic
@@ -531,25 +565,6 @@ commands:
     no-inventory: "&cNo saved inventory for %target%."
     success: "&aViewing offline inventory of %target%."
 
-  auth:
-    login-required: "&cAuthenticate with &e/modlogin <password>&c."
-    login-success: "&aLogged in successfully."
-    login-failed: "&cIncorrect password! Attempts left: &e%attempts%"
-    login-locked: "&4Account locked due to failed attempts."
-    not-registered: "&cNo password set. Use &e/modregister <password>&c."
-    registered: "&aPassword set. Use &e/modlogin&a to enter."
-    reset-success: "&aPassword for &e%player% &areset."
-    blocked-action: "&cYou must be logged in to do this!"
-    blocked-chat: "&cYou must be logged in to chat!"
-    changepass-usage: "&cUsage: /modchangepass <old> <new>"
-    incorrect-old-password: "&cIncorrect old password."
-    password-changed: "&aPassword changed successfully."
-    already-authenticated: "&cYou are already authenticated."
-    login-usage: "&cUsage: /modlogin <password>"
-    already-registered: "&cYou are already registered."
-    register-usage: "&cUsage: /modregister <password>"
-    reset-usage: "&cUsage: /modreset <player>"
-
   staffchat:
     usage: "%prefix%&cUsage: /staffchat <message>"
     success: "%prefix%&aMessage sent to staff chat."
@@ -612,7 +627,7 @@ commands:
     list-player: "&7 - &e%player%"
 
 # Metadata
-version: 200
+version: 201
 
 bc:
   tabcompleter:
@@ -622,4 +637,3 @@ alts:
   header: "&8&m----------------------------------------\n&6&lLinked Accounts for &e%ip%\n "
   entry: " &8• %color%%name% &7(%uuid%...)"
   footer: "&8&m----------------------------------------"
-

@@ -33,15 +33,13 @@ public class TicketJoinListener implements Listener {
         long openCount = reports.stream().filter(r -> r.getStatus() == ReportStatus.OPEN).count();
         long pendingCount = reports.stream().filter(r -> r.getStatus() == ReportStatus.PENDING).count();
 
-        String msg = plugin.getLangConfig().getString(
-                "report.join-message",
-                LifeMod.getInstance().getLangConfig().getString("reports.join-alert")
-        );
-        msg = msg.replace("%open%", String.valueOf(openCount))
-                .replace("%pending%", String.valueOf(pendingCount))
-                .replace("%total%", String.valueOf(reports.size()));
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        String msg = lang.getMessage("report.join-message",
+                "%open%", String.valueOf(openCount),
+                "%pending%", String.valueOf(pendingCount),
+                "%total%", String.valueOf(reports.size()));
 
-        player.sendMessage(MessageUtil.formatMessage(msg));
+        player.sendMessage(msg);
     }
 }
 

@@ -1,6 +1,6 @@
 name: LifeMod
 authors: [Lampalon]
-version: '2.0.0-SNAPSHOT'
+version: "${VERSION}"
 main: fr.lampalon.lifemod.platform.bukkit.LifeMod
 api-version: '1.13'
 softdepend:

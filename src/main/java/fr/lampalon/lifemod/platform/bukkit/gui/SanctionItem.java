@@ -44,7 +44,7 @@ public class SanctionItem extends AbstractItem {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         
         List<String> lore = new ArrayList<>();
-        lore.add(LifeMod.getInstance().getLangConfig().getString("gui.history.item.separator"));
+        lore.add(lang.getMessage("gui.history.item.separator"));
         lore.add(lang.getMessage("gui.history.item.target", "%target%", sanction.getPlayerName()));
         lore.add(lang.getMessage("gui.history.item.type", "%type%", sanction.getType().name()));
         lore.add(lang.getMessage("gui.history.item.reason", "%reason%", sanction.getReason()));
@@ -73,12 +73,12 @@ public class SanctionItem extends AbstractItem {
 
         lore.add("");
         lore.add(lang.getMessage("gui.history.item.delete-info", "%id%", sanction.getUuid().toString().substring(0, 8)));
-        lore.add(LifeMod.getInstance().getLangConfig().getString("gui.history.item.separator"));
+        lore.add(lang.getMessage("gui.history.item.separator"));
 
         String title = lang.getMessage("gui.history.item.title", "%id%", sanction.getUuid().toString().substring(0, 8));
-        ItemBuilder builder = new ItemBuilder(material).setDisplayName(MessageUtil.formatMessage(title));
+        ItemBuilder builder = new ItemBuilder(material).setDisplayName(title);
         for (String line : lore) {
-            builder.addLoreLines(MessageUtil.formatMessage(line));
+            builder.addLoreLines(line);
         }
         
         return builder;
@@ -88,7 +88,8 @@ public class SanctionItem extends AbstractItem {
     public void handleClick(@NotNull ClickType clickType, @NotNull Player player, @NotNull InventoryClickEvent event) {
         if (clickType.isRightClick()) {
             LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().deleteSanction(sanction.getUuid());
-            player.sendMessage(MessageUtil.formatMessage(LifeMod.getInstance().getLangConfig().getString("gui.history.item.delete-success")));
+            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            player.sendMessage(lang.getMessage("gui.history.item.delete-success"));
             if (onUpdate != null) onUpdate.run();
         }
     }

@@ -45,7 +45,7 @@ public class BungeeAntiAltManager {
                         "%score%", String.valueOf(result.getDangerScore()),
                         "%reason%", rules);
                 
-                plugin.getLogger().info(MessageUtil.formatMessage(debugMsg));
+                plugin.getLogger().info(lang.formatMessage(debugMsg));
             }
         });
     }

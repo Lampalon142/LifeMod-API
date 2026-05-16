@@ -45,29 +45,29 @@ public class ReportDetailGui extends AbstractGui {
                         "# # # # B # # # #")
                 .addIngredient('#', createBorder())
                 .addIngredient('R', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.reporter", "%player%", reporterName)))
-                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (reporter != null && reporter.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline"))))))
+                        .setDisplayName(lang.getMessage("reports.gui.detail.reporter", "%player%", reporterName))
+                        .addLoreLines(lang.getMessage("reports.gui.detail.status-prefix") + (reporter != null && reporter.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline")))))
                 .addIngredient('T', new SimpleItem(new ItemBuilder(Material.PLAYER_HEAD)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.target", "%player%", targetName)))
-                        .addLoreLines(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.status-prefix") + (target != null && target.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline"))))))
+                        .setDisplayName(lang.getMessage("reports.gui.detail.target", "%player%", targetName))
+                        .addLoreLines(lang.getMessage("reports.gui.detail.status-prefix") + (target != null && target.isOnline() ? lang.getMessage("reports.status.online", "&aOnline") : lang.getMessage("reports.status.offline", "&cOffline")))))
                 .addIngredient('I', new SimpleItem(new ItemBuilder(Material.BOOK)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-title")))
+                        .setDisplayName(lang.getMessage("reports.gui.detail.info-title"))
                         .addLoreLines(
-                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-reason", "%reason%", report.getReason())),
-                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-server", "%server%", report.getServerName())),
-                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-status", "%status%", report.getStatus().name())),
-                                MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.info-date", "%date%", sdf.format(new Date(report.getCreatedAt()))))
+                                lang.getMessage("reports.gui.detail.info-reason", "%reason%", report.getReason()),
+                                lang.getMessage("reports.gui.detail.info-server", "%server%", report.getServerName()),
+                                lang.getMessage("reports.gui.detail.info-status", "%status%", report.getStatus().name()),
+                                lang.getMessage("reports.gui.detail.info-date", "%date%", sdf.format(new Date(report.getCreatedAt())))
                         )))
                 .addIngredient('L', new SimpleItem(new ItemBuilder(Material.COMPASS)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.teleport")))
-                        .addLoreLines(lang.getStringList("reports.gui.detail.teleport-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                        .setDisplayName(lang.getMessage("reports.gui.detail.teleport"))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.teleport-lore").toArray(String[]::new))))
                 .addIngredient('A', new SimpleItem(new ItemBuilder(Material.LIME_DYE)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.assign")))
-                        .addLoreLines(lang.getStringList("reports.gui.detail.assign-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
+                        .setDisplayName(lang.getMessage("reports.gui.detail.assign"))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.assign-lore").toArray(String[]::new))))
                 .addIngredient('C', new SimpleItem(new ItemBuilder(Material.RED_DYE)
-                        .setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.close")))
-                        .addLoreLines(lang.getStringList("reports.gui.detail.close-lore").stream().map(MessageUtil::formatMessage).toArray(String[]::new))))
-                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.back"))), click -> {
+                        .setDisplayName(lang.getMessage("reports.gui.detail.close"))
+                        .addLoreLines(lang.getStringList("reports.gui.detail.close-lore").toArray(String[]::new))))
+                .addIngredient('B', new SimpleItem(new ItemBuilder(Material.ARROW).setDisplayName(lang.getMessage("reports.gui.detail.back")), click -> {
                     player.closeInventory();
                 }))
                 .build();
@@ -75,7 +75,7 @@ public class ReportDetailGui extends AbstractGui {
 
     @Override
     protected String getTitle() {
-        return MessageUtil.formatMessage(lang.getMessage("reports.gui.detail.title-prefix") + report.getUuid().toString().substring(0, 8));
+        return lang.getMessage("reports.gui.detail.title-prefix") + report.getUuid().toString().substring(0, 8);
     }
 
     @Override
