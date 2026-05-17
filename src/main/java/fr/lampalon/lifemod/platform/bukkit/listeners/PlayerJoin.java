@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
@@ -29,23 +30,39 @@ public class PlayerJoin implements Listener {
         this.debug = plugin.getDebugManager();
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         ILangService lang = ServiceRegistry.get(ILangService.class);
 
         // Update Notification
-        if (player.hasPermission("lifemod.notify")) {
+        if (player.hasPermission("lifemod.notify") && lang.getBoolean("system.update.enabled")) {
             updateChecker.checkForUpdates(result -> {
                 if (!player.isOnline()) return;
 
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (result == UpdateChecker.UpdateCheckResult.OUT_DATED) {
+                    if (result == UpdateChecker.UpdateCheckResult.UP_TO_DATE){
+                        String message = lang.getMessage("system.update.up-to-date",
+                                "%player%", player.getName(),
+                                "%current_version%", updateChecker.getCurrentVersionS(),
+                                "%latest_version%", updateChecker.getLatestVersionS());
+
+                        player.sendMessage(message);
+                        debug.log("update", "Notified player " + player.getName() + " about update.");
+                    } else if (result == UpdateChecker.UpdateCheckResult.OUT_DATED) {
                         String message = lang.getMessage("system.update.message",
                                 "%player%", player.getName(),
                                 "%current_version%", updateChecker.getCurrentVersionS(),
                                 "%latest_version%", updateChecker.getLatestVersionS());
                         
+                        player.sendMessage(message);
+                        debug.log("update", "Notified player " + player.getName() + " about update.");
+                    } else if (result == UpdateChecker.UpdateCheckResult.UNRELEASED) {
+                        String message = lang.getMessage("system.update.unreleased",
+                                "%player%", player.getName(),
+                                "%current_version%", updateChecker.getCurrentVersionS(),
+                                "%latest_version%", updateChecker.getLatestVersionS());
+
                         player.sendMessage(message);
                         debug.log("update", "Notified player " + player.getName() + " about update.");
                     } else if (result == UpdateChecker.UpdateCheckResult.NO_RESULT) {

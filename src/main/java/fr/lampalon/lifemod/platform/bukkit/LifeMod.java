@@ -307,7 +307,7 @@ public class LifeMod extends JavaPlugin {
 
         pm.registerEvents(new GuiDetailListener(this), this);
         pm.registerEvents(new ChatAsyncListener(this), this);
-        pm.registerEvents(new TicketJoinListener(this, updateChecker), this);
+        //pm.registerEvents(new TicketJoinListener(this, updateChecker), this);
         pm.registerEvents(new ChatListener(), this);
         pm.registerEvents(new ModeratorAuthListener(), this);
         pm.registerEvents(new SanctionListener(), this);
@@ -317,9 +317,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
-        if (langConfig.getBoolean("system.update.enabled")) {
-            pm.registerEvents(new PlayerJoin(this, updateChecker), this);
-        }
+        pm.registerEvents(new PlayerJoin(this, updateChecker), this);
     }
 
     private void registerCommands() {

@@ -25,7 +25,6 @@ public class ConnectionListener implements Listener {
         String name = event.getName();
         String ip = event.getAddress().getHostAddress();
 
-        // Enregistrement async des données du joueur
         if (LifeMod.getInstance().getDatabaseManager() == null) return;
         DatabaseProvider db = LifeMod.getInstance().getDatabaseManager().getDatabaseProvider();
         if (db == null) return;

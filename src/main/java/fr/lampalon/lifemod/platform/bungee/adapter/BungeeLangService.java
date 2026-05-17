@@ -41,6 +41,11 @@ public class BungeeLangService implements ILangService {
     }
 
     @Override
+    public Boolean getBoolean(String key) {
+        return lang.getBoolean(key, false);
+    }
+
+    @Override
     public String formatMessage(String message) {
         if (message == null) return "";
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);

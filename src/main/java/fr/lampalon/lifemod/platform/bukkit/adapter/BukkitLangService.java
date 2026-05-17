@@ -38,6 +38,11 @@ public class BukkitLangService implements ILangService {
     }
 
     @Override
+    public Boolean getBoolean(String key) {
+        return langConfig.getBoolean(key, false);
+    }
+
+    @Override
     public String formatMessage(String message) {
         return MessageUtil.formatMessage(message);
     }
