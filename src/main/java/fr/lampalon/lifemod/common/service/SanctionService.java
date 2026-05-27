@@ -10,11 +10,18 @@ import fr.lampalon.lifemod.common.utils.NetworkUtil;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class SanctionService implements ISanctionService {
+
+    private static final ExecutorService LIFEMOD_EXECUTOR = Executors.newCachedThreadPool(r -> new Thread(r, "LifeMod-Async"));
 
     private final DatabaseProvider db;
     private final IMessagingService messaging;
@@ -33,7 +40,6 @@ public class SanctionService implements ISanctionService {
         return CompletableFuture.supplyAsync(() -> {
             db.saveSanction(sanction);
             
-            // Mise à jour de la réputation IP si c'est un BAN
             if (sanction.getType() == SanctionType.BAN) {
                 PlayerData data = db.getPlayerData(sanction.getPlayerUuid());
                 if (data != null && data.getLastIp() != null) {
@@ -45,12 +51,9 @@ public class SanctionService implements ISanctionService {
                 }
             }
 
-            // Broadcast local
             broadcastSanction(sanction);
 
-            // Redis Sync
             if (messaging != null) {
-                // ADD|TYPE|PLAYER_UUID|ISSUER_NAME|REASON|DURATION|SILENT|SERVER|CATEGORY
                 String message = String.format("ADD|%s|%s|%s|%s|%d|%b|%s|%s",
                         sanction.getType().name(),
                         sanction.getPlayerUuid(),
@@ -64,13 +67,12 @@ public class SanctionService implements ISanctionService {
                 messaging.publish("lifemod:sanctions", message);
             }
 
-            // Auto-Punish check
             if (sanction.getType() == SanctionType.WARN || sanction.getType() == SanctionType.MUTE || sanction.getType() == SanctionType.BAN) {
                 checkAutoPunish(sanction.getPlayerUuid(), sanction.getCategory());
             }
             
             return sanction;
-        });
+        }, LIFEMOD_EXECUTOR);
     }
 
     @Override
@@ -82,9 +84,7 @@ public class SanctionService implements ISanctionService {
             active.revoke(removedBy, removedByName, reason);
             db.updateSanction(active);
 
-            // Redis Sync
             if (messaging != null) {
-                // REMOVE|TYPE|PLAYER_UUID|REMOVED_BY_NAME|REASON|SILENT
                 String message = String.format("REMOVE|%s|%s|%s|%s|%b",
                         type.name(),
                         playerUuid,
@@ -98,7 +98,7 @@ public class SanctionService implements ISanctionService {
             broadcastRevoke(type, playerUuid, removedByName, reason, silent);
 
             return true;
-        });
+        }, LIFEMOD_EXECUTOR);
     }
 
     private void broadcastSanction(Sanction sanction) {
@@ -153,17 +153,25 @@ public class SanctionService implements ISanctionService {
 
     @Override
     public CompletableFuture<Sanction> getActiveSanction(UUID playerUuid, String playerName, SanctionType type) {
-        return CompletableFuture.supplyAsync(() -> db.getActiveSanction(playerUuid, playerName, type));
+        return CompletableFuture.supplyAsync(() -> db.getActiveSanction(playerUuid, playerName, type), LIFEMOD_EXECUTOR);
+    }
+
+    @Override
+    public CompletableFuture<Map<UUID, Sanction>> getActiveSanctions(Collection<UUID> playerUuids, String playerName, SanctionType type) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<Sanction> sanctions = db.getActiveSanctions(playerUuids, type);
+            return sanctions.stream().collect(Collectors.toMap(Sanction::getPlayerUuid, s -> s));
+        }, LIFEMOD_EXECUTOR);
     }
 
     @Override
     public CompletableFuture<List<Sanction>> getHistory(UUID playerUuid) {
-        return CompletableFuture.supplyAsync(() -> db.getSanctions(playerUuid));
+        return CompletableFuture.supplyAsync(() -> db.getSanctions(playerUuid), LIFEMOD_EXECUTOR);
     }
 
     @Override
     public CompletableFuture<List<Sanction>> getSanctionsIssuedBy(String issuerName, UUID issuerUuid) {
-        return CompletableFuture.supplyAsync(() -> db.getSanctionsIssuedBy(issuerName, issuerUuid));
+        return CompletableFuture.supplyAsync(() -> db.getSanctionsIssuedBy(issuerName, issuerUuid), LIFEMOD_EXECUTOR);
     }
 
     @Override
@@ -198,7 +206,7 @@ public class SanctionService implements ISanctionService {
                     platform.dispatchCommand(finalCommand);
                 });
             }
-        });
+        }).exceptionally(ex -> { ex.printStackTrace(); return null; });
     }
 }
 

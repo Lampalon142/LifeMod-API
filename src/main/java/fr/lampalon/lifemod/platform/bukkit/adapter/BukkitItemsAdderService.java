@@ -1,6 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.adapter;
 
-import fr.lampalon.lifemod.common.service.IItemsAdderService;
+import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 

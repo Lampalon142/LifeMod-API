@@ -23,6 +23,10 @@ public class VanishService implements IVanishService {
     private final NamespacedKey vanishKey;
     private final String METADATA_KEY = "vanished";
 
+    public void handleQuit(UUID uuid) {
+        vanishedPlayers.remove(uuid);
+    }
+
     public VanishService(LifeMod plugin) {
         this.plugin = plugin;
         this.vanishKey = new NamespacedKey(plugin, "is_vanished");

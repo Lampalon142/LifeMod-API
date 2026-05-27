@@ -46,6 +46,10 @@ public class NoteInputManager {
         pendingInputs.remove(player.getUniqueId());
     }
 
+    public void handleQuit(UUID playerId) {
+        pendingInputs.remove(playerId);
+    }
+
     public void handleChatInput(Player player, String message) {
         NoteContext context = pendingInputs.remove(player.getUniqueId());
         if (context == null) return;

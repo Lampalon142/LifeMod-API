@@ -191,7 +191,9 @@ public class NMSHandler_v1_21_R1 implements NMSProvider, NMSReplayHandler {
                         containers.add(container);
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return containers;
     }

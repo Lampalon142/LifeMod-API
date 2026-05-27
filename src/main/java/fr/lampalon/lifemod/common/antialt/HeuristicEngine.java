@@ -13,6 +13,7 @@ import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.utils.NetworkUtil;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,103 +36,109 @@ public class HeuristicEngine {
     }
 
     public CompletableFuture<AnalysisResult> analyze(UUID playerUuid, String playerName, String ipAddress) {
-        return CompletableFuture.supplyAsync(() -> {
-            int score = 0;
-            Set<HeuristicRule> rules = new HashSet<>();
-            DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
-            ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
-            AntiVPNService vpnService = ServiceRegistry.get(AntiVPNService.class);
+        DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
+        ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
+        AntiVPNService vpnService = ServiceRegistry.get(AntiVPNService.class);
 
-            if (db == null || sanctionService == null) return null;
+        if (db == null || sanctionService == null) return CompletableFuture.completedFuture(null);
 
-            String subnet = NetworkUtil.getSubnet(ipAddress);
+        List<PlayerData> alts = db.getAlts(ipAddress);
+        long now = System.currentTimeMillis();
 
-            // 1 & 2. Score IP exacte & Bonus temporel
-            List<PlayerData> alts = db.getAlts(ipAddress);
-            long now = System.currentTimeMillis();
-            boolean vpnDetected = false;
-            
-            if (alts != null) {
-                for (PlayerData alt : alts) {
-                    if (alt.getUuid().equals(playerUuid)) continue;
-                    
-                    var sanctionFuture = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN);
-                    Sanction activeBan = sanctionFuture.join();
-                    
-                    if (activeBan != null) {
-                        score += config.getInt("modules.antialt.weights.ip-exact-banned", 60);
-                        rules.add(HeuristicRule.IP_EXACT_BANNED);
-
-                        long diffMs = now - activeBan.getCreatedAt();
-                        long diffHours = diffMs / (1000 * 60 * 60);
-                        long diffDays = diffHours / 24;
-
-                        if (diffHours <= config.getInt("modules.antialt.temporal.recent-ban-hours", 24)) {
-                            score += config.getInt("modules.antialt.weights.ip-temporal-24h", 30);
-                            rules.add(HeuristicRule.IP_TEMPORAL_RECENT);
-                        } else if (diffDays <= config.getInt("modules.antialt.temporal.medium-ban-days", 7)) {
-                            score += config.getInt("modules.antialt.weights.ip-temporal-week", 15);
-                            rules.add(HeuristicRule.IP_TEMPORAL_RECENT);
-                        }
-                        break; 
-                    }
-                }
+        List<CompletableFuture<Sanction>> banFutures = new ArrayList<>();
+        List<PlayerData> relevantAlts = new ArrayList<>();
+        if (alts != null) {
+            for (PlayerData alt : alts) {
+                if (alt.getUuid().equals(playerUuid)) continue;
+                relevantAlts.add(alt);
+                banFutures.add(sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN));
             }
+        }
 
-            // 3. Score subnet /24
-            // On vérifie si d'autres joueurs sur le même subnet sont bannis
-            // (Simplification : on pourrait faire une requête SQL plus complexe pour le subnet)
-            // Pour l'instant, on se base sur les alts déjà trouvés si on veut rester simple, 
-            // ou on ajoute une méthode au DatabaseProvider.
-            
-            // 4. Score pseudo
-            score += analyzeUsername(playerName, rules);
+        CompletableFuture<IPInfo> vpnFuture = vpnService != null
+                ? vpnService.getLookupManager().lookup(ipAddress)
+                : CompletableFuture.completedFuture(null);
 
-            // 5. Score historique IP
-            DatabaseProvider.IPReputation reputation = db.getIPReputation(ipAddress);
-            if (reputation != null && reputation.bannedAccounts >= 1) {
-                score += config.getInt("modules.antialt.weights.ip-history-multiple", 20);
-                rules.add(HeuristicRule.IP_HISTORY_MULTIPLE);
-            }
+        List<CompletableFuture<?>> allFutures = new ArrayList<>(banFutures);
+        allFutures.add(vpnFuture);
 
-            // 6. Score switch VPN soudain & 7. Multiplicateur VPN
-            if (vpnService != null) {
-                IPInfo ipInfo = vpnService.getLookupManager().lookup(ipAddress).join();
-                if (ipInfo != null && ipInfo.isProxy()) {
-                    vpnDetected = true;
-                    rules.add(HeuristicRule.VPN_DETECTED);
-                    
-                    PlayerData currentData = db.getPlayerData(playerUuid);
-                    if (currentData != null) {
-                        long daysSinceFirstSeen = (now - currentData.getFirstSeen()) / (1000 * 60 * 60 * 24);
-                        if (daysSinceFirstSeen >= config.getInt("modules.antialt.sudden-vpn-days", 30)) {
-                            score += config.getInt("modules.antialt.weights.sudden-vpn-switch", 20);
-                            rules.add(HeuristicRule.SUDDEN_VPN_SWITCH);
+        return CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0]))
+                .thenApply(v -> {
+                    int score = 0;
+                    Set<HeuristicRule> rules = new HashSet<>();
+                    boolean vpnDetected = false;
+
+                    // 1 & 2. Score IP exacte & Bonus temporel
+                    for (int i = 0; i < relevantAlts.size(); i++) {
+                        PlayerData alt = relevantAlts.get(i);
+                        Sanction activeBan = banFutures.get(i).join();
+                        if (activeBan != null) {
+                            score += config.getInt("modules.antialt.weights.ip-exact-banned", 60);
+                            rules.add(HeuristicRule.IP_EXACT_BANNED);
+
+                            long diffMs = now - activeBan.getCreatedAt();
+                            long diffHours = diffMs / (1000 * 60 * 60);
+                            long diffDays = diffHours / 24;
+
+                            if (diffHours <= config.getInt("modules.antialt.temporal.recent-ban-hours", 24)) {
+                                score += config.getInt("modules.antialt.weights.ip-temporal-24h", 30);
+                                rules.add(HeuristicRule.IP_TEMPORAL_RECENT);
+                            } else if (diffDays <= config.getInt("modules.antialt.temporal.medium-ban-days", 7)) {
+                                score += config.getInt("modules.antialt.weights.ip-temporal-week", 15);
+                                rules.add(HeuristicRule.IP_TEMPORAL_RECENT);
+                            }
+                            break;
                         }
                     }
 
-                    if (score > config.getInt("modules.antialt.weights.vpn-score-threshold", 30)) {
-                        score = (int) (score * config.getDouble("modules.antialt.weights.vpn-multiplier", 1.4));
-                    } else {
-                        score += config.getInt("modules.antialt.weights.vpn-alone", 15);
+                    // 4. Score pseudo
+                    score += analyzeUsername(playerName, rules);
+
+                    // 5. Score historique IP
+                    DatabaseProvider.IPReputation reputation = db.getIPReputation(ipAddress);
+                    if (reputation != null && reputation.bannedAccounts >= 1) {
+                        score += config.getInt("modules.antialt.weights.ip-history-multiple", 20);
+                        rules.add(HeuristicRule.IP_HISTORY_MULTIPLE);
                     }
-                }
-            }
 
-            // 8. Réduction NAT automatique
-            if (config.getBoolean("modules.antialt.nat-detection.enabled", true)) {
-                int legitimateAccounts = db.getLegitimateAccountCount(ipAddress);
-                if (legitimateAccounts > config.getInt("modules.antialt.nat-detection.legitimate-threshold", 3)) {
-                    double reduction = 1.0 / Math.log(legitimateAccounts + 1);
-                    score = (int) (score * reduction);
-                }
-            }
+                    // 6. Score switch VPN soudain & 7. Multiplicateur VPN
+                    try {
+                        IPInfo ipInfo = vpnFuture.get();
+                        if (ipInfo != null && ipInfo.isProxy()) {
+                            vpnDetected = true;
+                            rules.add(HeuristicRule.VPN_DETECTED);
 
-            score = Math.min(100, score);
-            String fingerprint = generateFingerprint(playerName, ipAddress, vpnDetected);
-            
-            return new AnalysisResult(playerName, score, rules, fingerprint);
-        });
+                            PlayerData currentData = db.getPlayerData(playerUuid);
+                            if (currentData != null) {
+                                long daysSinceFirstSeen = (now - currentData.getFirstSeen()) / (1000 * 60 * 60 * 24);
+                                if (daysSinceFirstSeen >= config.getInt("modules.antialt.sudden-vpn-days", 30)) {
+                                    score += config.getInt("modules.antialt.weights.sudden-vpn-switch", 20);
+                                    rules.add(HeuristicRule.SUDDEN_VPN_SWITCH);
+                                }
+                            }
+
+                            if (score > config.getInt("modules.antialt.weights.vpn-score-threshold", 30)) {
+                                score = (int) (score * config.getDouble("modules.antialt.weights.vpn-multiplier", 1.4));
+                            } else {
+                                score += config.getInt("modules.antialt.weights.vpn-alone", 15);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+
+                    // 8. Réduction NAT automatique
+                    if (config.getBoolean("modules.antialt.nat-detection.enabled", true)) {
+                        int legitimateAccounts = db.getLegitimateAccountCount(ipAddress);
+                        if (legitimateAccounts > config.getInt("modules.antialt.nat-detection.legitimate-threshold", 3)) {
+                            double reduction = 1.0 / Math.log(legitimateAccounts + 1);
+                            score = (int) (score * reduction);
+                        }
+                    }
+
+                    score = Math.min(100, score);
+                    String fingerprint = generateFingerprint(playerName, ipAddress, vpnDetected);
+
+                    return new AnalysisResult(playerName, score, rules, fingerprint);
+                });
     }
 
     private int analyzeUsername(String name, Set<HeuristicRule> rules) {

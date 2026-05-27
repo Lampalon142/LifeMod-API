@@ -46,7 +46,7 @@ public class ReportsCommand extends LifeCommand {
     private void fetchAndOpenReports(CommandContext context, int page, int itemsPerPage) {
         Bukkit.getScheduler().runTaskAsynchronously(context.getPlugin(), () -> {
             try {
-                List<Report> reports = context.getPlugin().getDatabaseManager().getDatabaseProvider().getAllReports();
+                List<Report> reports = context.getPlugin().getDatabaseManager().getDatabaseProvider().getAllReports(100, 0);
                 reports.sort(Comparator.comparingLong(Report::getCreatedAt).reversed());
 
                 Bukkit.getScheduler().runTask(context.getPlugin(), () -> {

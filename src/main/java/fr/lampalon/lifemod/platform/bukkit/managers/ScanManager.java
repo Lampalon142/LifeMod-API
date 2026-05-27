@@ -2,7 +2,7 @@ package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
-import fr.lampalon.lifemod.common.service.IItemsAdderService;
+import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.model.ScanResult;
 import org.bukkit.*;
@@ -200,7 +200,9 @@ public class ScanManager {
         for (File regionFile : regionFiles) {
             try {
                 found += scanRegionFile(regionFile, world, targetMaterial, targetIAId, result);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         progressCallback.accept("§e" + found + "§7 items trouvés dans les fichiers région de §a" + world.getName());
     }
@@ -334,7 +336,9 @@ public class ScanManager {
                     if (id.equals(targetMaterial)) count += amount;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return count;
     }
 
@@ -365,7 +369,9 @@ public class ScanManager {
                     return (String) iaTag.getClass().getMethod("getString", String.class).invoke(iaTag, "id");
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

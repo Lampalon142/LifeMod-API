@@ -13,6 +13,7 @@ import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 public class SanctionListener implements Listener {
 
@@ -28,7 +29,7 @@ public class SanctionListener implements Listener {
 
         // On bloque le thread de login pour vérifier la sanction (C'est un événement asynchrone, c'est fait pour)
         try {
-            Sanction ban = sanctionService.getActiveSanction(event.getUniqueId(), event.getName(), SanctionType.BAN).get();
+            Sanction ban = sanctionService.getActiveSanction(event.getUniqueId(), event.getName(), SanctionType.BAN).get(5, TimeUnit.SECONDS);
             
             if (ban != null) {
                 if (ban.isExpired()) {
@@ -59,7 +60,7 @@ public class SanctionListener implements Listener {
         if (sanctionService == null) return;
 
         try {
-            Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), event.getPlayer().getName(), SanctionType.MUTE).get();
+            Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), event.getPlayer().getName(), SanctionType.MUTE).get(5, TimeUnit.SECONDS);
             if (mute != null && !mute.isExpired()) {
                 event.setCancelled(true);
                 fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);

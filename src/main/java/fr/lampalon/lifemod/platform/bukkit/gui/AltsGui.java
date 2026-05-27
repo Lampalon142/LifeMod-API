@@ -3,9 +3,6 @@ package fr.lampalon.lifemod.platform.bukkit.gui;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
-import fr.lampalon.lifemod.common.model.SanctionType;
-import fr.lampalon.lifemod.common.service.ISanctionService;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -18,23 +15,27 @@ import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.AbstractItem;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class AltsGui extends PagedAbstractGui {
 
     private final List<PlayerData> alts;
     private final String ip;
+    private final Map<UUID, Sanction> bans;
 
-    public AltsGui(Player player, List<PlayerData> alts, String ip) {
+    public AltsGui(Player player, List<PlayerData> alts, String ip, Map<UUID, Sanction> bans) {
         super(player);
         this.alts = alts;
         this.ip = ip;
+        this.bans = bans;
     }
 
     @Override
     protected List<Item> getListItems() {
         return alts.stream()
-                .map(AltItem::new)
+                .map(data -> new AltItem(data, bans.get(data.getUuid())))
                 .collect(Collectors.toList());
     }
 
@@ -50,19 +51,18 @@ public class AltsGui extends PagedAbstractGui {
 
     private class AltItem extends AbstractItem {
         private final PlayerData data;
+        private final Sanction ban;
 
-        public AltItem(PlayerData data) {
+        public AltItem(PlayerData data, Sanction ban) {
             this.data = data;
+            this.ban = ban;
         }
 
         @Override
         public ItemProvider getItemProvider() {
             String status;
             Material material;
-            
-            ISanctionService ss = ServiceRegistry.get(ISanctionService.class);
-            Sanction ban = ss.getActiveSanction(data.getUuid(), data.getLastName(), SanctionType.BAN).join();
-            
+
             if (ban != null && !ban.isExpired()) {
                 status = lang.getMessage("gui.alts.status-banned");
                 material = Material.RED_TERRACOTTA;

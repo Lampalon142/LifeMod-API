@@ -7,6 +7,7 @@ import fr.lampalon.lifemod.common.replay.storage.ReplayWriter;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +27,7 @@ public class ReplaySession {
     private final ReplayBuffer buffer;
     private final ReplayWriter writer;
     private final ScheduledExecutorService scheduler;
-    private boolean recording;
+    private volatile boolean recording;
     private double startX, startY, startZ;
     private float startYaw, startPitch;
 
@@ -62,19 +63,19 @@ public class ReplaySession {
      * Stops the recording session.
      */
     public void stop() {
-        LOGGER.info("[DEBUG] Stopping session: " + sessionName);
         this.recording = false;
-        
-        // Save the whole buffer to disk before clearing!
         List<ReplayFrame> allFrames = buffer.getFrames(3600000L);
         if (!allFrames.isEmpty()) {
-            LOGGER.info("[DEBUG] Saving " + allFrames.size() + " frames to disk for " + sessionName);
-            writer.writeFrames(allFrames);
+            CompletableFuture.runAsync(() -> {
+                writer.writeFrames(allFrames);
+                writer.close();
+            });
+        } else {
+            writer.close();
         }
-        writer.close();
-        
-        scheduler.shutdown();
-        buffer.clear();
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdown();
+        }
     }
 
     /**

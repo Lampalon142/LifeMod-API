@@ -59,7 +59,7 @@ public class GuiDetailListener implements Listener {
                 player.sendMessage(lang.getMessage("reports.teleport-success"));
             }
         } else if ("back".equals(action)) {
-            new ReportMainMenu(player, plugin.getDatabaseManager().getDatabaseProvider().getAllReports()).open();
+            new ReportMainMenu(player, plugin.getDatabaseManager().getDatabaseProvider().getAllReports(100, 0)).open();
         }
         // Autres actions à migrer progressivement...
     }

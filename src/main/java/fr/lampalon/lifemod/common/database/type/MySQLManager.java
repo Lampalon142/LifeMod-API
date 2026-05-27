@@ -9,6 +9,7 @@ import fr.lampalon.lifemod.common.service.IConfigurationService;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MySQLManager implements DatabaseProvider {
 
@@ -28,10 +29,15 @@ public class MySQLManager implements DatabaseProvider {
         int poolsize = config.getInt("database.poolsize", 10);
 
         HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=false");
+        boolean useSSL = config.getBoolean("database.use-ssl", false);
+        hikariConfig.setJdbcUrl("jdbc:mysql://" + host + ":" + port + "/" + database + "?useSSL=" + useSSL + "&serverTimezone=UTC");
         hikariConfig.setUsername(user);
         hikariConfig.setPassword(password);
         hikariConfig.setMaximumPoolSize(poolsize);
+        hikariConfig.setConnectionTimeout(5000);
+        hikariConfig.setIdleTimeout(600000);
+        hikariConfig.setMaxLifetime(1800000);
+        hikariConfig.setLeakDetectionThreshold(10000);
         hikariConfig.setPoolName("LifeMod-MySQL");
         this.dataSource = new HikariDataSource(hikariConfig);
 
@@ -120,10 +126,14 @@ public class MySQLManager implements DatabaseProvider {
     public void updateReport(Report report) { saveReport(report); }
 
     @Override
-    public List<Report> getAllReports() {
+    public List<Report> getAllReports(int limit, int offset) {
         List<Report> reports = new ArrayList<>();
-        try (Connection conn = getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery("SELECT * FROM reports ORDER BY created_at DESC")) {
-            while (rs.next()) reports.add(mapResultSetToReport(rs));
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT * FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?")) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) reports.add(mapResultSetToReport(rs));
+            }
         } catch (SQLException e) { e.printStackTrace(); }
         return reports;
     }
@@ -349,6 +359,26 @@ public class MySQLManager implements DatabaseProvider {
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
+    }
+
+    @Override
+    public List<Sanction> getActiveSanctions(Collection<UUID> playerUuids, SanctionType type) {
+        List<Sanction> result = new ArrayList<>();
+        if (playerUuids == null || playerUuids.isEmpty()) return result;
+        String placeholders = playerUuids.stream().map(u -> "?").collect(Collectors.joining(","));
+        String sql = "SELECT * FROM sanctions WHERE player_uuid IN (" + placeholders + ") AND type = ? AND active = 1";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i = 1;
+            for (UUID uuid : playerUuids) ps.setString(i++, uuid.toString());
+            ps.setString(i, type.name());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Sanction s = mapResultSetToSanction(rs);
+                    if (!s.isExpired()) result.add(s);
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return result;
     }
 
     @Override

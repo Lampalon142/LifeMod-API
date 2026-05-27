@@ -42,6 +42,9 @@ public class AntiVPNPacketListener implements PacketListener {
                     event.getUser().sendPacket(disconnect);
                     event.getUser().closeConnection();
                 }
+            }).exceptionally(ex -> {
+                ex.printStackTrace();
+                return null;
             });
         }
     }

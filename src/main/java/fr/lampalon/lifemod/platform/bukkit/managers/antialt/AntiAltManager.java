@@ -67,6 +67,9 @@ public class AntiAltManager {
 
             // 2. Process Reactions based on Decision Matrix
             processDecision(player, result, ip);
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            return null;
         });
     }
 

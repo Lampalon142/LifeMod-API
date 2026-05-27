@@ -8,6 +8,7 @@ import fr.lampalon.lifemod.common.model.PlayerData;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +20,7 @@ public interface DatabaseProvider {
     Report getReportByUuid(UUID uuid);
     void saveReport(Report report);
     void updateReport(Report report);
-    List<Report> getAllReports();
+    List<Report> getAllReports(int limit, int offset);
     List<Report> getReportsByTarget(UUID targetUuid);
     void deleteReport(UUID uuid);
 
@@ -45,6 +46,7 @@ public interface DatabaseProvider {
     List<Sanction> getSanctionsIssuedBy(String issuerName, UUID issuerUuid);
     List<Sanction> getActiveSanctions(UUID playerUuid);
     Sanction getActiveSanction(UUID playerUuid, String playerName, SanctionType type);
+    List<Sanction> getActiveSanctions(Collection<UUID> playerUuids, SanctionType type);
 
     // Player Data & Alts
     void savePlayerData(PlayerData data);

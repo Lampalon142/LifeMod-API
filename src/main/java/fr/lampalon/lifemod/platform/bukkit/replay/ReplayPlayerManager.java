@@ -70,6 +70,14 @@ public class ReplayPlayerManager {
         }
     }
 
+    public void handleQuit(UUID playerId) {
+        savedStates.remove(playerId);
+        PlaybackManager pm = activePlaybacks.remove(playerId);
+        if (pm != null) {
+            pm.stopPlayback();
+        }
+    }
+
     public boolean isInReplay(Player player) {
         return savedStates.containsKey(player.getUniqueId());
     }

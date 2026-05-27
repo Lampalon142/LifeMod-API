@@ -56,17 +56,20 @@ public class IPLookupManager {
         }
 
         providers.get(index).lookup(ip).thenAccept(info -> {
-            if (info != null) {
-                // Save to DB Cache
-                DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
-                if (db != null) {
-                    db.saveIPInfo(info.getIp(), info.getCountryCode(), info.getCountryName(), info.getIsp(), info.isProxy(), info.getLastUpdate());
+            try {
+                if (info != null) {
+                    // Save to DB Cache
+                    DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
+                    if (db != null) {
+                        db.saveIPInfo(info.getIp(), info.getCountryCode(), info.getCountryName(), info.getIsp(), info.isProxy(), info.getLastUpdate());
+                    }
+                    future.complete(info);
+                } else {
+                    // Try next provider
+                    lookupFromProviders(ip, index + 1, future);
                 }
-                future.complete(info);
-                pendingLookups.remove(ip);
-            } else {
-                // Try next provider
-                lookupFromProviders(ip, index + 1, future);
+            } finally {
+                if (info != null) pendingLookups.remove(ip);
             }
         }).exceptionally(ex -> {
             lookupFromProviders(ip, index + 1, future);

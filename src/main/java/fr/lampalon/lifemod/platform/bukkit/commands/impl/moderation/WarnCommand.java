@@ -8,6 +8,7 @@ import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 public class WarnCommand extends BaseSanctionCommand {
     public WarnCommand() {
@@ -21,18 +22,19 @@ public class WarnCommand extends BaseSanctionCommand {
                 "%reason%", sanction.getReason());
         context.getSender().sendMessage(success);
 
-        if (target.isOnline()) {
+        Player onlineTarget = target.getPlayer();
+        if (onlineTarget != null) {
             String received = context.getLang().getMessage("sanctions.warn.received",
                     "%reason%", sanction.getReason());
-            target.getPlayer().sendMessage(received);
+            onlineTarget.sendMessage(received);
 
             ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
             if (platform instanceof BukkitPlatform) {
                 NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
                 if (nms != null) {
-                    nms.sendTitle(target.getPlayer(), context.getLang().getMessage("sanctions.warn.title"),
+                    nms.sendTitle(onlineTarget, context.getLang().getMessage("sanctions.warn.title"),
                             context.getLang().getMessage("sanctions.warn.subtitle", "%reason%", sanction.getReason()), 10, 40, 10);
-                    nms.sendActionBar(target.getPlayer(), received);
+                    nms.sendActionBar(onlineTarget, received);
                 }
             }
         }

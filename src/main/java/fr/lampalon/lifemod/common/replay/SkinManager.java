@@ -9,6 +9,9 @@ import java.net.URL;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -25,8 +28,25 @@ public class SkinManager {
     private static final Logger LOGGER = Logger.getLogger("SkinManager");
 
     private final Map<UUID, TextureProperty[]> skinCache = new ConcurrentHashMap<>();
-    // Secondary cache by player name, useful for offline servers
     private final Map<String, TextureProperty[]> skinCacheByName = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "SkinManager-Cleanup");
+        t.setDaemon(true);
+        return t;
+    });
+
+    public SkinManager() {
+        cleanupExecutor.scheduleAtFixedRate(this::cleanup, 30, 30, TimeUnit.MINUTES);
+    }
+
+    private void cleanup() {
+        if (skinCache.size() > 1000) {
+            skinCache.clear();
+        }
+        if (skinCacheByName.size() > 1000) {
+            skinCacheByName.clear();
+        }
+    }
 
     public void cacheSkin(UUID uuid, TextureProperty[] properties) {
         if (properties != null && properties.length > 0) {

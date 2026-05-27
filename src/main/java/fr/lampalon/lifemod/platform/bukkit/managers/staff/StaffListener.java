@@ -38,6 +38,10 @@ public class StaffListener implements Listener {
     // Utilisation d'un cache d'interaction par tick pour bloquer les doublons (NMS/Bukkit)
     private final Map<UUID, Long> lastActionTick = new HashMap<>();
 
+    public void handleQuit(UUID playerId) {
+        lastActionTick.remove(playerId);
+    }
+
     public StaffListener(StaffModeManager staffModeManager, StaffItemManager staffItemManager, StaffActionManager staffActionManager) {
         this.staffModeManager = staffModeManager;
         this.staffItemManager = staffItemManager;
@@ -164,7 +168,9 @@ public class StaffListener implements Listener {
             try {
                 org.bukkit.Sound sound = org.bukkit.Sound.valueOf(script.substring(7).trim().toUpperCase());
                 player.playSound(player.getLocation(), sound, 1f, 1f);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         else if (upper.startsWith("[NATIVE]")) {
             String actionName = script.substring(8).trim().toUpperCase();

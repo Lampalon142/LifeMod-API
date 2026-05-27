@@ -47,6 +47,9 @@ public class BungeeAntiAltManager {
                 
                 plugin.getLogger().info(lang.formatMessage(debugMsg));
             }
+        }).exceptionally(ex -> {
+            ex.printStackTrace();
+            return null;
         });
     }
 }

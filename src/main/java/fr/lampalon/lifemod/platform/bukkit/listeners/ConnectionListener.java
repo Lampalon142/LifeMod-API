@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class ConnectionListener implements Listener {
 
@@ -51,7 +52,8 @@ public class ConnectionListener implements Listener {
         ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
         if (sanctionService == null) return;
         
-        Sanction activeBan = sanctionService.getActiveSanction(uuid, name, SanctionType.BAN).join();
+        try {
+            Sanction activeBan = sanctionService.getActiveSanction(uuid, name, SanctionType.BAN).get(5, TimeUnit.SECONDS);
 
         if (activeBan != null) {
             fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
@@ -63,6 +65,9 @@ public class ConnectionListener implements Listener {
                     "%server%", activeBan.getServerName());
 
             event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message);
+        }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

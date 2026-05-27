@@ -9,6 +9,7 @@ import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 public class KickCommand extends BaseSanctionCommand {
     public KickCommand() {
@@ -26,7 +27,8 @@ public class KickCommand extends BaseSanctionCommand {
                 "%player%", target.getName(),
                 "%reason%", sanction.getReason());
         context.getSender().sendMessage(successMsg);
-        if (target.isOnline()) {
+        Player onlineTarget = target.getPlayer();
+        if (onlineTarget != null) {
             Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
                 String kickMsg = context.getLang().getMessage("sanctions.kick.message",
                         "%reason%", sanction.getReason(),
@@ -36,7 +38,7 @@ public class KickCommand extends BaseSanctionCommand {
                 if (platform instanceof BukkitPlatform) {
                     NMSProvider nms = ((BukkitPlatform) platform).getNmsProvider();
                     if (nms != null) {
-                        nms.kickPlayer(target.getPlayer(), kickMsg);
+                        nms.kickPlayer(onlineTarget, kickMsg);
                     }
                 }
             });

@@ -22,7 +22,7 @@ import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
-import fr.lampalon.lifemod.common.service.IItemsAdderService;
+import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
@@ -45,6 +45,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
@@ -74,6 +76,10 @@ public class LifeMod extends JavaPlugin {
     private CommandRegistry commandRegistry;
     private fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager antiAltManager;
     private fr.lampalon.lifemod.common.antivpn.AntiVPNService antiVPNService;
+    private fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener replayPacketListener;
+    private fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener antiVPNPacketListener;
+    private fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener vanishPacketListener;
+    private CPSListener cpsListener;
     private boolean chatEnabled = true;
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
@@ -125,11 +131,17 @@ public class LifeMod extends JavaPlugin {
         setupMetrics();
 
         // Start Replay Recorder
-        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 1L, 1L);
+        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
 
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);
+
+        ServiceRegistry.register(ExecutorService.class, Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "LifeMod-Async");
+            t.setDaemon(true);
+            return t;
+        }));
 
         long elapsed = System.currentTimeMillis() - start;
         printStartupMessage(elapsed, bukkitPlatform.getNmsProvider().getName());
@@ -265,22 +277,25 @@ public class LifeMod extends JavaPlugin {
 
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
+        this.replayPacketListener = new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager);
         PacketEvents.getAPI().getEventManager().registerListener(
-                new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager),
+                replayPacketListener,
                 PacketListenerPriority.MONITOR
         );
 
         // AntiVPN System
         this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(ServiceRegistry.get(ILifePlatform.class));
+        this.antiVPNPacketListener = new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class));
         PacketEvents.getAPI().getEventManager().registerListener(
-                new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, ServiceRegistry.get(ILifePlatform.class)),
+                antiVPNPacketListener,
                 PacketListenerPriority.LOW
         );
         ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
 
         vanishService = new VanishService(this);
+        this.vanishPacketListener = new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService);
         PacketEvents.getAPI().getEventManager().registerListener(
-                new fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishPacketListener(vanishService),
+                vanishPacketListener,
                 PacketListenerPriority.HIGH
         );
     }
@@ -298,10 +313,10 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffPhysicalListener(staffModeManager), this);
         pm.registerEvents(new Staffchatevent(this), this);
         pm.registerEvents(new PluginDisable(), this);
-        pm.registerEvents(new PlayerQuit(), this);
+        pm.registerEvents(new PlayerQuit(this), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
 
-        CPSListener cpsListener = new CPSListener(cpsMap);
+        cpsListener = new CPSListener(cpsMap);
         pm.registerEvents(cpsListener, this);
         PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
 

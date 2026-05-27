@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.common.replay;
 
+// TODO: This class is dead code - remove or replace with platform-independent implementation
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 

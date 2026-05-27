@@ -12,14 +12,14 @@ import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.CpsAction;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.KnockbackAction;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.VanishAction;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.InfoViewerAction;
 
 public class StaffActionManager {
 
-    private final Map<StaffActionType, IStaffAction> actions = new HashMap<>();
+    private final Map<StaffActionType, IStaffAction> actions = new EnumMap<>(StaffActionType.class);
 
     public StaffActionManager() {
         registerDefaults();

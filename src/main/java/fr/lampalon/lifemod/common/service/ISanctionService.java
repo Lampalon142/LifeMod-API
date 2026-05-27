@@ -3,7 +3,9 @@ package fr.lampalon.lifemod.common.service;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,6 +35,11 @@ public interface ISanctionService {
      * Retrieves sanctions issued by a moderator
      */
     CompletableFuture<List<Sanction>> getSanctionsIssuedBy(String issuerName, UUID issuerUuid);
+
+    /**
+     * Retrieves active sanctions for a batch of players
+     */
+    CompletableFuture<Map<UUID, Sanction>> getActiveSanctions(Collection<UUID> playerUuids, String playerName, SanctionType type);
 
     /**
      * Checks and applies Auto-Punish if necessary

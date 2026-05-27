@@ -85,6 +85,8 @@ public class BinaryReplayWriter implements ReplayWriter {
             } catch (IOException e) {
                 LOGGER.severe("[DEBUG] Error closing writer for " + sessionFile.getName() + ": " + e.getMessage());
                 e.printStackTrace();
+            } finally {
+                outputStream = null;
             }
         }
     }

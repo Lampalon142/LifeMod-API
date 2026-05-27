@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Command for initiating or stopping a replay playback.
@@ -106,24 +107,37 @@ public class ReplayCommand extends LifeCommand {
         }
 
         mod.sendMessage("§aReading replay file...");
-        BinaryReplayReader reader = new BinaryReplayReader(replayFile);
-        List<ReplayFrame> frames = reader.readAllFrames();
 
-        if (frames.isEmpty()) {
-            mod.sendMessage("§cReplay file is empty or invalid.");
-            return;
-        }
+        CompletableFuture.supplyAsync(() -> {
+            BinaryReplayReader reader = new BinaryReplayReader(replayFile);
+            List<ReplayFrame> frames = reader.readAllFrames();
+            if (frames.isEmpty()) return null;
+            return new Object[] {
+                frames,
+                reader.getPlayerUUID(),
+                reader.getPlayerName(),
+                reader.getEntityId(),
+                new Location(mod.getWorld(), reader.getStartX(), reader.getStartY(), reader.getStartZ(), reader.getStartYaw(), reader.getStartPitch())
+            };
+        }).thenAccept(result -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (result == null) {
+                    mod.sendMessage("§cReplay file is empty or invalid.");
+                    return;
+                }
+                @SuppressWarnings("unchecked")
+                List<ReplayFrame> frames = (List<ReplayFrame>) result[0];
+                UUID targetUUID = (UUID) result[1];
+                String targetName = (String) result[2];
+                int entityId = (int) result[3];
+                Location startLoc = (Location) result[4];
 
-        UUID targetUUID = reader.getPlayerUUID();
-        String targetName = reader.getPlayerName();
-        int entityId = reader.getEntityId();
-        Location startLoc = new Location(mod.getWorld(), reader.getStartX(), reader.getStartY(), reader.getStartZ(), reader.getStartYaw(), reader.getStartPitch());
-
-        mod.sendMessage("§aLoaded §e" + frames.size() + "§a frames for §e" + targetName);
-        
-        plugin.getReplayPlayerManager().enterReplay(mod);
-        PlaybackManager playbackManager = new PlaybackManager(plugin);
-        playbackManager.startPlayback(mod, frames, entityId, targetUUID, targetName, startLoc);
+                mod.sendMessage("§aLoaded §e" + frames.size() + "§a frames for §e" + targetName);
+                plugin.getReplayPlayerManager().enterReplay(mod);
+                PlaybackManager playbackManager = new PlaybackManager(plugin);
+                playbackManager.startPlayback(mod, frames, entityId, targetUUID, targetName, startLoc);
+            });
+        });
     }
 
     private void playFromActive(Player mod, String targetName, String[] args) {

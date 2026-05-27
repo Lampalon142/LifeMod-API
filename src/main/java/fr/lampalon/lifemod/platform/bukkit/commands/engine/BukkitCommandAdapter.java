@@ -15,15 +15,16 @@ import java.util.List;
 public class BukkitCommandAdapter implements CommandExecutor, TabCompleter {
     private final LifeCommand lifeCommand;
     private final LifeMod plugin;
+    private final fr.lampalon.lifemod.common.service.ILangService lang;
 
     public BukkitCommandAdapter(LifeCommand lifeCommand, LifeMod plugin) {
         this.lifeCommand = lifeCommand;
         this.plugin = plugin;
+        this.lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         if (lifeCommand.getPermission() != null && !sender.hasPermission(lifeCommand.getPermission())) {
             sender.sendMessage(lang.getMessage("system.no-permission"));
             return true;

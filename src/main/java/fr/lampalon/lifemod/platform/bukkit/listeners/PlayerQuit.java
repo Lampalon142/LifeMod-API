@@ -14,34 +14,43 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.util.UUID;
 
 public class PlayerQuit implements Listener {
-    private final DebugManager debug = LifeMod.getInstance().getDebugManager();
+    private final LifeMod plugin;
+    private final DebugManager debug;
+
+    public PlayerQuit(LifeMod plugin) {
+        this.plugin = plugin;
+        this.debug = plugin.getDebugManager();
+    }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
-        LifeMod plugin = LifeMod.getInstance();
-        boolean isMod = plugin.getStaffModeManager().isMod(player);
 
-        // Save data
-        DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
-        
-        // Update PlayerData with current staff status
-        fr.lampalon.lifemod.common.model.PlayerData data = db.getPlayerData(uuid);
-        if (data != null) {
-            data.setInStaffMode(isMod);
-            data.setLastSeen(System.currentTimeMillis());
-            db.savePlayerData(data);
-        }
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
 
-        db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        
-        // Remove from local memory so the server doesn't "remember" them as staff next time they join
+            fr.lampalon.lifemod.common.model.PlayerData data = db.getPlayerData(uuid);
+            if (data != null) {
+                data.setInStaffMode(false);
+                data.setLastSeen(System.currentTimeMillis());
+                db.savePlayerData(data);
+            }
+
+            db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+        });
+
         plugin.getStaffModeManager().cleanupMemoryOnQuit(uuid);
-
-        // Remove from vanished list (Internal cleanup)
         plugin.getVanishService().getVanishedPlayers().remove(uuid);
+        plugin.getFreezeManager().handleQuit(uuid);
+        plugin.getSpectateManager().handleQuit(uuid);
+        plugin.getNoteInputManager().handleQuit(uuid);
+        if (plugin.getVanishService() instanceof fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishService vs) {
+            vs.handleQuit(uuid);
+        }
+        plugin.getCpsMap().remove(uuid);
+        plugin.getReplayPlayerManager().handleQuit(uuid);
 
         debug.log("playerquit", player.getName() + " data saved on quit.");
     }

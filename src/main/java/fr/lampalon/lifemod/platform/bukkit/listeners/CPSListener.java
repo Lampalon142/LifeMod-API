@@ -44,6 +44,10 @@ public class CPSListener implements Listener, PacketListener {
         // }
     }
 
+    public void cleanup(UUID uuid) {
+        cpsMap.remove(uuid);
+    }
+
     private void addClick(Player player) {
         UUID uuid = player.getUniqueId();
         Deque<Long> deque = cpsMap.computeIfAbsent(uuid, k -> new ConcurrentLinkedDeque<>());

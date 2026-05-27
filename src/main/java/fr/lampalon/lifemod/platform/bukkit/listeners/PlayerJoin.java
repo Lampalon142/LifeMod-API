@@ -18,6 +18,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class PlayerJoin implements Listener {
     private final LifeMod plugin;
@@ -89,37 +90,45 @@ public class PlayerJoin implements Listener {
             }
 
             List<PlayerData> alts = plugin.getDatabaseManager().getDatabaseProvider().getAlts(ip);
-            boolean evasion = false;
-            StringBuilder accounts = new StringBuilder();
 
             ISanctionService sanctionService = ServiceRegistry.get(ISanctionService.class);
             if (sanctionService == null) return;
 
-            for (PlayerData alt : alts) {
-                String color = "&7";
-                if (Bukkit.getPlayer(alt.getUuid()) != null) color = "&a";
+            List<CompletableFuture<Sanction>> futures = alts.stream()
+                    .map(alt -> sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN))
+                    .toList();
 
-                Sanction ban = sanctionService.getActiveSanction(alt.getUuid(), alt.getLastName(), SanctionType.BAN).join();
-                if (ban != null) {
-                    evasion = true;
-                    color = "&c";
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenAccept(v -> {
+                boolean evasion = false;
+                StringBuilder accounts = new StringBuilder();
+
+                for (int i = 0; i < alts.size(); i++) {
+                    PlayerData alt = alts.get(i);
+                    String color = "&7";
+                    if (Bukkit.getPlayer(alt.getUuid()) != null) color = "&a";
+
+                    Sanction ban = futures.get(i).join();
+                    if (ban != null) {
+                        evasion = true;
+                        color = "&c";
+                    }
+
+                    accounts.append(color).append(alt.getLastName()).append("&7, ");
                 }
 
-                accounts.append(color).append(alt.getLastName()).append("&7, ");
-            }
+                if (evasion) {
+                    String accountList = accounts.length() > 2 ? accounts.substring(0, accounts.length() - 2) : "";
 
-            if (evasion) {
-                String accountList = accounts.length() > 2 ? accounts.substring(0, accounts.length() - 2) : "";
+                    String alert = lang.getMessage("alts.evasion-alert",
+                            "%player%", player.getName(),
+                            "%accounts%", accountList,
+                            "%ip%", ip);
 
-                String alert = lang.getMessage("alts.evasion-alert",
-                        "%player%", player.getName(),
-                        "%accounts%", accountList,
-                        "%ip%", ip);
-
-                Bukkit.getOnlinePlayers().stream()
-                        .filter(p -> p.hasPermission("lifemod.alts"))
-                        .forEach(p -> p.sendMessage(alert));
-            }
+                    Bukkit.getOnlinePlayers().stream()
+                            .filter(p -> p.hasPermission("lifemod.alts"))
+                            .forEach(p -> p.sendMessage(alert));
+                }
+            });
         });
     }
 }

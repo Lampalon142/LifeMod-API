@@ -1,7 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
-import fr.lampalon.lifemod.common.service.IItemsAdderService;
+import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;

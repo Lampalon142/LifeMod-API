@@ -12,7 +12,7 @@ import java.util.*;
 public class SpectateManager {
     private final Map<UUID, Location> originalLocations = new HashMap<>();
     private final Map<UUID, UUID> lastTargets = new HashMap<>();
-    private final Map<UUID, Boolean> isFreecam = new HashMap<>();
+    private final Set<UUID> isFreecam = new HashSet<>();
     private final Map<UUID, UUID> spectateTarget = new HashMap<>();
 
     private String getLang(String key, String... placeholders) {
@@ -29,8 +29,6 @@ public class SpectateManager {
             return;
         }
         originalLocations.put(staff.getUniqueId(), staff.getLocation());
-        isFreecam.put(staff.getUniqueId(), false);
-
         UUID previousTarget = spectateTarget.get(staff.getUniqueId());
         if (previousTarget != null) {
             lastTargets.put(staff.getUniqueId(), previousTarget);
@@ -44,8 +42,8 @@ public class SpectateManager {
     }
 
     public void startFreecam(Player staff) {
-        if (isSpectating(staff) && !isFreecam.get(staff.getUniqueId())) {
-            isFreecam.put(staff.getUniqueId(), true);
+        if (isSpectating(staff) && !isFreecam.contains(staff.getUniqueId())) {
+            isFreecam.add(staff.getUniqueId());
             staff.setSpectatorTarget(null);
             staff.sendMessage(getLang("commands.spectate.freecam-start"));
             return;
@@ -53,7 +51,7 @@ public class SpectateManager {
         if (!isSpectating(staff)) {
             originalLocations.put(staff.getUniqueId(), staff.getLocation());
         }
-        isFreecam.put(staff.getUniqueId(), true);
+        isFreecam.add(staff.getUniqueId());
         spectateTarget.remove(staff.getUniqueId());
         staff.setGameMode(GameMode.SPECTATOR);
         staff.setSpectatorTarget(null);
@@ -136,8 +134,15 @@ public class SpectateManager {
         return originalLocations.containsKey(player.getUniqueId());
     }
 
+    public void handleQuit(UUID playerId) {
+        originalLocations.remove(playerId);
+        lastTargets.remove(playerId);
+        isFreecam.remove(playerId);
+        spectateTarget.remove(playerId);
+    }
+
     public boolean isFreecam(Player player) {
-        return isFreecam.getOrDefault(player.getUniqueId(), false);
+        return isFreecam.contains(player.getUniqueId());
     }
 }
 

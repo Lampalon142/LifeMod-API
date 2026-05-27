@@ -42,7 +42,7 @@ import java.util.logging.Logger;
  */
 public class PlaybackManager {
     private static final Logger LOGGER = Logger.getLogger("PlaybackManager");
-    private static final AtomicInteger VIRTUAL_ID_COUNTER = new AtomicInteger(900_000);
+    private final AtomicInteger virtualIdCounter = new AtomicInteger(900_000);
 
     private final LifeMod plugin;
     private List<ReplayFrame> frames;
@@ -77,7 +77,7 @@ public class PlaybackManager {
         this.isPaused = false;
         this.playbackSpeed = 1.0;
         this.npcUUID = UUID.randomUUID();
-        this.virtualEntityId = VIRTUAL_ID_COUNTER.getAndIncrement();
+        this.virtualEntityId = virtualIdCounter.getAndIncrement();
 
         LOGGER.info("[DEBUG] Starting playback for " + spectator.getName()
                 + " | Target: " + targetName
@@ -141,7 +141,9 @@ public class PlaybackManager {
                     int x = dis.readInt(), y = dis.readInt(), z = dis.readInt();
                     int blockId = dis.readInt();
                     toRestore.put(encodePos(x, y, z), blockId);
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -156,7 +158,9 @@ public class PlaybackManager {
                                 new com.github.retrooper.packetevents.util.Vector3i(x, y, z),
                                 entry.getValue()));
                 count++;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         LOGGER.info("[DEBUG] Block restore: " + count + " blocks for " + spectator.getName());
@@ -184,36 +188,42 @@ public class PlaybackManager {
         if (targetIndex < 0) targetIndex = 0;
         if (targetIndex >= frames.size()) targetIndex = frames.size() - 1;
 
-        if (targetIndex < currentIndex) {
-            Map<Long, Integer> toRestore = new HashMap<>();
-            for (int i = currentIndex - 1; i >= targetIndex; i--) {
-                for (byte[] data : frames.get(i).getPackets()) {
-                    if (data.length < 14 || data[0] != (byte) 0xFA) continue;
+            if (targetIndex < currentIndex) {
+                Map<Long, Integer> toRestore = new HashMap<>();
+                for (int i = currentIndex - 1; i >= targetIndex; i--) {
+                    for (byte[] data : frames.get(i).getPackets()) {
+                        if (data.length < 14 || data[0] != (byte) 0xFA) continue;
+                        try {
+                            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
+                            dis.readByte();
+                            int x = dis.readInt(), y = dis.readInt(), z = dis.readInt(), blockId = dis.readInt();
+                            toRestore.put(encodePos(x, y, z), blockId);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                for (Map.Entry<Long, Integer> entry : toRestore.entrySet()) {
                     try {
-                        DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
-                        dis.readByte();
-                        int x = dis.readInt(), y = dis.readInt(), z = dis.readInt(), blockId = dis.readInt();
-                        toRestore.put(encodePos(x, y, z), blockId);
-                    } catch (Exception ignored) {}
+                        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator,
+                                new WrapperPlayServerBlockChange(
+                                        new com.github.retrooper.packetevents.util.Vector3i(
+                                                decodeX(entry.getKey()), decodeY(entry.getKey()), decodeZ(entry.getKey())),
+                                        entry.getValue()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                for (int i = currentIndex; i < targetIndex; i++) {
+                    for (byte[] data : frames.get(i).getPackets()) {
+                        if (data.length < 1) continue;
+                        try { dispatchPacket(spectator, data, -1); } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
-            for (Map.Entry<Long, Integer> e : toRestore.entrySet()) {
-                try {
-                    PacketEvents.getAPI().getPlayerManager().sendPacket(spectator,
-                            new WrapperPlayServerBlockChange(
-                                    new com.github.retrooper.packetevents.util.Vector3i(
-                                            decodeX(e.getKey()), decodeY(e.getKey()), decodeZ(e.getKey())),
-                                    e.getValue()));
-                } catch (Exception ignored) {}
-            }
-        } else {
-            for (int i = currentIndex; i < targetIndex; i++) {
-                for (byte[] data : frames.get(i).getPackets()) {
-                    if (data.length < 1) continue;
-                    try { dispatchPacket(spectator, data, -1); } catch (Exception ignored) {}
-                }
-            }
-        }
         this.currentIndex = targetIndex;
     }
 
@@ -247,7 +257,7 @@ public class PlaybackManager {
                 for (byte[] data : frames.get(currentIndex).getPackets()) {
                     if (data.length == 0) continue;
                     try { dispatchPacket(spectator, data, originalEntityId); }
-                    catch (Exception ignored) {}
+                    catch (Exception e) { e.printStackTrace(); }
                 }
 
                 currentIndex++;

@@ -29,7 +29,7 @@ public class TicketJoinListener implements Listener {
         Player player = event.getPlayer();
         if (!player.hasPermission("lifemod.report.join")) return;
 
-        List<Report> reports = plugin.getDatabaseManager().getDatabaseProvider().getAllReports();
+        List<Report> reports = plugin.getDatabaseManager().getDatabaseProvider().getAllReports(100, 0);
         long openCount = reports.stream().filter(r -> r.getStatus() == ReportStatus.OPEN).count();
         long pendingCount = reports.stream().filter(r -> r.getStatus() == ReportStatus.PENDING).count();
 

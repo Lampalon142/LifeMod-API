@@ -64,6 +64,11 @@ public class FreezeManager {
         }
     }
 
+    public void handleQuit(UUID playerId) {
+        playerHelmets.remove(playerId);
+        frozenPlayers.remove(playerId);
+    }
+
     public Map<UUID, Location> getFrozenPlayers() {
         return frozenPlayers;
     }

@@ -1,3 +1,4 @@
+// NMS abstraction boundary - Bukkit types are acceptable here
 package fr.lampalon.lifemod.common.nms.api;
 
 import org.bukkit.World;

@@ -16,11 +16,13 @@ import java.util.List;
 public class BukkitCommandWrapper extends Command {
     private final LifeCommand lifeCommand;
     private final LifeMod plugin;
+    private final ILangService lang;
 
     public BukkitCommandWrapper(LifeCommand lifeCommand, LifeMod plugin) {
         super(lifeCommand.getName());
         this.lifeCommand = lifeCommand;
         this.plugin = plugin;
+        this.lang = ServiceRegistry.get(ILangService.class);
         setAliases(lifeCommand.getAliases());
         setDescription(lifeCommand.getDescription());
         setUsage(lifeCommand.getUsage());
@@ -31,8 +33,6 @@ public class BukkitCommandWrapper extends Command {
 
     @Override
     public boolean execute(CommandSender sender, String label, String[] args) {
-        ILangService lang = ServiceRegistry.get(ILangService.class);
-
         if (lifeCommand.getPermission() != null && !sender.hasPermission(lifeCommand.getPermission())) {
             sender.sendMessage(lang.getMessage("system.no-permission"));
             return true;
