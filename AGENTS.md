@@ -1,22 +1,44 @@
-# LifeMod Agent Guide (High-Signal Instructions)
+# LifeMod Agent Guide
 
-This guide contains operational constraints and conventions that agents must follow to work correctly on LifeMod. Adherence ensures stability and correct usage across platforms.
+## Build & Test
+- **Required order:** `./gradlew build shadowJar` then `./gradlew test`
+- **No tests exist** — `gradlew test` is a no-op; JaCoCo coverage always 0%
+- **No lint/format/typecheck** rules configured
+- **Java 21 toolchain** in `build.gradle`; CI runner uses JDK 17 (Temurin) — toolchain resolves the mismatch
+- **Single-module project** — Bukkit + Bungee code live in one source set (no subprojects)
+- **Artifacts:** `build/libs/*.jar`; publish requires `MODRINTH_TOKEN` env var
 
-## 🛠 Build & Test Workflow
-*   **Mandatory Order:** Always run `gradlew build shadowJar` first, followed by `./gradlew test`.
-*   **Publishing:** Requires setting the `MODRINTH_TOKEN` environment variable. Artifacts are found in `build/libs/*.jar`.
+## Architecture
+- **DI:** Always `ServiceRegistry.get(Class)` — never `new` services directly
+- **NMS:** All version-specific code in `platform.bukkit.nms.*` only; no `net.minecraft.server` imports outside that package
+- **Cross-platform:** `ILifePlatform` for broadcast, kick, async — don't use Bukkit-specific APIs in shared code
+- **Bukkit knows Java, Java doesn't know Bukkit:** Business logic must never depend on Bukkit APIs; only Bukkit code may import Bukkit classes
+- **Sanctions:** Ban/kick/mute/warn via `ISanctionService`
+- **Messages/Config:** Use `ILangService` / `IConfigurationService` — never read config or lang files directly
+- **Lang fallback:** Key-by-key merge, falls back to embedded `en_US`
+- **Bungee NMS:** `BungeePlatform.getNmsProvider()` returns `null` (no NMS on proxy)
 
-## 🏗 Core Architecture Gotchas
-1.  **Service Access (DI):** Never instantiate services directly. Always use `ServiceRegistry.get(Class)` to retrieve dependencies.
-2.  **NMS Abstraction:** All Minecraft Network Stack (NMS) code *must* be isolated within the platform-specific handlers (`platform.bukkit.nms.*`). Do not introduce direct `net.minecraft.server` imports in common core logic.
-3.  **Cross-Platform Operations:** Use `ILifePlatform` for all cross-cutting concerns (e.g., broadcast, kick, async tasks).
+## Style
+- **No superfluous comments** — code should be self-documenting
+- **Always optimize** — prefer efficient, minimal code
+- **Respect Java conventions** — follow standard naming, formatting, and idioms
 
-## ⚙️ Coding Conventions & Quirks
-*   **Message/Settings Handling:** All user-facing text and configuration changes must flow through the dedicated services: `ILangService` or `IConfigurationService`.
-*   **Sanctions:** Ban, kick, mute, and warn actions require using `ISanctionService` to maintain consistency.
-*   **Command Discovery:** Commands are auto-discovered via reflection (`CommandRegistry.scanAndRegisterCommands(...)`). Understand that constructors accept either `(LifeMod)` or `()`.
-*   **Config Files:** Bukkit uses `config.yml`; BungeeCord uses `bungee-config.yml`.
+## Commands
+- Auto-discovered via reflection (`CommandRegistry.scanAndRegisterCommands(...)`)
+- Constructors accept `(LifeMod)` or `()`
+- **Duplicates exist:** `InvseeCommand`, `SpectateCommand`, `StaffHistoryCommand` appear in both `impl/player/` and `impl/moderation/` packages
 
-## 🚀 CI/CD & Release Flow
-*   CI runs on: `master`, `main`, `v2`, `dev` (push + PR).
-*   Release procedure: Tagging with `v*` triggers `shadowJar` build, GH release, and Modrinth publishing.
+## Config & Resources
+- Bukkit: `config.yml` | Bungee: `bungee-config.yml`
+- Lang files: `languages/<lang>.yml` (Bukkit), `languages/bungee_<lang>.yml` (Bungee)
+
+## Dependencies
+`implementation`-scope deps bundled via ShadowJar: PacketEvents 2.7.0, InvUI, Jedis (Redis), HikariCP, jBCrypt, bStats. Add new deps at `implementation` scope for ShadowJar inclusion.
+
+## CI/CD
+- **Triggers:** Push/PR to `master`, `main`, `v2`, `dev`
+- **Release:** Tag `v*` → `shadowJar` → GH Release → Modrinth publish
+- **⚠ Token in VCS:** Modrinth token hardcoded in `gradle.properties`
+
+## Reference
+- `GEMINI.md` — supplementary project overview
