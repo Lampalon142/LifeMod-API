@@ -1,6 +1,7 @@
 # LifeMod Agent Guide
 
-## Build & Test
+## Workflow
+- **Commit after every logical change** — never batch unrelated fixes in one commit
 - **Required order:** `./gradlew build shadowJar` then `./gradlew test`
 - **No tests exist** — `gradlew test` is a no-op; JaCoCo coverage always 0%
 - **No lint/format/typecheck** rules configured
