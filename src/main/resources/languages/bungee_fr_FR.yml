@@ -72,6 +72,8 @@ sanctions:
     title: "&c&lAVERTISSEMENT"
     subtitle: "&7%reason%"
 
+  permanent: "Permanent"
+
   # Broadcasts (Local & Network)
   broadcast:
     ban:
@@ -107,6 +109,17 @@ commands:
     usage: "%prefix%&cUtilisation : /staffchat <message>"
     success: "%prefix%&aMessage envoyé au chat staff réseau."
     message: "&7[&cReseau-SC&7] &e%player%&f : %message%"
+
+antialt:
+  debug: "&6[AntiAlt-Bungee] &eJoueur : &b%player% &e| Score : &b%score% &e| Raison : &b%reason%"
+  rules:
+    EntropyHigh: "Haute Entropie"
+    BadBigram: "Bigrammes Rares"
+    BadTrigram: "Trigrammes Rares"
+    GeneratedSuffix: "Suffixe Généré"
+    RandomCasing: "Casse Aléatoire"
+    IPHistory: "Historique IP Suspect"
+    PatternMatch: "Correspondance de Motif"
 
 # Metadata
 version: 200

@@ -39,12 +39,12 @@ public class SanctionListener implements Listener {
 
                 fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
                 String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
-                String expiration = ban.isPermanent() ? "Permanent" : new SimpleDateFormat(dateFormat).format(new Date(ban.getExpirationTime()));
-                
+
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                String expirationMsg = ban.isPermanent() ? lang.getMessage("sanctions.permanent") : new SimpleDateFormat(dateFormat).format(new Date(ban.getExpirationTime()));
                 String message = lang.getMessage("sanctions.ban.login",
                         "%reason%", ban.getReason(),
-                        "%expiration%", expiration,
+                        "%expiration%", expirationMsg,
                         "%id%", ban.getUuid().toString().substring(0, 8),
                         "%server%", ban.getServerName());
 
@@ -65,12 +65,11 @@ public class SanctionListener implements Listener {
                 event.setCancelled(true);
                 fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
                 String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
-                String expiration = mute.isPermanent() ? "Jamais" : new SimpleDateFormat(dateFormat).format(new Date(mute.getExpirationTime()));
-
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                String expMsg = mute.isPermanent() ? lang.getMessage("sanctions.permanent") : new SimpleDateFormat(dateFormat).format(new Date(mute.getExpirationTime()));
                 String message = lang.getMessage("sanctions.mute.chat-blocked",
                         "%reason%", mute.getReason(),
-                        "%expiration%", expiration);
+                        "%expiration%", expMsg);
 
                 event.getPlayer().sendMessage(message);
             }

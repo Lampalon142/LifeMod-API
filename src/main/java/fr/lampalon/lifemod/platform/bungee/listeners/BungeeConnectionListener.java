@@ -40,7 +40,7 @@ public class BungeeConnectionListener implements Listener {
                     String message = lang.getMessage("sanctions.ban.login",
                             "%reason%", activeBan.getReason(),
                             "%issuer%", activeBan.getIssuerName(),
-                            "%expiration%", activeBan.isPermanent() ? "Jamais" : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()),
+                            "%expiration%", activeBan.isPermanent() ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis()),
                             "%id%", activeBan.getUuid().toString().substring(0, 8),
                             "%server%", activeBan.getServerName());
                     

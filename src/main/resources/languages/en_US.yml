@@ -126,6 +126,11 @@ sanctions:
     title: "&c&lWARNING"
     subtitle: "&7%reason%"
 
+  note:
+    success: "&aNote added to &e%player%&a: &f%reason%"
+
+  permanent: "Permanent"
+
   # Broadcasts (Local & Network)
   broadcast:
     ban:
@@ -244,11 +249,11 @@ report:
     close: "&cClose Report"
     close-lore: [ "&7Click to resolve and", "&7close this report." ]
     notes:
-      title: "§6Notes: §e"
+      title: "&6Notes: &e"
       item:
-        date: "§7Date: §f%date%"
-        edit: "§eLeft-click to edit"
-        delete: "§cRight-click to delete"
+        date: "&7Date: &f%date%"
+        edit: "&eLeft-click to edit"
+        delete: "&cRight-click to delete"
   gui:
     lore:
       - "&7Target: &c%target% &7(%target_status%)"
@@ -583,6 +588,57 @@ commands:
   broadcast:
     usage: "%prefix%&cUsage: /broadcast <message>"
     prefix: "&7[&6Broadcast&7] &f» "
+    format: "%prefix%%message%"
+    tab-completer:
+      - "&eEnter your message here..."
+
+  replay:
+    player-only: "&cOnly players can use this command."
+    not-in-replay: "&cYou are not in a replay session."
+    stopped: "&aReplay session stopped. Your state has been restored."
+    usage-load: "&cUsage: /replay load <sessionName>"
+    help-title: "&6&lLifeMod Replay System"
+    help-play: "&e/replay <player> [duration] &7- Play from active recording"
+    help-load: "&e/replay load <name> &7- Play from saved file"
+    help-list: "&e/replay list &7- List saved replays"
+    help-stop: "&e/replay stop &7- Exit current replay"
+    help-duration: "&7Duration: 1m, 2.5m, 10s (max 1h)"
+    no-replays: "&cNo replays found."
+    list-title: "&6&lAvailable Replays:"
+    list-entry: "&e- %name% &7(%size% KB)"
+    file-not-found: "&cReplay file not found: %name%"
+    reading-file: "&aReading replay file..."
+    file-empty: "&cReplay file is empty or invalid."
+    loaded-frames: "&aLoaded &e%count%&a frames for &e%player%"
+    player-not-found: "&cPlayer not found: %name%"
+    no-active-recording: "&cNo active recording for &e%player%"
+    invalid-duration: "&cInvalid duration format. Use e.g. 5m, 10s. Max 1h."
+    no-data: "&cNo data found for the requested duration."
+    loading-frames: "&aLoading &e%count%&a frames from active session for &e%player%"
+
+  scan:
+    usage: "&cUsage: /scan <map|inventories|enderchest|all> <player|all> <item|hand>"
+    hand-empty: "&cYou must hold an item in your hand."
+    invalid-item: "&cInvalid item: %item%"
+    starting: "&6&lLifeMod &8» &7Scanning for &e%item%&7..."
+    progress: "&6&lScan &8» %message%"
+    report-header: "&8&m----------------------------------------"
+    report-title: "&6&lScan Report"
+    report-total: "&e• &fTotal found: &b%count%"
+    report-duration: "&e• &fDuration: &b%time%ms"
+    report-players-header: "&e&lPlayers:"
+    report-player-entry: "  &7- &f%name% : &e%count%"
+    report-containers-header: "&e&lContainers:"
+    report-container-entry: "  &7- &f%world% %x%, %y%, %z% : &e%count%"
+    report-more: "  &7... and &e%count% &7more locations."
+
+  speed:
+    provide: "%prefix%&cUsage: /speed <speed> [player]"
+    success: "%prefix%&aSpeed set to &e%speed%&a."
+
+  noclip:
+    activate: "%prefix%&aNoClip enabled!"
+    deactivate: "%prefix%&cNoClip disabled!"
 
   clearinv:
     usage: "%prefix%&cUsage: /clearinv [player]"
@@ -626,12 +682,19 @@ commands:
     list-header: "&6Spectating Players:"
     list-player: "&7 - &e%player%"
 
+# --- DEBUG ---
+debug:
+  messages:
+    prefix: "&7[&6Debug&7] &f"
+    user-error: "&cAn error occurred (%context%). Please try again."
+    user-help: "&eIf the problem persists, contact an administrator."
+    admin-error: "&c%error%: %message%"
+    admin-location: "&7%location%"
+
 # Metadata
 version: 201
 
-bc:
-  tabcompleter:
-    - "&eEnter your message here..."
+
 
 alts:
   header: "&8&m----------------------------------------\n&6&lLinked Accounts for &e%ip%\n "

@@ -72,6 +72,8 @@ sanctions:
     title: "&c&lWARNING"
     subtitle: "&7%reason%"
 
+  permanent: "Permanent"
+
   # Broadcasts (Local & Network)
   broadcast:
     ban:

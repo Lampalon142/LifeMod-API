@@ -34,7 +34,7 @@ public class ScanCommand extends LifeCommand {
     @Override
     public void execute(CommandContext context) {
         if (context.getArgs().length < 3) {
-            context.getSender().sendMessage("§cUsage: " + getUsage());
+            context.getSender().sendMessage(context.getLang().getMessage("commands.scan.usage"));
             return;
         }
 
@@ -46,16 +46,14 @@ public class ScanCommand extends LifeCommand {
         if (itemStr.equalsIgnoreCase("hand")) {
             targetItem = context.getPlayer().getInventory().getItemInMainHand();
             if (targetItem == null || targetItem.getType() == Material.AIR) {
-                context.getSender().sendMessage("§cVous devez tenir un item en main.");
+                context.getSender().sendMessage(context.getLang().getMessage("commands.scan.hand-empty"));
                 return;
             }
         } else {
-            // Try ItemsAdder first
             if (itemsAdderService != null && itemsAdderService.isEnabled()) {
                 targetItem = itemsAdderService.getItem(itemStr);
             }
-            
-            // Try Bukkit Material if not found or IA not enabled
+
             if (targetItem == null) {
                 Material material = Material.matchMaterial(itemStr);
                 if (material != null) {
@@ -65,7 +63,7 @@ public class ScanCommand extends LifeCommand {
         }
 
         if (targetItem == null) {
-            context.getSender().sendMessage("§cItem invalide : " + itemStr);
+            context.getSender().sendMessage(context.getLang().getMessage("commands.scan.invalid-item", "%item%", itemStr));
             return;
         }
 
@@ -74,48 +72,53 @@ public class ScanCommand extends LifeCommand {
             itemName = itemsAdderService.getItemId(targetItem);
         }
 
-        context.getSender().sendMessage("§6§lLifeMod §8» §7Lancement du scan pour §e" + itemName + "§7...");
+        context.getSender().sendMessage(context.getLang().getMessage("commands.scan.starting", "%item%", itemName));
 
         plugin.getScanManager().scan(type, targetStr, targetItem, progress -> {
-            context.getSender().sendMessage("§6§lScan §8» " + progress);
+            context.getSender().sendMessage(context.getLang().getMessage("commands.scan.progress", "%message%", progress));
         }).thenAccept(result -> {
-            Bukkit.getScheduler().runTask(plugin, () -> sendReport(context.getSender(), result));
+            Bukkit.getScheduler().runTask(plugin, () -> sendReport(context.getSender(), result, context));
         });
     }
 
-    private void sendReport(org.bukkit.command.CommandSender sender, ScanResult result) {
-        sender.sendMessage("§8§m----------------------------------------");
-        sender.sendMessage("§6§lRapport de Scan");
+    private void sendReport(org.bukkit.command.CommandSender sender, ScanResult result, CommandContext context) {
+        sender.sendMessage(context.getLang().getMessage("commands.scan.report-header"));
+        sender.sendMessage(context.getLang().getMessage("commands.scan.report-title"));
         sender.sendMessage(" ");
-        sender.sendMessage("§e• §fTotal trouvé: §b" + result.getTotalCount());
-        sender.sendMessage("§e• §fDurée: §b" + result.getDuration() + "ms");
-        
+        sender.sendMessage(context.getLang().getMessage("commands.scan.report-total", "%count%", String.valueOf(result.getTotalCount())));
+        sender.sendMessage(context.getLang().getMessage("commands.scan.report-duration", "%time%", String.valueOf(result.getDuration())));
+
         if (!result.getFoundPlayers().isEmpty()) {
             sender.sendMessage(" ");
-            sender.sendMessage("§e§lJoueurs :");
+            sender.sendMessage(context.getLang().getMessage("commands.scan.report-players-header"));
             result.getFoundPlayers().forEach((uuid, count) -> {
                 String name = Bukkit.getOfflinePlayer(uuid).getName();
-                sender.sendMessage("  §7- §f" + name + " : §e" + count);
+                sender.sendMessage(context.getLang().getMessage("commands.scan.report-player-entry", "%name%", name != null ? name : uuid.toString(), "%count%", String.valueOf(count)));
             });
         }
 
         if (!result.getFoundLocations().isEmpty()) {
             sender.sendMessage(" ");
-            sender.sendMessage("§e§lConteneurs :");
+            sender.sendMessage(context.getLang().getMessage("commands.scan.report-containers-header"));
             int limit = 10;
             int count = 0;
             for (var entry : result.getFoundLocations().entrySet()) {
                 if (count >= limit) {
-                    sender.sendMessage("  §7... et §e" + (result.getFoundLocations().size() - limit) + " §7autres positions.");
+                    sender.sendMessage(context.getLang().getMessage("commands.scan.report-more", "%count%", String.valueOf(result.getFoundLocations().size() - limit)));
                     break;
                 }
                 Location loc = entry.getKey();
-                sender.sendMessage("  §7- §f" + loc.getWorld().getName() + " " + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + " : §e" + entry.getValue());
+                sender.sendMessage(context.getLang().getMessage("commands.scan.report-container-entry",
+                        "%world%", loc.getWorld().getName(),
+                        "%x%", String.valueOf(loc.getBlockX()),
+                        "%y%", String.valueOf(loc.getBlockY()),
+                        "%z%", String.valueOf(loc.getBlockZ()),
+                        "%count%", String.valueOf(entry.getValue())));
                 count++;
             }
         }
 
-        sender.sendMessage("§8§m----------------------------------------");
+        sender.sendMessage(context.getLang().getMessage("commands.scan.report-header"));
     }
 
     @Override

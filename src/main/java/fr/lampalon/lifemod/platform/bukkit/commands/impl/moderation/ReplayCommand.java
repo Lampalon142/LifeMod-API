@@ -31,15 +31,15 @@ public class ReplayCommand extends LifeCommand {
     @Override
     public void execute(CommandContext context) {
         if (!(context.getSender() instanceof Player)) {
-            context.getSender().sendMessage("§cOnly players can use this command.");
+            context.getSender().sendMessage(context.getLang().getMessage("commands.replay.player-only"));
             return;
         }
 
         Player mod = (Player) context.getSender();
         ReplayPlayerManager rpm = plugin.getReplayPlayerManager();
-        
+
         if (context.getArgs().length < 1) {
-            sendHelp(mod);
+            sendHelp(mod, context);
             return;
         }
 
@@ -47,66 +47,67 @@ public class ReplayCommand extends LifeCommand {
 
         if (action.equalsIgnoreCase("stop") || action.equalsIgnoreCase("exit")) {
             if (!rpm.isInReplay(mod)) {
-                mod.sendMessage("§cYou are not in a replay session.");
+                mod.sendMessage(context.getLang().getMessage("commands.replay.not-in-replay"));
                 return;
             }
             rpm.exitReplay(mod);
-            mod.sendMessage("§aReplay session stopped. Your state has been restored.");
+            mod.sendMessage(context.getLang().getMessage("commands.replay.stopped"));
             return;
         }
 
         if (action.equalsIgnoreCase("list")) {
-            listReplays(mod);
+            listReplays(mod, context);
             return;
         }
 
         if (action.equalsIgnoreCase("load")) {
             if (context.getArgs().length < 2) {
-                mod.sendMessage("§cUsage: /replay load <sessionName>");
+                mod.sendMessage(context.getLang().getMessage("commands.replay.usage-load"));
                 return;
             }
-            loadAndPlay(mod, context.getArgs()[1]);
+            loadAndPlay(mod, context.getArgs()[1], context);
             return;
         }
 
-        // Default: play from active session
-        playFromActive(mod, action, context.getArgs());
+        playFromActive(mod, action, context.getArgs(), context);
     }
 
-    private void sendHelp(Player mod) {
-        mod.sendMessage("§6§lLifeMod Replay System");
-        mod.sendMessage("§e/replay <player> [duration] §7- Play from active recording");
-        mod.sendMessage("§e/replay load <name> §7- Play from saved file");
-        mod.sendMessage("§e/replay list §7- List saved replays");
-        mod.sendMessage("§e/replay stop §7- Exit current replay");
-        mod.sendMessage("§7Duration: 1m, 2.5m, 10s (max 1h)");
+    private void sendHelp(Player mod, CommandContext context) {
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-title"));
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-play"));
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-load"));
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-list"));
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-stop"));
+        mod.sendMessage(context.getLang().getMessage("commands.replay.help-duration"));
     }
 
-    private void listReplays(Player mod) {
+    private void listReplays(Player mod, CommandContext context) {
         File replayDir = new File("plugins/LifeMod/replays");
         if (!replayDir.exists() || !replayDir.isDirectory()) {
-            mod.sendMessage("§cNo replays found.");
+            mod.sendMessage(context.getLang().getMessage("commands.replay.no-replays"));
             return;
         }
         File[] files = replayDir.listFiles((dir, name) -> name.endsWith(".replay"));
         if (files == null || files.length == 0) {
-            mod.sendMessage("§cNo replays found.");
+            mod.sendMessage(context.getLang().getMessage("commands.replay.no-replays"));
             return;
         }
-        mod.sendMessage("§6§lAvailable Replays:");
+        mod.sendMessage(context.getLang().getMessage("commands.replay.list-title"));
         for (File f : files) {
-            mod.sendMessage("§e- " + f.getName().replace(".replay", "") + " §7(" + (f.length() / 1024) + " KB)");
+            mod.sendMessage(context.getLang().getMessage("commands.replay.list-entry",
+                    "%name%", f.getName().replace(".replay", ""),
+                    "%size%", String.valueOf(f.length() / 1024)));
         }
     }
 
-    private void loadAndPlay(Player mod, String sessionName) {
+    private void loadAndPlay(Player mod, String sessionName, CommandContext context) {
         File replayFile = new File("plugins/LifeMod/replays", sessionName + ".replay");
         if (!replayFile.exists()) {
-            mod.sendMessage("§cReplay file not found: " + sessionName);
+            mod.sendMessage(context.getLang().getMessage("commands.replay.file-not-found", "%name%", sessionName));
             return;
         }
 
-        mod.sendMessage("§aReading replay file...");
+        mod.sendMessage(context.getLang().getMessage("commands.replay.reading-file"));
 
         CompletableFuture.supplyAsync(() -> {
             BinaryReplayReader reader = new BinaryReplayReader(replayFile);
@@ -122,7 +123,7 @@ public class ReplayCommand extends LifeCommand {
         }).thenAccept(result -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (result == null) {
-                    mod.sendMessage("§cReplay file is empty or invalid.");
+                    mod.sendMessage(context.getLang().getMessage("commands.replay.file-empty"));
                     return;
                 }
                 @SuppressWarnings("unchecked")
@@ -132,7 +133,7 @@ public class ReplayCommand extends LifeCommand {
                 int entityId = (int) result[3];
                 Location startLoc = (Location) result[4];
 
-                mod.sendMessage("§aLoaded §e" + frames.size() + "§a frames for §e" + targetName);
+                mod.sendMessage(context.getLang().getMessage("commands.replay.loaded-frames", "%count%", String.valueOf(frames.size()), "%player%", targetName));
                 plugin.getReplayPlayerManager().enterReplay(mod);
                 PlaybackManager playbackManager = new PlaybackManager(plugin);
                 playbackManager.startPlayback(mod, frames, entityId, targetUUID, targetName, startLoc);
@@ -140,36 +141,36 @@ public class ReplayCommand extends LifeCommand {
         });
     }
 
-    private void playFromActive(Player mod, String targetName, String[] args) {
+    private void playFromActive(Player mod, String targetName, String[] args, CommandContext context) {
         Player target = Bukkit.getPlayer(targetName);
         if (target == null) {
-            mod.sendMessage("§cPlayer not found: " + targetName);
+            mod.sendMessage(context.getLang().getMessage("commands.replay.player-not-found", "%name%", targetName));
             return;
         }
 
         ReplaySession session = plugin.getReplayManager().getSession(target.getUniqueId());
         if (session == null) {
-            mod.sendMessage("§cNo active recording for §e" + target.getName());
+            mod.sendMessage(context.getLang().getMessage("commands.replay.no-active-recording", "%player%", target.getName()));
             return;
         }
 
-        long durationMs = 60000; // Default: 1 minute
+        long durationMs = 60000;
         if (args.length >= 2) {
             try {
                 durationMs = parseDuration(args[1]);
             } catch (IllegalArgumentException e) {
-                mod.sendMessage("§cInvalid duration format. Use e.g. 5m, 10s. Max 1h.");
+                mod.sendMessage(context.getLang().getMessage("commands.replay.invalid-duration"));
                 return;
             }
         }
 
         List<ReplayFrame> frames = session.getRecordedData(durationMs);
         if (frames.isEmpty()) {
-            mod.sendMessage("§cNo data found for the requested duration.");
+            mod.sendMessage(context.getLang().getMessage("commands.replay.no-data"));
             return;
         }
 
-        mod.sendMessage("§aLoading §e" + frames.size() + "§a frames from active session for §e" + target.getName());
+        mod.sendMessage(context.getLang().getMessage("commands.replay.loading-frames", "%count%", String.valueOf(frames.size()), "%player%", target.getName()));
         
         plugin.getReplayPlayerManager().enterReplay(mod);
         PlaybackManager playbackManager = new PlaybackManager(plugin);

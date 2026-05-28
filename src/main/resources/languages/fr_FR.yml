@@ -90,6 +90,11 @@ sanctions:
     title: "&c&lAVERTISSEMENT"
     subtitle: "&7%reason%"
 
+  note:
+    success: "&aNote ajoutée à &e%player%&a : &f%reason%"
+
+  permanent: "Permanent"
+
   broadcast:
     ban:
       public: "&8&m----------------------------------------\n&6&lLifeMod &8» &e%target% &aa été &c&lBANNI &apar &e%issuer%&a.\n&7Raison : &f%reason%\n&7Durée : &f%time%\n&8&m----------------------------------------"
@@ -207,11 +212,11 @@ report:
     close: "&cFermer le rapport"
     close-lore: [ "&7Cliquez pour résoudre et", "&7fermer ce rapport." ]
     notes:
-      title: "§6Notes : §e"
+      title: "&6Notes : &e"
       item:
-        date: "§7Date : §f%date%"
-        edit: "§eClic-gauche pour éditer"
-        delete: "§cClic-droit pour supprimer"
+        date: "&7Date : &f%date%"
+        edit: "&eClic-gauche pour éditer"
+        delete: "&cClic-droit pour supprimer"
   gui:
     lore:
       - "&7Cible : &c%target% &7(%target_status%)"
@@ -580,6 +585,9 @@ commands:
   broadcast:
     usage: "%prefix%&cUtilisation : /broadcast <message>"
     prefix: "&7[&6Broadcast&7] &f» "
+    format: "%prefix%%message%"
+    tab-completer:
+      - "&eEntrez votre message ici..."
 
   clearinv:
     usage: "%prefix%&cUtilisation : /clearinv [joueur]"
@@ -623,12 +631,63 @@ commands:
     list-header: "&6Joueurs en Spectate :"
     list-player: "&7 - &e%player%"
 
+  replay:
+    player-only: "&cSeuls les joueurs peuvent utiliser cette commande."
+    not-in-replay: "&cVous n'êtes pas dans une session de replay."
+    stopped: "&aSession de replay arrêtée. Votre état a été restauré."
+    usage-load: "&cUtilisation : /replay load <nomSession>"
+    help-title: "&6&lLifeMod Système de Replay"
+    help-play: "&e/replay <joueur> [durée] &7- Lire depuis un enregistrement actif"
+    help-load: "&e/replay load <nom> &7- Lire depuis un fichier sauvegardé"
+    help-list: "&e/replay list &7- Lister les replays sauvegardés"
+    help-stop: "&e/replay stop &7- Quitter le replay en cours"
+    help-duration: "&7Durée : 1m, 2.5m, 10s (max 1h)"
+    no-replays: "&cAucun replay trouvé."
+    list-title: "&6&lReplays Disponibles :"
+    list-entry: "&e- %name% &7(%size% Ko)"
+    file-not-found: "&cFichier replay introuvable : %name%"
+    reading-file: "&aLecture du fichier replay..."
+    file-empty: "&cLe fichier replay est vide ou invalide."
+    loaded-frames: "&a&e%count%&a frames chargées pour &e%player%"
+    player-not-found: "&cJoueur introuvable : %name%"
+    no-active-recording: "&cAucun enregistrement actif pour &e%player%"
+    invalid-duration: "&cFormat de durée invalide. Exemple : 5m, 10s. Max 1h."
+    no-data: "&cAucune donnée trouvée pour la durée demandée."
+    loading-frames: "&a&e%count%&a frames chargées depuis la session active pour &e%player%"
+
+  scan:
+    usage: "&cUtilisation : /scan <map|inventories|enderchest|all> <joueur|all> <item|hand>"
+    hand-empty: "&cVous devez tenir un item en main."
+    invalid-item: "&cItem invalide : %item%"
+    starting: "&6&lLifeMod &8» &7Lancement du scan pour &e%item%&7..."
+    progress: "&6&lScan &8» %message%"
+    report-header: "&8&m----------------------------------------"
+    report-title: "&6&lRapport de Scan"
+    report-total: "&e• &fTotal trouvé : &b%count%"
+    report-duration: "&e• &fDurée : &b%time%ms"
+    report-players-header: "&e&lJoueurs :"
+    report-player-entry: "  &7- &f%name% : &e%count%"
+    report-containers-header: "&e&lConteneurs :"
+    report-container-entry: "  &7- &f%world% %x%, %y%, %z% : &e%count%"
+    report-more: "  &7... et &e%count% &7autres positions."
+
+  speed:
+    provide: "%prefix%&cUtilisation : /speed <vitesse> [joueur]"
+    success: "%prefix%&aVitesse réglée sur &e%speed%&a."
+
+# --- DEBUG ---
+debug:
+  messages:
+    prefix: "&7[&6Debug&7] &f"
+    user-error: "&cUne erreur s'est produite (%context%). Veuillez réessayer."
+    user-help: "&eSi le problème persiste, contactez un administrateur."
+    admin-error: "&c%error%&7: &f%message%"
+    admin-location: "&7%location%"
+
 # Métadonnées
 version: 201
 
-bc:
-  tabcompleter:
-    - "&eEntrez votre message ici..."
+
 
 alts:
   header: "&8&m----------------------------------------\n&6&lComptes liés pour &e%ip%\n "

@@ -29,7 +29,7 @@ public class BungeeChatListener implements Listener {
         if (activeMute != null) {
             String message = lang.getMessage("sanctions.mute.chat-blocked",
                     "%reason%", activeMute.getReason(),
-                    "%expiration%", activeMute.isPermanent() ? "Jamais" : TimeUtil.formatTime(activeMute.getExpirationTime() - System.currentTimeMillis()));
+                    "%expiration%", activeMute.isPermanent() ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(activeMute.getExpirationTime() - System.currentTimeMillis()));
             
             player.sendMessage(new TextComponent(message));
             event.setCancelled(true);

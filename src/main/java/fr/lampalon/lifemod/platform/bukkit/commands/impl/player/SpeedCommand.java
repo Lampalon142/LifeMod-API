@@ -28,7 +28,7 @@ public class SpeedCommand extends LifeCommand {
         Player player = context.getPlayer();
 
         if (context.getArgs().length == 0) {
-            context.getSender().sendMessage(context.getLang().getMessage("speed.provide"));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.speed.provide"));
             return;
         }
 
@@ -36,12 +36,12 @@ public class SpeedCommand extends LifeCommand {
         try {
             speed = Integer.parseInt(context.getArgs()[0]);
         } catch (NumberFormatException e) {
-            context.getSender().sendMessage(context.getLang().getMessage("speed.provide"));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.speed.provide"));
             return;
         }
 
         if (speed < 1 || speed > 10) {
-            context.getSender().sendMessage(context.getLang().getMessage("speed.provide"));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.speed.provide"));
             return;
         }
 
@@ -51,7 +51,7 @@ public class SpeedCommand extends LifeCommand {
             player.setWalkSpeed((float) speed / 10);
         }
 
-        context.getSender().sendMessage(context.getLang().getMessage("speed.success", "%speed%", String.valueOf(speed)));
+        context.getSender().sendMessage(context.getLang().getMessage("commands.speed.success", "%speed%", String.valueOf(speed)));
         context.getDebug().log("speed", player.getName() + " changed speed to " + speed);
 
         if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {

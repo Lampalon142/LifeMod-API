@@ -63,6 +63,7 @@ public class BungeeLangService implements ILangService {
 
     @Override
     public String getPrefix() {
-        return "system.prefix";
+        String prefix = lang.getString("system.prefix");
+        return prefix != null ? prefix : "";
     }
 }
