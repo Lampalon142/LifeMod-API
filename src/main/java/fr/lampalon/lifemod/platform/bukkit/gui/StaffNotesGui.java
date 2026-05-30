@@ -49,7 +49,8 @@ public class StaffNotesGui extends PagedAbstractGui {
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        Material mat = Material.valueOf(config.getString("gui.pagination.previous-material", "ARROW"));
+                        ItemBuilder builder = new ItemBuilder(mat);
                         builder.setDisplayName(lang.getMessage("gui.pagination.previous"));
                         return builder;
                     }
@@ -57,12 +58,13 @@ public class StaffNotesGui extends PagedAbstractGui {
                 .addIngredient('>', new PageItem(true) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        Material mat = Material.valueOf(config.getString("gui.pagination.next-material", "ARROW"));
+                        ItemBuilder builder = new ItemBuilder(mat);
                         builder.setDisplayName(lang.getMessage("gui.pagination.next"));
                         return builder;
                     }
                 })
-                .addIngredient('A', new SimpleItem(new ItemBuilder(Material.WRITABLE_BOOK).setDisplayName(lang.getMessage("reports.gui.notes.add")), click -> {
+                .addIngredient('A', new SimpleItem(new ItemBuilder(Material.valueOf(config.getString("gui.notes.add-material", "WRITABLE_BOOK"))).setDisplayName(lang.getMessage("reports.gui.notes.add")), click -> {
                     player.closeInventory();
                     LifeMod.getInstance().getNoteInputManager().startNoteInput(player, report);
                     player.sendMessage(lang.getMessage("reports.gui.notes.prompt"));

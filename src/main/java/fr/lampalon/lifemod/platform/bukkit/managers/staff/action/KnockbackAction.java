@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.entity.Player;
@@ -28,9 +30,11 @@ public class KnockbackAction implements IStaffAction {
     }
 
     private void applyKnockback(Player player, Player target) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        // Simulating Knockback
-        target.setVelocity(player.getLocation().getDirection().multiply(0.5).setY(0.4));
+        double multiplier = config.getDouble("modules.mod-mode.items.kbtester.knockback-multiplier", 0.5);
+        double y = config.getDouble("modules.mod-mode.items.kbtester.knockback-y", 0.4);
+        target.setVelocity(player.getLocation().getDirection().multiply(multiplier).setY(y));
         player.sendMessage(lang.getMessage("mod.items.kb-tester.applied", "%target%", target.getName()));
     }
 }

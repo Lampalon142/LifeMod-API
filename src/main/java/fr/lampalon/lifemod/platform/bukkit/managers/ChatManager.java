@@ -30,8 +30,8 @@ public class ChatManager implements Listener {
     }
 
     public void reloadConfig() {
-        enabled = plugin.getConfig().getBoolean("chatManager.enabled", true);
-        blacklist = plugin.getConfig().getStringList("chatManager.blacklist");
+        enabled = plugin.getConfig().getBoolean("modules.chat-manager.enabled", true);
+        blacklist = plugin.getConfig().getStringList("modules.chat-manager.blacklist");
         debug.log("chat", "ChatManager configuration reloaded. Enabled: " + enabled + ", Blacklist: " + blacklist);
     }
 
@@ -79,21 +79,21 @@ public class ChatManager implements Listener {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-        plugin.getConfig().set("chatManager.enabled", enabled);
+        plugin.getConfig().set("modules.chat-manager.enabled", enabled);
         plugin.saveConfig();
         debug.log("chat", "ChatManager enabled set to " + enabled);
     }
 
     public void addToBlacklist(String word) {
         blacklist.add(word);
-        plugin.getConfig().set("chatManager.blacklist", blacklist);
+        plugin.getConfig().set("modules.chat-manager.blacklist", blacklist);
         plugin.saveConfig();
         debug.log("chat", "Added word to blacklist: " + word);
     }
 
     public void removeFromBlacklist(String word) {
         blacklist.remove(word);
-        plugin.getConfig().set("chatManager.blacklist", blacklist);
+        plugin.getConfig().set("modules.chat-manager.blacklist", blacklist);
         plugin.saveConfig();
         debug.log("chat", "Removed word from blacklist: " + word);
     }

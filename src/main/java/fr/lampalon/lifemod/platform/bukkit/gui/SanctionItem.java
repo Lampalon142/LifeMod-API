@@ -1,6 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.gui;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Material;
@@ -29,16 +31,17 @@ public class SanctionItem extends AbstractItem {
 
     @Override
     public ItemProvider getItemProvider() {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         Material material;
         switch (sanction.getType()) {
-            case BAN: material = Material.RED_CONCRETE; break;
-            case MUTE: material = Material.ORANGE_CONCRETE; break;
-            case WARN: material = Material.YELLOW_CONCRETE; break;
-            case KICK: material = Material.GRAY_CONCRETE; break;
-            default: material = Material.PAPER;
+            case BAN: material = Material.valueOf(config.getString("gui.sanctions.materials.BAN", "RED_CONCRETE")); break;
+            case MUTE: material = Material.valueOf(config.getString("gui.sanctions.materials.MUTE", "ORANGE_CONCRETE")); break;
+            case WARN: material = Material.valueOf(config.getString("gui.sanctions.materials.WARN", "YELLOW_CONCRETE")); break;
+            case KICK: material = Material.valueOf(config.getString("gui.sanctions.materials.KICK", "GRAY_CONCRETE")); break;
+            default: material = Material.valueOf(config.getString("gui.sanctions.materials.default", "PAPER"));
         }
 
-        fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+        
         String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);

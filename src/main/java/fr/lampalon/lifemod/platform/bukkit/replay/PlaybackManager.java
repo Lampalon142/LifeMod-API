@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import fr.lampalon.lifemod.common.nms.api.NMSReplayHandler;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
@@ -408,13 +409,19 @@ public class PlaybackManager {
     }
 
     private Location buildObserverLocation(Location npcLoc) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        double distance = config.getDouble("modules.replay.observer-distance", 5.0);
+        double yOffset = config.getDouble("modules.replay.observer-y-offset", 2.0);
+        double yawOffset = config.getDouble("modules.replay.observer-yaw-offset", 180.0);
+        float pitch = (float) config.getDouble("modules.replay.observer-pitch", 15.0);
+
         double yawRad = Math.toRadians(npcLoc.getYaw());
         Location obs = npcLoc.clone();
-        obs.setX(npcLoc.getX() + Math.sin(yawRad) * 5);
-        obs.setY(npcLoc.getY() + 2);
-        obs.setZ(npcLoc.getZ() - Math.cos(yawRad) * 5);
-        obs.setYaw(npcLoc.getYaw() + 180f);
-        obs.setPitch(15f);
+        obs.setX(npcLoc.getX() + Math.sin(yawRad) * distance);
+        obs.setY(npcLoc.getY() + yOffset);
+        obs.setZ(npcLoc.getZ() - Math.cos(yawRad) * distance);
+        obs.setYaw(npcLoc.getYaw() + (float) yawOffset);
+        obs.setPitch(pitch);
         return obs;
     }
 }

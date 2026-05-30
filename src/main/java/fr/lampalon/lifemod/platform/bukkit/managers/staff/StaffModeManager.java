@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
@@ -96,13 +97,16 @@ public class StaffModeManager {
 
     // Applique uniquement les effets visuels et donne les items
     private void applyStaffState(Player player) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         player.getInventory().clear();
-        player.setGameMode(GameMode.SURVIVAL);
-        player.setAllowFlight(true);
-        player.setFlying(true);
-        player.setInvulnerable(true);
-        player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0));
+        player.setGameMode(GameMode.valueOf(config.getString("modules.mod-mode.effects.game-mode", "SURVIVAL")));
+        player.setAllowFlight(config.getBoolean("modules.mod-mode.effects.allow-flight", true));
+        player.setFlying(config.getBoolean("modules.mod-mode.effects.flying", true));
+        player.setInvulnerable(config.getBoolean("modules.mod-mode.effects.invulnerable", true));
+        if (config.getBoolean("modules.mod-mode.effects.night-vision", true)) {
+            player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0));
+        }
         
         itemManager.giveItems(player);
         plugin.getVanishService().setVanished(player, true, false);

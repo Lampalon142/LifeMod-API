@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Location;
@@ -16,7 +18,9 @@ public class JumpAction implements IStaffAction {
     @Override
     public void onInteract(Player player, PlayerInteractEvent event) {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        Block target = player.getTargetBlock((Set<Material>) null, 100);
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        int maxDist = (int) config.getDouble("modules.mod-mode.items.navigation.jump-max-distance", 100.0);
+        Block target = player.getTargetBlock((Set<Material>) null, maxDist);
         if (target == null || target.getType() == Material.AIR) {
             player.sendMessage(lang.getMessage("mod.items.navigation.no-target"));
             return;

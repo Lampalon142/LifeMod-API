@@ -1,6 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.gui;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Report;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
@@ -56,8 +58,9 @@ public class ReportItem extends AbstractItem {
                 .collect(Collectors.toList());
 
         String displayName = lang.getMessage("reports.gui.item-name", "%uuid%", report.getUuid().toString().substring(0, 8));
-
-        ItemBuilder builder = new ItemBuilder(Material.PAPER).setDisplayName(displayName);
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        Material itemMat = Material.valueOf(config.getString("gui.reports.item-material", "PAPER"));
+        ItemBuilder builder = new ItemBuilder(itemMat).setDisplayName(displayName);
         for (String line : lore) {
             builder.addLoreLines(line);
         }

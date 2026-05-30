@@ -68,4 +68,4 @@ modules:
       thresholds:
         3: "kick %player% &cAuto-Punish Global: 3 active warnings accumulated on network."
 
-version: 200
+version: 201

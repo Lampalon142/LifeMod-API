@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.gui;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import xyz.xenondevs.invui.gui.Gui;
@@ -35,7 +37,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        Material mat = Material.valueOf(config.getString("gui.pagination.previous-material", "ARROW"));
+                        ItemBuilder builder = new ItemBuilder(mat);
                         builder.setDisplayName(lang.getMessage("gui.pagination.previous"));
                         if (!gui.hasPreviousPage()) builder.addLoreLines(lang.getMessage("gui.pagination.first-page"));
                         return builder;
@@ -44,7 +47,8 @@ public abstract class PagedAbstractGui extends AbstractGui {
                 .addIngredient('>', new PageItem(true) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        ItemBuilder builder = new ItemBuilder(Material.ARROW);
+                        Material mat = Material.valueOf(config.getString("gui.pagination.next-material", "ARROW"));
+                        ItemBuilder builder = new ItemBuilder(mat);
                         builder.setDisplayName(lang.getMessage("gui.pagination.next"));
                         if (!gui.hasNextPage()) builder.addLoreLines(lang.getMessage("gui.pagination.last-page"));
                         return builder;

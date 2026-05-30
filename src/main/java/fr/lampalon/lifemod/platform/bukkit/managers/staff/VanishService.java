@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.events.vanish.PlayerVanishStateChangeEvent;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
@@ -67,9 +68,12 @@ public class VanishService implements IVanishService {
         }
 
         // Silent attributes
-        player.setCollidable(false);
-        player.setCanPickupItems(false);
-        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        player.setCollidable(config.getBoolean("modules.mod-mode.vanish.no-collision", true));
+        player.setCanPickupItems(config.getBoolean("modules.mod-mode.vanish.no-pickup", true));
+        if (config.getBoolean("modules.mod-mode.vanish.invisibility-effect", true)) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
+        }
 
         if (!silent) {
             broadcastFakeQuit(player);

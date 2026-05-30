@@ -51,7 +51,8 @@ public abstract class AbstractGui {
     }
 
     protected Item createBorder() {
-        return new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setDisplayName(" ").setDamage((short) 15)); // Black stained glass for 1.8-1.12, or just DARK_GRAY in newer
+        String matName = config.getString("gui.border-material", "BLACK_STAINED_GLASS_PANE");
+        return new SimpleItem(new ItemBuilder(Material.valueOf(matName)).setDisplayName(" ").setDamage((short) 15));
     }
 
     protected Item createBorder(Material material) {

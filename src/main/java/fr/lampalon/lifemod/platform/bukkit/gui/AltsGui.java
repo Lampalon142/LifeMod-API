@@ -3,6 +3,7 @@ package fr.lampalon.lifemod.platform.bukkit.gui;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -65,13 +66,13 @@ public class AltsGui extends PagedAbstractGui {
 
             if (ban != null && !ban.isExpired()) {
                 status = lang.getMessage("gui.alts.status-banned");
-                material = Material.RED_TERRACOTTA;
+                material = Material.valueOf(config.getString("gui.alts.materials.banned", "RED_TERRACOTTA"));
             } else if (Bukkit.getPlayer(data.getUuid()) != null) {
                 status = lang.getMessage("gui.alts.status-online");
-                material = Material.LIME_TERRACOTTA;
+                material = Material.valueOf(config.getString("gui.alts.materials.online", "LIME_TERRACOTTA"));
             } else {
                 status = lang.getMessage("gui.alts.status-offline");
-                material = Material.GRAY_TERRACOTTA;
+                material = Material.valueOf(config.getString("gui.alts.materials.offline", "GRAY_TERRACOTTA"));
             }
 
             return new ItemBuilder(material)

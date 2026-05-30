@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Location;
@@ -16,7 +18,9 @@ public class ThruAction implements IStaffAction {
     public void onInteract(Player player, PlayerInteractEvent event) {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         // Simple passthrough logic
-        BlockIterator iterator = new BlockIterator(player, 10); // Max 10 blocks depth
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        int maxDepth = (int) config.getDouble("modules.mod-mode.items.navigation.thru-max-depth", 10.0);
+        BlockIterator iterator = new BlockIterator(player, maxDepth);
         Block lastSolid = null;
         
         while (iterator.hasNext()) {

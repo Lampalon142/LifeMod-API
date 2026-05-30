@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
@@ -33,7 +35,8 @@ public class CpsAction implements IStaffAction {
             return;
         }
 
-        int duration = 10; // Could be from config
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        int duration = (int) config.getDouble("modules.mod-mode.items.cpstester.duration", 10.0);
         player.sendMessage(lang.getMessage("mod.items.cps.start",
                 "%duration%", String.valueOf(duration),
                 "%target%", target.getName()));
@@ -57,7 +60,8 @@ public class CpsAction implements IStaffAction {
                     .collect(java.util.stream.Collectors.toList());
 
             double cps = (double) clicksDuringTest.size() / duration;
-            boolean suspectedAutoClicker = cps > 15.0; // Simple threshold
+            double threshold = config.getDouble("modules.mod-mode.items.cpstester.autoclicker-threshold", 15.0);
+            boolean suspectedAutoClicker = cps > threshold;
 
             String statusKey = suspectedAutoClicker ? "mod.items.cps.status.suspected" : "mod.items.cps.status.unlikely";
             String resultStatus = lang.getMessage(statusKey);

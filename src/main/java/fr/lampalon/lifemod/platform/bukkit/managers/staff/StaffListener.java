@@ -35,11 +35,10 @@ public class StaffListener implements Listener {
     private final StaffItemManager staffItemManager;
     private final StaffActionManager staffActionManager;
     
-    // Utilisation d'un cache d'interaction par tick pour bloquer les doublons (NMS/Bukkit)
-    private final Map<UUID, Long> lastActionTick = new HashMap<>();
+    private final Map<UUID, Long> lastEntityInteractTick = new HashMap<>();
 
     public void handleQuit(UUID playerId) {
-        lastActionTick.remove(playerId);
+        lastEntityInteractTick.remove(playerId);
     }
 
     public StaffListener(StaffModeManager staffModeManager, StaffItemManager staffItemManager, StaffActionManager staffActionManager) {
@@ -48,16 +47,12 @@ public class StaffListener implements Listener {
         this.staffActionManager = staffActionManager;
     }
 
-    /**
-     * Vérifie si une action a déjà été traitée pour ce joueur dans ce tick.
-     * Compatible avec toutes les versions via l'API de base tout en étant ultra précis.
-     */
-    private boolean canInteract(Player player) {
-        long currentTick = Bukkit.getServer().getWorlds().get(0).getFullTime(); // Plus stable que getCurrentTick sur certaines versions
-        if (lastActionTick.containsKey(player.getUniqueId()) && lastActionTick.get(player.getUniqueId()) == currentTick) {
+    private boolean canEntityInteract(Player player) {
+        long currentTick = Bukkit.getServer().getWorlds().get(0).getFullTime();
+        if (lastEntityInteractTick.containsKey(player.getUniqueId()) && lastEntityInteractTick.get(player.getUniqueId()) == currentTick) {
             return false;
         }
-        lastActionTick.put(player.getUniqueId(), currentTick);
+        lastEntityInteractTick.put(player.getUniqueId(), currentTick);
         return true;
     }
 
@@ -70,6 +65,11 @@ public class StaffListener implements Listener {
         Player player = event.getPlayer();
         if (!staffModeManager.isMod(player)) return;
 
+        // When right-clicking air while targeting a player, PlayerInteractEntityEvent
+        // handles the actual entity action. Skipping RIGHT_CLICK_AIR prevents a
+        // spurious onInteract() call (e.g. "no target") before the entity handler fires.
+        if (event.getAction() == Action.RIGHT_CLICK_AIR) return;
+
         ItemStack item = event.getItem();
         if (item == null) return;
 
@@ -77,8 +77,6 @@ public class StaffListener implements Listener {
         if (staffItem == null) return;
 
         event.setCancelled(true);
-
-        if (!canInteract(player)) return;
 
         String clickType = getClickType(event.getAction());
         if (clickType == null) return;
@@ -101,7 +99,7 @@ public class StaffListener implements Listener {
 
         event.setCancelled(true);
 
-        if (!canInteract(player)) return;
+        if (!canEntityInteract(player)) return;
 
         handleStaffAction(player, staffItem, "RIGHT_CLICK", null, event, event.getRightClicked());
     }
@@ -117,7 +115,7 @@ public class StaffListener implements Listener {
         StaffItem staffItem = staffItemManager.getStaffItem(item);
         if (staffItem == null) return;
 
-        if (!canInteract(player)) return;
+        if (!canEntityInteract(player)) return;
 
         // On annule les dégâts si une action est prévue
         List<String> scripts = staffItem.getScripts("LEFT_CLICK");

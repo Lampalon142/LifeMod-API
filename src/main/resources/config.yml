@@ -65,12 +65,24 @@ modules:
 
   # Moderation Mode (Inventory & Tools)
   mod-mode:
+    effects:
+      game-mode: "SURVIVAL"
+      allow-flight: true
+      flying: true
+      invulnerable: true
+      night-vision: true
+    vanish:
+      collidable: false
+      can-pickup-items: false
+      invisibility: true
     items:
       navigation:
         enabled: true
         slot: 0
         material: COMPASS
         custom-model-data: 1001
+        jump-max-distance: 100
+        thru-max-depth: 10
         name: "&6&lNavigation"
         lore:
           - "&7--------------------------"
@@ -101,6 +113,7 @@ modules:
         enabled: true
         slot: 2
         material: PACKED_ICE
+        helmet-material: PACKED_ICE
         name: "&bFreeze Tool"
         lore:
           - "&7Right-Click: &eFreeze/Unfreeze"
@@ -132,6 +145,7 @@ modules:
         slot: 4
         material: CLOCK
         duration: 10
+        autoclicker-threshold: 15.0
         name: "&eCPS Tester"
         lore:
           - "&7Right-Click Player: &eCheck CPS"
@@ -142,6 +156,8 @@ modules:
         enabled: true
         slot: 5
         material: STICK
+        knockback-multiplier: 0.5
+        knockback-y: 0.4
         name: "&cKnockback Tester"
         lore:
           - "&7Attack: &eTest KB"
@@ -284,6 +300,53 @@ modules:
         text: "Powered By LifeMod"
         logo: "https://mc-heads.net/avatar/%player%/"
 
+  # Replay System
+  replay:
+    recording-tick-rate: 2
+    observer-distance: 5.0
+    observer-y-offset: 2.0
+    observer-yaw-offset: 180.0
+    observer-pitch: 15.0
+    playback-speed: 1.0
+    spawn-delay-ticks: 20
+    ticks-per-frame: 1
+    progress-interval: 200
+    game-mode: "CREATIVE"
+    allow-flight: true
+    items:
+      rewind:
+        slot: 0
+        material: ARROW
+      forward:
+        slot: 1
+        material: ARROW
+      pause:
+        slot: 4
+        material: CLOCK
+      exit:
+        slot: 8
+        material: BARRIER
+    gui:
+      inventory:
+        timeline-material: GRAY_STAINED_GLASS_PANE
+        play-pause:
+          slot: 40
+          material: LIME_DYE
+        speed:
+          slot: 38
+          material: FEATHER
+        pov-switch:
+          slot: 42
+          material: ARROW
+        exit:
+          slot: 49
+          material: BARRIER
+      controls:
+        stop-material: RED_WOOL
+        pause-material: YELLOW_WOOL
+        play-material: GREEN_WOOL
+        speed-material: LIME_WOOL
+
 # --- COMMANDS STATUS ---
 commands:
   enabled:
@@ -315,5 +378,73 @@ commands:
     modreset: true
     auth: true
 
+# --- GUI MATERIALS ---
+gui:
+  border-material: BLACK_STAINED_GLASS_PANE
+  pagination:
+    previous-material: ARROW
+    next-material: ARROW
+  sanctions:
+    materials:
+      BAN: RED_CONCRETE
+      MUTE: ORANGE_CONCRETE
+      WARN: YELLOW_CONCRETE
+      KICK: GRAY_CONCRETE
+      default: PAPER
+  reports:
+    item-material: PAPER
+    detail:
+      reporter-material: PLAYER_HEAD
+      target-material: PLAYER_HEAD
+      info-material: BOOK
+      teleport-material: COMPASS
+      assign-material: LIME_DYE
+      close-material: RED_DYE
+      back-material: ARROW
+  alts:
+    materials:
+      banned: RED_TERRACOTTA
+      online: LIME_TERRACOTTA
+      offline: GRAY_TERRACOTTA
+  notes:
+    add-material: WRITABLE_BOOK
+    item-material: PAPER
+  staffhistory:
+    filter-type-material: HOPPER
+    filter-player-material: PLAYER_HEAD
+    filter-date-material: CLOCK
+    time-filter-options:
+      - label: "1h"
+        millis: 3600000
+      - label: "24h"
+        millis: 86400000
+      - label: "1 week"
+        millis: 604800000
+
+# --- AUTH GUI ---
+auth:
+  gui:
+    materials:
+      border: BLACK_STAINED_GLASS_PANE
+      progress: PAPER
+      digit: LIGHT_GRAY_STAINED_GLASS_PANE
+      delete: ORANGE_STAINED_GLASS_PANE
+      clear: RED_STAINED_GLASS_PANE
+      validate: LIME_STAINED_GLASS_PANE
+    slots:
+      digit-1: 19
+      digit-2: 20
+      digit-3: 21
+      digit-4: 28
+      digit-5: 29
+      digit-6: 30
+      digit-7: 37
+      digit-8: 38
+      digit-9: 39
+      digit-0: 47
+      delete: 25
+      clear: 43
+      validate: 52
+
 # Metadata
-version: 200
+version: 201

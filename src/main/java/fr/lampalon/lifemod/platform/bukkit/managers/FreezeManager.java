@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Location;
@@ -33,7 +35,9 @@ public class FreezeManager {
                 playerHelmets.put(target.getUniqueId(), helmet);
             }
             frozenPlayers.put(target.getUniqueId(), target.getLocation());
-            target.getInventory().setHelmet(new ItemStack(Material.PACKED_ICE));
+            IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+            String helmetMat = config.getString("modules.mod-mode.items.freeze.helmet-material", "PACKED_ICE");
+            target.getInventory().setHelmet(new ItemStack(Material.valueOf(helmetMat)));
             
             fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
             for (String line : lang.getStringList("commands.freeze.messages.freeze.onfreeze")) {

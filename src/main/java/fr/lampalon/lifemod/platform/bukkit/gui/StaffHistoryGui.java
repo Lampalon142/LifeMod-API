@@ -92,20 +92,23 @@ public class StaffHistoryGui extends PagedAbstractGui {
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName(lang.getMessage("gui.pagination.previous"));
+                        Material mat = Material.valueOf(config.getString("gui.pagination.previous-material", "ARROW"));
+                        return new ItemBuilder(mat).setDisplayName(lang.getMessage("gui.pagination.previous"));
                     }
                 })
                 .addIngredient('>', new PageItem(true) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
-                        return new ItemBuilder(Material.ARROW).setDisplayName(lang.getMessage("gui.pagination.next"));
+                        Material mat = Material.valueOf(config.getString("gui.pagination.next-material", "ARROW"));
+                        return new ItemBuilder(mat).setDisplayName(lang.getMessage("gui.pagination.next"));
                     }
                 })
                 .addIngredient('F', new AbstractItem() { // Filter Type
                     @Override
                     public ItemProvider getItemProvider() {
                         String current = filterType == null ? lang.getMessage("gui.staffhistory.type-all") : filterType.name();
-                        return new ItemBuilder(Material.HOPPER)
+                        Material mat = Material.valueOf(config.getString("gui.staffhistory.filter-type-material", "HOPPER"));
+                        return new ItemBuilder(mat)
                                 .setDisplayName(lang.getMessage("gui.staffhistory.filter-type"))
                                 .addLoreLines(lang.getMessage("gui.staffhistory.current", "%current%", current), lang.getMessage("gui.staffhistory.click-to-change"));
                     }
@@ -117,14 +120,15 @@ public class StaffHistoryGui extends PagedAbstractGui {
                         else if (filterType == SanctionType.WARN) filterType = SanctionType.KICK;
                         else filterType = null;
                         updateFilteredList();
-                        open(); // Rebuild/Refresh
+                        open();
                     }
                 })
                 .addIngredient('P', new AbstractItem() { // Filter Player
                     @Override
                     public ItemProvider getItemProvider() {
                         String current = filterPlayer == null ? lang.getMessage("gui.staffhistory.type-all") : filterPlayer;
-                        return new ItemBuilder(Material.PLAYER_HEAD)
+                        Material mat = Material.valueOf(config.getString("gui.staffhistory.filter-player-material", "PLAYER_HEAD"));
+                        return new ItemBuilder(mat)
                                 .setDisplayName(lang.getMessage("gui.staffhistory.filter-player"))
                                 .addLoreLines(lang.getMessage("gui.staffhistory.current", "%current%", current), lang.getMessage("gui.staffhistory.click-to-chat"));
                     }
@@ -132,8 +136,6 @@ public class StaffHistoryGui extends PagedAbstractGui {
                     public void handleClick(@NotNull ClickType clickType, @NotNull Player player, @NotNull InventoryClickEvent event) {
                         player.closeInventory();
                         player.sendMessage(lang.getMessage("gui.staffhistory.chat-prompt"));
-                        // Simple chat input listener logic needed here. 
-                        // For simplicity, using a temporary listener.
                         LifeMod.getInstance().getChatManager().awaitChatInput(player, input -> {
                             if (input.equalsIgnoreCase("none") || input.equalsIgnoreCase("cancel")) {
                                 filterPlayer = null;
@@ -149,16 +151,17 @@ public class StaffHistoryGui extends PagedAbstractGui {
                     @Override
                     public ItemProvider getItemProvider() {
                         String current = filterTime == 0 ? lang.getMessage("gui.staffhistory.time-all") : lang.getMessage("gui.staffhistory.time-since");
-                        return new ItemBuilder(Material.CLOCK)
+                        Material mat = Material.valueOf(config.getString("gui.staffhistory.filter-date-material", "CLOCK"));
+                        return new ItemBuilder(mat)
                                 .setDisplayName(lang.getMessage("gui.staffhistory.filter-date"))
                                 .addLoreLines(lang.getMessage("gui.staffhistory.current", "%current%", current), lang.getMessage("gui.staffhistory.click-to-change"));
                     }
                     @Override
                     public void handleClick(@NotNull ClickType clickType, @NotNull Player player, @NotNull InventoryClickEvent event) {
                         long now = System.currentTimeMillis();
-                        if (filterTime == 0) filterTime = now - 3600000L; // 1h
-                        else if (filterTime == now - 3600000L) filterTime = now - 86400000L; // 24h
-                        else if (filterTime == now - 86400000L) filterTime = now - 604800000L; // 1 week
+                        if (filterTime == 0) filterTime = now - 3600000L;
+                        else if (filterTime == now - 3600000L) filterTime = now - 86400000L;
+                        else if (filterTime == now - 86400000L) filterTime = now - 604800000L;
                         else filterTime = 0;
                         updateFilteredList();
                         open();

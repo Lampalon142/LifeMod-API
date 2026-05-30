@@ -37,7 +37,8 @@ public class StaffNoteItem extends AbstractItem {
         String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
 
-        ItemBuilder builder = new ItemBuilder(Material.PAPER)
+        Material noteMat = Material.valueOf(config.getString("gui.notes.item-material", "PAPER"));
+        ItemBuilder builder = new ItemBuilder(noteMat)
                 .setDisplayName(lang.getMessage("reports.gui.notes.item-title", "%author%", authorName))
                 .addLoreLines(
                         lang.getMessage("reports.gui.notes.item-date", "%date%", sdf.format(new Date(note.getCreatedAt()))),

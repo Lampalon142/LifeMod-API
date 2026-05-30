@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.replay;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.ItemBuilder;
 import org.bukkit.GameMode;
@@ -29,11 +31,12 @@ public class ReplayPlayerManager {
      * CREATIVE = can fly freely and move around the NPC independently.
      */
     public void enterReplay(Player player) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         savedStates.put(player.getUniqueId(), new ReplayPlayerState(player));
 
         player.getInventory().clear();
-        player.setGameMode(GameMode.CREATIVE);
-        player.setAllowFlight(true);
+        player.setGameMode(GameMode.valueOf(config.getString("modules.replay.game-mode", "CREATIVE")));
+        player.setAllowFlight(config.getBoolean("modules.replay.allow-flight", true));
         player.setFlying(true);
 
         // Hide all real players to isolate the moderator
@@ -94,28 +97,30 @@ public class ReplayPlayerManager {
     }
 
     private void giveReplayItems(Player player) {
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        
-        ItemStack rewind = new ItemBuilder(Material.ARROW)
+
+        ItemStack rewind = new ItemBuilder(Material.valueOf(config.getString("modules.replay.items.rewind.material", "ARROW")))
                 .setName(lang.getMessage("replay.items.rewind"))
                 .toItemStack();
 
-        ItemStack forward = new ItemBuilder(Material.ARROW)
+        ItemStack forward = new ItemBuilder(Material.valueOf(config.getString("modules.replay.items.forward.material", "ARROW")))
                 .setName(lang.getMessage("replay.items.forward"))
                 .toItemStack();
 
-        ItemStack pause = new ItemBuilder(Material.CLOCK)
+        ItemStack pause = new ItemBuilder(Material.valueOf(config.getString("modules.replay.items.pause.material", "CLOCK")))
                 .setName(lang.getMessage("replay.items.pause"))
                 .toItemStack();
 
-        ItemStack exitReplay = new ItemBuilder(Material.BARRIER)
+        ItemStack exitReplay = new ItemBuilder(Material.valueOf(config.getString("modules.replay.items.exit.material", "BARRIER")))
                 .setName(lang.getMessage("replay.items.exit"))
                 .toItemStack();
 
-        player.getInventory().setItem(0, rewind);
-        player.getInventory().setItem(1, forward);
-        player.getInventory().setItem(4, pause);
-        player.getInventory().setItem(8, exitReplay);
-        player.getInventory().setHeldItemSlot(4);
+        player.getInventory().setItem(config.getInt("modules.replay.items.rewind.slot", 0), rewind);
+        player.getInventory().setItem(config.getInt("modules.replay.items.forward.slot", 1), forward);
+        player.getInventory().setItem(config.getInt("modules.replay.items.pause.slot", 4), pause);
+        player.getInventory().setItem(config.getInt("modules.replay.items.exit.slot", 8), exitReplay);
+        player.getInventory().setHeldItemSlot(config.getInt("modules.replay.items.pause.slot", 4));
     }
+
 }
