@@ -41,7 +41,7 @@ public class AltCommand extends LifeCommand {
             // On peut chercher l'UUID par le nom si on avait une méthode pour ça, sinon on utilise un placeholder ou on refuse.
             // Pour l'instant on se limite aux joueurs en ligne ou on cherche dans PlayerData si possible.
             // Comme le moteur a besoin de l'UUID pour l'historique, c'est crucial.
-            context.getSender().sendMessage("§cNote: L'analyse de joueurs hors-ligne n'est supportée que s'ils ont déjà été connectés.");
+            context.getSender().sendMessage(context.getLang().getMessage("antialt.offline-note"));
             return; // Simplification pour l'instant
         }
 
@@ -69,7 +69,7 @@ public class AltCommand extends LifeCommand {
         if (score < 30) return context.getLang().getMessage("antialt.score.low");
         if (score < 60) return context.getLang().getMessage("antialt.score.medium");
         if (score < 85) return context.getLang().getMessage("antialt.score.high");
-        return "&4&l";
+        return context.getLang().getMessage("antialt.color.critical");
     }
 
     @Override

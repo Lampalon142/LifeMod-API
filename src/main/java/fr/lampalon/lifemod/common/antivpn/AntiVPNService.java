@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.common.antivpn.data.IPInfo;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 
 import java.util.List;
@@ -53,10 +54,12 @@ public class AntiVPNService {
             return CompletableFuture.completedFuture(true);
         }
 
+        ILangService lang = ServiceRegistry.get(ILangService.class);
+
         // 2. Anti-Bot: Global Rate Limit
         int globalLimit = config.getInt("modules.antivpn.anti-bot.global-limit", 5);
         if (globalConnectionsLastSecond.incrementAndGet() > globalLimit) {
-            platform.logInfo("§c[AntiVPN] Blocking connection (Global Rate Limit): " + name + " (" + ip + ")");
+            platform.logInfo(lang != null ? lang.getMessage("antivpn.log.rate-limit", "%player%", name, "%ip%", ip) : "§c[AntiVPN] Blocking connection (Global Rate Limit): " + name + " (" + ip + ")");
             return CompletableFuture.completedFuture(false);
         }
 
@@ -65,18 +68,19 @@ public class AntiVPNService {
         long lastTime = lastConnectionTime.getOrDefault(ip, 0L);
         int perIpLimit = config.getInt("modules.antivpn.anti-bot.per-ip-cooldown", 10000); // ms
         if (now - lastTime < perIpLimit) {
-            platform.logInfo("§c[AntiVPN] Blocking connection (IP Cooldown): " + name + " (" + ip + ")");
+            platform.logInfo(lang != null ? lang.getMessage("antivpn.log.ip-cooldown", "%player%", name, "%ip%", ip) : "§c[AntiVPN] Blocking connection (IP Cooldown): " + name + " (" + ip + ")");
             return CompletableFuture.completedFuture(false);
         }
         lastConnectionTime.put(ip, now);
 
         // 4. IP Lookup Analysis
+        ILangService finalLang = lang;
         return lookupManager.lookup(ip).thenApply(info -> {
             if (info == null) return true; // Fallback if lookup fails
 
             // A. VPN/Proxy Detection
             if (info.isProxy() && config.getBoolean("modules.antivpn.block-vpn", true)) {
-                platform.logInfo("§c[AntiVPN] Blocking VPN/Proxy: " + name + " (" + ip + ") - ISP: " + info.getIsp());
+                platform.logInfo(finalLang != null ? finalLang.getMessage("antivpn.log.vpn-proxy", "%player%", name, "%ip%", ip, "%isp%", info.getIsp()) : "§c[AntiVPN] Blocking VPN/Proxy: " + name + " (" + ip + ") - ISP: " + info.getIsp());
                 return false;
             }
 
@@ -85,12 +89,12 @@ public class AntiVPNService {
             List<String> countries = config.getStringList("modules.antivpn.geo-blocking.countries");
             if (mode.equalsIgnoreCase("WHITELIST")) {
                 if (!countries.contains(info.getCountryCode())) {
-                    platform.logInfo("§c[AntiVPN] Blocking Geo (Not Whitelisted): " + name + " (" + ip + ") - Country: " + info.getCountryCode());
+                    platform.logInfo(finalLang != null ? finalLang.getMessage("antivpn.log.geo-not-whitelisted", "%player%", name, "%ip%", ip, "%country%", info.getCountryCode()) : "§c[AntiVPN] Blocking Geo (Not Whitelisted): " + name + " (" + ip + ") - Country: " + info.getCountryCode());
                     return false;
                 }
             } else if (mode.equalsIgnoreCase("BLACKLIST")) {
                 if (countries.contains(info.getCountryCode())) {
-                    platform.logInfo("§c[AntiVPN] Blocking Geo (Blacklisted): " + name + " (" + ip + ") - Country: " + info.getCountryCode());
+                    platform.logInfo(finalLang != null ? finalLang.getMessage("antivpn.log.geo-blacklisted", "%player%", name, "%ip%", ip, "%country%", info.getCountryCode()) : "§c[AntiVPN] Blocking Geo (Blacklisted): " + name + " (" + ip + ") - Country: " + info.getCountryCode());
                     return false;
                 }
             }
@@ -99,7 +103,7 @@ public class AntiVPNService {
             List<String> blockedISPs = config.getStringList("modules.antivpn.blocked-isps");
             for (String blockedIsp : blockedISPs) {
                 if (info.getIsp().toLowerCase().contains(blockedIsp.toLowerCase())) {
-                    platform.logInfo("§c[AntiVPN] Blocking ISP: " + name + " (" + ip + ") - ISP: " + info.getIsp());
+                    platform.logInfo(finalLang != null ? finalLang.getMessage("antivpn.log.isp", "%player%", name, "%ip%", ip, "%isp%", info.getIsp()) : "§c[AntiVPN] Blocking ISP: " + name + " (" + ip + ") - ISP: " + info.getIsp());
                     return false;
                 }
             }

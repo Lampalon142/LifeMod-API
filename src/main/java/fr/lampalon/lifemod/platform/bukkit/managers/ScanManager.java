@@ -2,6 +2,7 @@ package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.model.ScanResult;
@@ -38,9 +39,10 @@ public class ScanManager {
      * Scans for a specific item based on its material and custom data.
      */
     public CompletableFuture<ScanResult> scan(String type, String target, ItemStack targetItem, Consumer<String> progressCallback) {
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         return CompletableFuture.supplyAsync(() -> {
             ScanResult result = new ScanResult();
-            progressCallback.accept("§7Début du scan (" + type + ")...");
+            progressCallback.accept(lang.getMessage("scan.progress.starting", "%type%", type));
 
             if (type.equalsIgnoreCase("inventories") || type.equalsIgnoreCase("all")) {
                 scanInventories(target, targetItem, result, progressCallback);
@@ -61,6 +63,7 @@ public class ScanManager {
 
     private void scanMap(ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
         ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
         // Collecte des chunks DÉJÀ chargés sur le main thread (safe, rapide)
         CompletableFuture<Map<org.bukkit.World, List<Container>>> loadedFuture = new CompletableFuture<>();
@@ -83,7 +86,7 @@ public class ScanManager {
 
             // 1. Scan des chunks chargés (inventaire live)
             for (var entry : loadedContainers.entrySet()) {
-                progressCallback.accept("§7Scan de §e" + entry.getValue().size() + "§7 conteneurs chargés dans §a" + entry.getKey().getName());
+                progressCallback.accept(lang.getMessage("scan.progress.containers", "%count%", String.valueOf(entry.getValue().size()), "%world%", entry.getKey().getName()));
                 for (Container container : entry.getValue()) {
                     int count = countItems(container.getInventory().getContents(), targetItem);
                     if (count > 0) result.addLocation(container.getLocation(), count);
@@ -96,13 +99,14 @@ public class ScanManager {
             }
 
         } catch (Exception e) {
-            progressCallback.accept("§cErreur durant le scan: " + e.getMessage());
+            progressCallback.accept(lang.getMessage("scan.progress.error", "%message%", e.getMessage()));
         }
     }
 
     private void scanInventories(String target, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         if (target.equalsIgnoreCase("all")) {
-            progressCallback.accept("§7Scan des inventaires de tous les joueurs...");
+            progressCallback.accept(lang.getMessage("scan.progress.inventories-all"));
             for (Player player : Bukkit.getOnlinePlayers()) {
                 int count = countItems(player.getInventory().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
@@ -110,7 +114,7 @@ public class ScanManager {
         } else {
             Player player = Bukkit.getPlayer(target);
             if (player != null) {
-                progressCallback.accept("§7Scan de l'inventaire de " + player.getName() + "...");
+                progressCallback.accept(lang.getMessage("scan.progress.inventory-player", "%player%", player.getName()));
                 int count = countItems(player.getInventory().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
@@ -118,8 +122,9 @@ public class ScanManager {
     }
 
     private void scanEnderchests(String target, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         if (target.equalsIgnoreCase("all")) {
-            progressCallback.accept("§7Scan des Enderchests de tous les joueurs...");
+            progressCallback.accept(lang.getMessage("scan.progress.enderchests-all"));
             for (Player player : Bukkit.getOnlinePlayers()) {
                 int count = countItems(player.getEnderChest().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
@@ -127,7 +132,7 @@ public class ScanManager {
         } else {
             Player player = Bukkit.getPlayer(target);
             if (player != null) {
-                progressCallback.accept("§7Scan de l'Enderchest de " + player.getName() + "...");
+                progressCallback.accept(lang.getMessage("scan.progress.enderchest-player", "%player%", player.getName()));
                 int count = countItems(player.getEnderChest().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
@@ -184,13 +189,14 @@ public class ScanManager {
     }
 
     private void scanRegionFiles(org.bukkit.World world, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         File regionDir = new File(world.getWorldFolder(), "region");
         if (!regionDir.exists()) return;
 
         File[] regionFiles = regionDir.listFiles((d, name) -> name.endsWith(".mca"));
         if (regionFiles == null || regionFiles.length == 0) return;
 
-        progressCallback.accept("§7Lecture de §e" + regionFiles.length + "§7 fichiers région dans §a" + world.getName() + "§7...");
+        progressCallback.accept(lang.getMessage("scan.progress.region-files", "%files%", String.valueOf(regionFiles.length), "%world%", world.getName()));
 
         String targetMaterial = targetItem.getType().name();
         String targetIAId = (itemsAdderService != null && itemsAdderService.isEnabled())
@@ -204,7 +210,7 @@ public class ScanManager {
                 e.printStackTrace();
             }
         }
-        progressCallback.accept("§e" + found + "§7 items trouvés dans les fichiers région de §a" + world.getName());
+        progressCallback.accept(lang.getMessage("scan.progress.region-found", "%found%", String.valueOf(found), "%world%", world.getName()));
     }
 
     private int scanRegionFile(File regionFile, org.bukkit.World world, String targetMaterial, String targetIAId, ScanResult result) throws Exception {

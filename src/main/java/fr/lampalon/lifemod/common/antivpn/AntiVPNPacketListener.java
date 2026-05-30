@@ -10,7 +10,6 @@ import fr.lampalon.lifemod.common.service.ILangService;
 
 import com.github.retrooper.packetevents.wrapper.login.server.WrapperLoginServerDisconnect;
 import net.kyori.adventure.text.Component;
-import fr.lampalon.lifemod.common.utils.ColorUtil;
 import java.net.InetSocketAddress;
 
 public class AntiVPNPacketListener implements PacketListener {
@@ -38,7 +37,7 @@ public class AntiVPNPacketListener implements PacketListener {
                     ILangService lang = ServiceRegistry.get(ILangService.class);
                     String reason = lang != null ? lang.getMessage("antivpn.kick-reason", "vpn.anti-vpn.default") : "vpn.anti-vpn.default";
                     
-                    WrapperLoginServerDisconnect disconnect = new WrapperLoginServerDisconnect(Component.text(ColorUtil.format(reason)));
+                    WrapperLoginServerDisconnect disconnect = new WrapperLoginServerDisconnect(Component.text(reason));
                     event.getUser().sendPacket(disconnect);
                     event.getUser().closeConnection();
                 }

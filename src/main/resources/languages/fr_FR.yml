@@ -394,6 +394,16 @@ antialt:
   fingerprint: "&e• &fFingerprint : &7%fingerprint%"
   footer: "&8&m----------------------------------------"
   no-rules: "Aucune"
+  offline-note: "&cNote : L'analyse de joueurs hors-ligne n'est supportée que s'ils ont déjà été connectés."
+  color:
+    critical: "&4&l"
+    high: "&c"
+    medium: "&6"
+    low: "&e"
+  score:
+    low: "&a"
+    medium: "&e"
+    high: "&6"
   rules:
     EntropyHigh: "Haute Entropie"
     BadBigram: "Bigrammes Inhabituels"
@@ -405,6 +415,13 @@ antialt:
 
 antivpn:
   kick-reason: "&c&lLifeMod &7- &cLes VPN/Proxy ne sont pas autorisés."
+  log:
+    rate-limit: "&c[AntiVPN] Connexion bloquée (Limite Globale) : %player% (%ip%)"
+    ip-cooldown: "&c[AntiVPN] Connexion bloquée (Cooldown IP) : %player% (%ip%)"
+    vpn-proxy: "&c[AntiVPN] VPN/Proxy bloqué : %player% (%ip%) - FAI : %isp%"
+    geo-not-whitelisted: "&c[AntiVPN] Géo bloqué (Non autorisé) : %player% (%ip%) - Pays : %country%"
+    geo-blacklisted: "&c[AntiVPN] Géo bloqué (Liste noire) : %player% (%ip%) - Pays : %country%"
+    isp: "&c[AntiVPN] FAI bloqué : %player% (%ip%) - FAI : %isp%"
 
 vanish:
   activate: "&aVanish activé."
@@ -654,6 +671,26 @@ commands:
     invalid-duration: "&cFormat de durée invalide. Exemple : 5m, 10s. Max 1h."
     no-data: "&cAucune donnée trouvée pour la durée demandée."
     loading-frames: "&a&e%count%&a frames chargées depuis la session active pour &e%player%"
+    interaction:
+      paused: "&eReplay mis en pause."
+      resumed: "&aReprise du replay."
+      rewind: "&bRecul de 5 secondes..."
+      forward: "&bAvance de 5 secondes..."
+      speed-not-implemented: "&dContrôle de vitesse non implémenté."
+      exit: "&aSortie du mode replay. Votre état a été restauré."
+    gui:
+      stop: "&cStop"
+      pause: "&ePause"
+      play: "&aPlay/Speed x1"
+      speed: "&aSpeed x4"
+      title: "Replay Controls"
+    inventory:
+      title: "&8Replay Controls"
+      timeline: "&7Timeline"
+      play-pause: "&aPlay / Pause"
+      speed: "&eSpeed x1.0"
+      pov-switch: "&bPov Switch"
+      exit: "&cExit Replay"
 
   scan:
     usage: "&cUtilisation : /scan <map|inventories|enderchest|all> <joueur|all> <item|hand>"
@@ -670,6 +707,16 @@ commands:
     report-containers-header: "&e&lConteneurs :"
     report-container-entry: "  &7- &f%world% %x%, %y%, %z% : &e%count%"
     report-more: "  &7... et &e%count% &7autres positions."
+    progress:
+      starting: "&7Lancement du scan (%type%)..."
+      inventories-all: "&7Scan des inventaires de tous les joueurs..."
+      inventory-player: "&7Scan de l'inventaire de %player%..."
+      enderchests-all: "&7Scan des Enderchests de tous les joueurs..."
+      enderchest-player: "&7Scan de l'Enderchest de %player%..."
+      containers: "&7Scan de &e%count%&7 conteneurs chargés dans &a%world%"
+      region-files: "&7Lecture de &e%files%&7 fichiers région dans &a%world%&7..."
+      region-found: "&e%found%&7 items trouvés dans les fichiers région de &a%world%"
+      error: "&cErreur durant le scan : %message%"
 
   speed:
     provide: "%prefix%&cUtilisation : /speed <vitesse> [joueur]"
@@ -693,3 +740,7 @@ alts:
   header: "&8&m----------------------------------------\n&6&lComptes liés pour &e%ip%\n "
   entry: " &8• %color%%name% &7(%uuid%...)"
   footer: "&8&m----------------------------------------"
+  color:
+    online: "&a"
+    offline: "&7"
+    banned: "&c"

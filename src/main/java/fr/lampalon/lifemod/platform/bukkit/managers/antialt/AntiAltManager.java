@@ -6,6 +6,7 @@ import fr.lampalon.lifemod.common.antialt.HeuristicRule;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.utils.NetworkUtil;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
@@ -75,7 +76,7 @@ public class AntiAltManager {
 
     private void processDecision(Player player, AnalysisResult result, String ip) {
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         int score = result.getDangerScore();
 
         int logSilent = config.getInt("modules.antialt.thresholds.log-silent", 30);
@@ -95,7 +96,7 @@ public class AntiAltManager {
     }
 
     private void sendAuditAlert(Player player, AnalysisResult result, String ip, String action, boolean priority) {
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         
         String signals = result.getTriggeredRules().stream()
                 .map(rule -> lang.getMessage("antialt.signal-format", "%reason%", rule.getReason()))
@@ -103,7 +104,7 @@ public class AntiAltManager {
 
         String message = lang.getMessage("antialt.audit-alert",
                 "%player%", player.getName(),
-                "%score_color%", getScoreColor(result.getDangerScore()),
+                "%score_color%", getScoreColor(result.getDangerScore(), lang),
                 "%score%", String.valueOf(result.getDangerScore()),
                 "%uuid%", player.getUniqueId().toString(),
                 "%ip%", ip,
@@ -122,10 +123,10 @@ public class AntiAltManager {
         }
     }
 
-    private String getScoreColor(int score) {
-        if (score >= 85) return "§4§l";
-        if (score >= 70) return "§c";
-        if (score >= 50) return "§6";
-        return "§e";
+    private String getScoreColor(int score, ILangService lang) {
+        if (score >= 85) return lang.getMessage("antialt.color.critical");
+        if (score >= 70) return lang.getMessage("antialt.color.high");
+        if (score >= 50) return lang.getMessage("antialt.color.medium");
+        return lang.getMessage("antialt.color.low");
     }
 }

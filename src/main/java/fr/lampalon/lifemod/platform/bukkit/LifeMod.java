@@ -340,15 +340,15 @@ public class LifeMod extends JavaPlugin {
     }
 
     private void printStartupMessage(long elapsed, String nmsVersion) {
-        getLogger().info("§8§m----------------------------------------");
-        getLogger().info("§6§lLifeMod §7- §aSuccessfully Enabled");
+        getLogger().info("&8&m----------------------------------------");
+        getLogger().info("&6&lLifeMod &7- &aSuccessfully Enabled");
         getLogger().info(" ");
-        getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        getLogger().info("§e• §fPlatform: §b" + nmsVersion + "§e)");
-        getLogger().info("§e• §fDatabase: §a" + configConfig.getString("database.type").toUpperCase());
-        getLogger().info("§e• §fCommands: §aAuto-Registered (" + commandRegistry.getCommands().size() + ")");
-        getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
-        getLogger().info("§8§m----------------------------------------");
+        getLogger().info("&e• &fVersion: &b" + getDescription().getVersion());
+        getLogger().info("&e• &fPlatform: &b" + nmsVersion + "&e)");
+        getLogger().info("&e• &fDatabase: &a" + configConfig.getString("database.type").toUpperCase());
+        getLogger().info("&e• &fCommands: &aAuto-Registered (" + commandRegistry.getCommands().size() + ")");
+        getLogger().info("&e• &fStartup Time: &e" + elapsed + "ms");
+        getLogger().info("&8&m----------------------------------------");
     }
 
     @Override

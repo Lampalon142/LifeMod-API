@@ -121,5 +121,15 @@ antialt:
     IPHistory: "Suspicious IP History"
     PatternMatch: "Pattern Match"
 
+antivpn:
+  kick-reason: "&c&lLifeMod &7- &cVPN/Proxy are not allowed on this server."
+  log:
+    rate-limit: "&c[AntiVPN] Blocking connection (Global Rate Limit): %player% (%ip%)"
+    ip-cooldown: "&c[AntiVPN] Blocking connection (IP Cooldown): %player% (%ip%)"
+    vpn-proxy: "&c[AntiVPN] Blocking VPN/Proxy: %player% (%ip%) - ISP: %isp%"
+    geo-not-whitelisted: "&c[AntiVPN] Blocking Geo (Not Whitelisted): %player% (%ip%) - Country: %country%"
+    geo-blacklisted: "&c[AntiVPN] Blocking Geo (Blacklisted): %player% (%ip%) - Country: %country%"
+    isp: "&c[AntiVPN] Blocking ISP: %player% (%ip%) - ISP: %isp%"
+
 # Metadata
-version: 200
+version: 201

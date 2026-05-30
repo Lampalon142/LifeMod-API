@@ -121,5 +121,15 @@ antialt:
     IPHistory: "Historique IP Suspect"
     PatternMatch: "Correspondance de Motif"
 
+antivpn:
+  kick-reason: "&c&lLifeMod &7- &cLes VPN/Proxy ne sont pas autorisés."
+  log:
+    rate-limit: "&c[AntiVPN] Connexion bloquée (Limite Globale) : %player% (%ip%)"
+    ip-cooldown: "&c[AntiVPN] Connexion bloquée (Cooldown IP) : %player% (%ip%)"
+    vpn-proxy: "&c[AntiVPN] VPN/Proxy bloqué : %player% (%ip%) - FAI : %isp%"
+    geo-not-whitelisted: "&c[AntiVPN] Géo bloqué (Non autorisé) : %player% (%ip%) - Pays : %country%"
+    geo-blacklisted: "&c[AntiVPN] Géo bloqué (Liste noire) : %player% (%ip%) - Pays : %country%"
+    isp: "&c[AntiVPN] FAI bloqué : %player% (%ip%) - FAI : %isp%"
+
 # Metadata
-version: 200
+version: 201

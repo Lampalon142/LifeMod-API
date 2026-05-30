@@ -89,17 +89,17 @@ public class BungeeLifeMod extends Plugin {
 
         long elapsed = System.currentTimeMillis() - start;
 
-        getLogger().info("§8§m----------------------------------------");
-        getLogger().info("§6§lLifeMod §bBungee §7- §aSuccessfully Enabled");
+        getLogger().info("&8&m----------------------------------------");
+        getLogger().info("&6&lLifeMod &bBungee &7- &aSuccessfully Enabled");
         getLogger().info(" ");
-        getLogger().info("§e• §fVersion: §b" + getDescription().getVersion());
-        getLogger().info("§e• §fPlatform: §aBungeeCord");
-        getLogger().info("§e• §fInstance: §d" + ProxyServer.getInstance().getVersion());
-        getLogger().info("§e• §fDatabase: §a" + config.getString("database.type", "mysql").toUpperCase());
-        getLogger().info("§e• §fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "§aEnabled" : "§cDisabled"));
-        getLogger().info("§e• §fStartup Time: §e" + elapsed + "ms");
+        getLogger().info("&e• &fVersion: &b" + getDescription().getVersion());
+        getLogger().info("&e• &fPlatform: &aBungeeCord");
+        getLogger().info("&e• &fInstance: &d" + ProxyServer.getInstance().getVersion());
+        getLogger().info("&e• &fDatabase: &a" + config.getString("database.type", "mysql").toUpperCase());
+        getLogger().info("&e• &fRedis Sync: " + (config.getBoolean("redis.enabled", false) ? "&aEnabled" : "&cDisabled"));
+        getLogger().info("&e• &fStartup Time: &e" + elapsed + "ms");
         getLogger().info(" ");
-        getLogger().info("§8§m----------------------------------------");
+        getLogger().info("&8&m----------------------------------------");
     }
 
     private void loadConfigs() {

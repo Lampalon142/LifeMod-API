@@ -104,16 +104,16 @@ public class PlayerJoin implements Listener {
 
                 for (int i = 0; i < alts.size(); i++) {
                     PlayerData alt = alts.get(i);
-                    String color = "&7";
-                    if (Bukkit.getPlayer(alt.getUuid()) != null) color = "&a";
+                    String color = lang.getMessage("alts.color.offline");
+                    if (Bukkit.getPlayer(alt.getUuid()) != null) color = lang.getMessage("alts.color.online");
 
                     Sanction ban = futures.get(i).join();
                     if (ban != null) {
                         evasion = true;
-                        color = "&c";
+                        color = lang.getMessage("alts.color.banned");
                     }
 
-                    accounts.append(color).append(alt.getLastName()).append("&7, ");
+                    accounts.append(color).append(alt.getLastName()).append(lang.getMessage("alts.color.offline")).append(", ");
                 }
 
                 if (evasion) {

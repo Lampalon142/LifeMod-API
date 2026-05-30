@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.replay.listeners;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager;
 import org.bukkit.Material;
@@ -34,29 +36,30 @@ public class ReplayInteractionListener implements Listener {
         if (pm == null) return;
 
         event.setCancelled(true);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         String name = item.getItemMeta().hasDisplayName() ? item.getItemMeta().getDisplayName() : "";
 
         switch (item.getType()) {
             case CLOCK:
                 boolean paused = !pm.isPaused();
                 pm.setPaused(paused);
-                player.sendMessage(paused ? "§eReplay mis en pause." : "§aReprise du replay.");
+                player.sendMessage(lang.getMessage(paused ? "replay.interaction.paused" : "replay.interaction.resumed"));
                 break;
             case ARROW:
                 if (name.contains("Reculer")) {
                     pm.seekTo(player, pm.getCurrentIndex() - 100);
-                    player.sendMessage("§bRecul de 5 secondes...");
+                    player.sendMessage(lang.getMessage("replay.interaction.rewind"));
                 } else {
                     pm.seekTo(player, pm.getCurrentIndex() + 100);
-                    player.sendMessage("§bAvance de 5 secondes...");
+                    player.sendMessage(lang.getMessage("replay.interaction.forward"));
                 }
                 break;
             case BOOK:
-                player.sendMessage("§dContrôle de vitesse non implémenté.");
+                player.sendMessage(lang.getMessage("replay.interaction.speed-not-implemented"));
                 break;
             case BARRIER:
                 rpm.exitReplay(player);
-                player.sendMessage("§aSortie du mode replay. Votre état a été restauré.");
+                player.sendMessage(lang.getMessage("replay.interaction.exit"));
                 break;
             default:
                 break;
