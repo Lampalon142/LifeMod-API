@@ -79,7 +79,9 @@ public class ModCancels implements Listener {
 
   @EventHandler(priority = EventPriority.HIGHEST)
   public void onPlayerInteract(PlayerInteractEvent e) {
-    if (isRestricted(e.getPlayer())) {
+    boolean restricted = isRestricted(e.getPlayer());
+    debug.log("mod", "ModCancels.onPlayerInteract: " + e.getPlayer().getName() + " action=" + e.getAction() + " restricted=" + restricted + " cancelled=" + e.isCancelled());
+    if (restricted) {
       e.setCancelled(true);
       debug.log("mod", e.getPlayer().getName() + " tried to interact in mod/freeze mode");
     }

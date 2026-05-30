@@ -446,5 +446,16 @@ auth:
       clear: 43
       validate: 52
 
+# --- DEBUG ---
+debug:
+  enabled: false
+  log-level: "INFO"
+  modules:
+    staff: false
+    freeze: false
+    vanish: false
+    mod: false
+    chat: false
+
 # Metadata
 version: 201

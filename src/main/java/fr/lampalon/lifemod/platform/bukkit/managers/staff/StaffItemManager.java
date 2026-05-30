@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.model.StaffItem;
 import fr.lampalon.lifemod.platform.bukkit.utils.ItemBuilder;
@@ -21,11 +22,13 @@ import java.util.Map;
 public class StaffItemManager {
 
     private final LifeMod plugin;
+    private final DebugManager debug;
     private final Map<String, StaffItem> staffItems = new HashMap<>();
     private final NamespacedKey itemKey;
 
     public StaffItemManager(LifeMod plugin) {
         this.plugin = plugin;
+        this.debug = plugin.getDebugManager();
         this.itemKey = new NamespacedKey(plugin, "staff_item_id");
         loadItems();
     }
@@ -39,9 +42,14 @@ public class StaffItemManager {
             return;
         }
 
+        debug.log("staff", "loadItems: found section with keys=" + section.getKeys(false));
+
         for (String key : section.getKeys(false)) {
             ConfigurationSection itemSec = section.getConfigurationSection(key);
-            if (itemSec == null || !itemSec.getBoolean("enabled", true)) continue;
+            if (itemSec == null || !itemSec.getBoolean("enabled", true)) {
+                debug.log("staff", "loadItems: skipping " + key + " (disabled or null)");
+                continue;
+            }
 
             try {
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
@@ -110,6 +118,7 @@ public class StaffItemManager {
 
                 StaffItem staffItem = new StaffItem(key, finalStack, slot, actionScripts);
                 staffItems.put(key, staffItem);
+                debug.log("staff", "loadItems: loaded " + key + " slot=" + slot + " mat=" + material + " actions=" + actionScripts);
 
             } catch (Exception e) {
                 plugin.getLogger().severe("Error loading staff item: " + key);
@@ -119,17 +128,35 @@ public class StaffItemManager {
     }
 
     public void giveItems(Player player) {
+        debug.log("staff", "giveItems: giving " + staffItems.size() + " items to " + player.getName());
         for (StaffItem item : staffItems.values()) {
             player.getInventory().setItem(item.getSlot(), item.getItemStack());
+            debug.log("staff", "giveItems: set slot=" + item.getSlot() + " key=" + item.getKey());
         }
     }
 
     public StaffItem getStaffItem(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) return null;
-        
-        String key = item.getItemMeta().getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
-        if (key == null) return null;
+        if (item == null) {
+            debug.log("staff", "getStaffItem: item is null");
+            return null;
+        }
+        if (item.getType() == Material.AIR) {
+            debug.log("staff", "getStaffItem: item is AIR");
+            return null;
+        }
+        if (!item.hasItemMeta()) {
+            debug.log("staff", "getStaffItem: item has no ItemMeta, type=" + item.getType());
+            return null;
+        }
 
-        return staffItems.get(key);
+        String key = item.getItemMeta().getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
+        if (key == null) {
+            debug.log("staff", "getStaffItem: no PDC key found for " + item.getType());
+            return null;
+        }
+
+        StaffItem result = staffItems.get(key);
+        debug.log("staff", "getStaffItem: found key=" + key + " result=" + (result == null ? "null" : result.getKey()));
+        return result;
     }
 }

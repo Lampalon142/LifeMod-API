@@ -27,16 +27,23 @@ public class FreezeManager {
     }
 
     public void freezePlayer(Player moderator, Player target) {
-        if (isPlayerFrozen(target.getUniqueId())) return;
+        debug.log("freeze", "freezePlayer called: moderator=" + moderator.getName() + " target=" + target.getName());
+        if (isPlayerFrozen(target.getUniqueId())) {
+            debug.log("freeze", "freezePlayer: " + target.getName() + " is already frozen, returning");
+            return;
+        }
 
         try {
             ItemStack helmet = target.getInventory().getHelmet();
+            debug.log("freeze", "freezePlayer: current helmet=" + (helmet == null ? "null" : helmet.getType().name()));
             if (helmet != null) {
-                playerHelmets.put(target.getUniqueId(), helmet);
+                playerHelmets.put(target.getUniqueId(), helmet.clone());
+                debug.log("freeze", "freezePlayer: saved original helmet for " + target.getName());
             }
-            frozenPlayers.put(target.getUniqueId(), target.getLocation());
+            frozenPlayers.put(target.getUniqueId(), target.getLocation().clone());
             IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
             String helmetMat = config.getString("modules.mod-mode.items.freeze.helmet-material", "PACKED_ICE");
+            debug.log("freeze", "freezePlayer: setting helmet to " + helmetMat);
             target.getInventory().setHelmet(new ItemStack(Material.valueOf(helmetMat)));
             
             fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
@@ -44,24 +51,30 @@ public class FreezeManager {
                 target.sendMessage(line);
             }
             
-            debug.log("freeze", moderator.getName() + " froze " + target.getName());
+            debug.log("freeze", moderator.getName() + " froze " + target.getName() + " | frozenPlayers.size=" + frozenPlayers.size());
         } catch (Exception e) {
             debug.userError(moderator, "Error while freezing " + target.getName(), e);
         }
     }
 
     public void unfreezePlayer(Player moderator, Player target) {
+        debug.log("freeze", "unfreezePlayer called: moderator=" + moderator.getName() + " target=" + target.getName());
         try {
             if (frozenPlayers.containsKey(target.getUniqueId())) {
                 target.getInventory().setHelmet(null);
+                debug.log("freeze", "unfreezePlayer: removed ice helmet");
                 if (playerHelmets.containsKey(target.getUniqueId())) {
-                    target.getInventory().setHelmet(playerHelmets.get(target.getUniqueId()));
+                    ItemStack originalHelmet = playerHelmets.get(target.getUniqueId());
+                    debug.log("freeze", "unfreezePlayer: restoring original helmet " + originalHelmet.getType());
+                    target.getInventory().setHelmet(originalHelmet);
                     playerHelmets.remove(target.getUniqueId());
                 }
                 frozenPlayers.remove(target.getUniqueId());
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
                 target.sendMessage(lang.getMessage("commands.freeze.messages.unfreeze.target", "%player%", moderator.getName()));
-                debug.log("freeze", moderator.getName() + " unfroze " + target.getName());
+                debug.log("freeze", moderator.getName() + " unfroze " + target.getName() + " | frozenPlayers.size=" + frozenPlayers.size());
+            } else {
+                debug.log("freeze", "unfreezePlayer: " + target.getName() + " is not in frozenPlayers map!");
             }
         } catch (Exception e) {
             debug.userError(moderator, "Error while unfreezing " + target.getName(), e);
@@ -69,6 +82,7 @@ public class FreezeManager {
     }
 
     public void handleQuit(UUID playerId) {
+        debug.log("freeze", "handleQuit: " + playerId + " | was in frozenPlayers=" + frozenPlayers.containsKey(playerId));
         playerHelmets.remove(playerId);
         frozenPlayers.remove(playerId);
     }
