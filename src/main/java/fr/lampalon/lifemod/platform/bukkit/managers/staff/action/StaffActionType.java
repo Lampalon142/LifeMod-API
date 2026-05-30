@@ -1,28 +1,29 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
 public enum StaffActionType {
-    // Navigation
-    THRU,
-    JUMP,
-    
-    // Inspection
-    INSPECT_INVENTORY,
-    SILENT_CHEST,
-    
-    // Control
-    FREEZE,
-    MOUNT,
-    RANDOM_TP,
-    
-    // Analysis
-    CPS_TESTER,
-    KNOCKBACK_TESTER,
-    INFO_VIEWER,
-    
-    // Utility
-    VANISH,
-    COMMAND; 
-    
+    THRU(false),
+    JUMP(false),
+    INSPECT_INVENTORY(true),
+    SILENT_CHEST(true),
+    FREEZE(true),
+    MOUNT(true),
+    RANDOM_TP(false),
+    CPS_TESTER(true),
+    KNOCKBACK_TESTER(true),
+    INFO_VIEWER(true),
+    VANISH(false),
+    COMMAND(false);
+
+    private final boolean requiresTarget;
+
+    StaffActionType(boolean requiresTarget) {
+        this.requiresTarget = requiresTarget;
+    }
+
+    public boolean requiresTarget() {
+        return requiresTarget;
+    }
+
     public static StaffActionType fromString(String name) {
         try {
             return valueOf(name.toUpperCase());

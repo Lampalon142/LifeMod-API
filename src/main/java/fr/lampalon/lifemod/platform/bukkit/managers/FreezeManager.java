@@ -9,13 +9,13 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FreezeManager {
-    private final Map<UUID, ItemStack> playerHelmets = new HashMap<>();
-    private final Map<UUID, Location> frozenPlayers = new HashMap<>();
+    private final Map<UUID, ItemStack> playerHelmets = new ConcurrentHashMap<>();
+    private final Map<UUID, Location> frozenPlayers = new ConcurrentHashMap<>();
     private final DebugManager debug;
 
     public FreezeManager() {

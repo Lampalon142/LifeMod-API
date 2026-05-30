@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.model.StaffItem;
 import org.bukkit.entity.Player;
@@ -51,9 +52,6 @@ public class StaffListener implements Listener {
 
         if (!staffModeManager.isMod(player)) return;
 
-        // RIGHT_CLICK_AIR is always skipped — the entity event handles entity clicks
-        if (event.getAction() == Action.RIGHT_CLICK_AIR) return;
-
         event.setCancelled(true);
 
         StaffItem staffItem = getStaffItemFromHand(player);
@@ -64,6 +62,10 @@ public class StaffListener implements Listener {
 
         List<String> scripts = staffItem.getScripts(clickType);
         if (scripts == null || scripts.isEmpty()) return;
+
+        // For RIGHT_CLICK_AIR, skip if the item's scripts contain a NATIVE action
+        // that needs an entity/block target — the PlayerInteractEntityEvent will handle it.
+        if (event.getAction() == Action.RIGHT_CLICK_AIR && scriptsRequireTarget(scripts)) return;
 
         StaffActionContext context = new StaffActionContext(player, staffItem, clickType, event, null, null);
         scriptExecutor.execute(context, scripts);
@@ -187,5 +189,20 @@ public class StaffListener implements Listener {
         if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) return "RIGHT_CLICK";
         if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR) return "LEFT_CLICK";
         return null;
+    }
+
+    private boolean scriptsRequireTarget(List<String> scripts) {
+        for (String script : scripts) {
+            String upper = script.toUpperCase().trim();
+            String actionPart;
+            if (upper.startsWith("[NATIVE]")) {
+                actionPart = script.substring(8).trim();
+            } else {
+                actionPart = script.trim();
+            }
+            StaffActionType type = StaffActionType.fromString(actionPart);
+            if (type != null && type.requiresTarget()) return true;
+        }
+        return false;
     }
 }
