@@ -42,7 +42,7 @@ public class StaffNoteItem extends AbstractItem {
                 .addLoreLines(
                         lang.getMessage("reports.gui.notes.item-date", "%date%", sdf.format(new Date(note.getCreatedAt()))),
                         "",
-                        "§f" + note.getContent(),
+                        lang.getMessage("reports.gui.notes.content-format", "%content%", note.getContent()),
                         "",
                         lang.getMessage("reports.gui.notes.item-edit"),
                         lang.getMessage("reports.gui.notes.item-delete")

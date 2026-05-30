@@ -56,7 +56,7 @@ public class GuiDetailListener implements Listener {
                 Location loc = new Location(Bukkit.getWorld(report.getLocationWorld()), report.getX(), report.getY(), report.getZ());
                 player.teleport(loc);
                 fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-                player.sendMessage(lang.getMessage("reports.teleport-success"));
+                player.sendMessage(lang.getMessage("reports.gui.detail.teleport-success"));
             }
         } else if ("back".equals(action)) {
             new ReportMainMenu(player, plugin.getDatabaseManager().getDatabaseProvider().getAllReports(100, 0)).open();

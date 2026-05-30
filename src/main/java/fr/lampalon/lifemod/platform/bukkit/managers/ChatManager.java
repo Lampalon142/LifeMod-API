@@ -69,7 +69,7 @@ public class ChatManager implements Listener {
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("lifemod.chat.views")) {
-                String notification = lang.getMessage("chatManager.notification",
+                String notification = lang.getMessage("commands.chat.forbidden-word",
                         "%player%", sender.getName(),
                         "%word%", word);
                 player.sendMessage(notification);

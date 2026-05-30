@@ -32,7 +32,7 @@ public class Staffchatevent implements Listener {
                 event.setCancelled(true);
                 String rawMsg = message.substring(prefix.length());
 
-                String staffMessage = lang.getMessage("commands.staffchat.format",
+                String staffMessage = lang.getMessage("commands.staffchat.message",
                         "%player%", player.getName(),
                         "%message%", rawMsg);
 

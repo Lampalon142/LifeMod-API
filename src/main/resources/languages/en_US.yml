@@ -211,6 +211,7 @@ reports:
       title: "&6Notes: &e#%id%"
       add: "&a✚ Add a note"
       prompt: "&aType your note in chat (or 'cancel' to abort)"
+      content-format: "&f%content%"
       item-title: "&eNote by &f%author%"
       item-date: "&7Date: &f%date%"
       item-edit: "&eLeft-click to edit"
@@ -489,7 +490,7 @@ commands:
     toggle-on: "&aGlobal chat is now &2enabled&a."
     toggle-off: "&cGlobal chat is now &4disabled&c."
     blocked: "&cChat is currently disabled."
-    forbidden-word: "&c%player% attempted to send a forbidden word!"
+    forbidden-word: "&c%player% attempted to send a forbidden word (%word%)!"
 
   teleport:
     usage: "%prefix%&cUsage: /tp <player> [target] or <x> <y> <z>"

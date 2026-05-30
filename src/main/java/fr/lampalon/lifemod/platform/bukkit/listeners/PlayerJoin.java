@@ -119,7 +119,7 @@ public class PlayerJoin implements Listener {
                 if (evasion) {
                     String accountList = accounts.length() > 2 ? accounts.substring(0, accounts.length() - 2) : "";
 
-                    String alert = lang.getMessage("alts.evasion-alert",
+                    String alert = lang.getMessage("gui.alts.evasion-alert",
                             "%player%", player.getName(),
                             "%accounts%", accountList,
                             "%ip%", ip);

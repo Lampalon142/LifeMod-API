@@ -97,7 +97,7 @@ public class ModeratorAuthListener implements Listener {
                 return;
             }
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("commands.auth.blocked-action"));
+            player.sendMessage(lang.getMessage("auth.blocked-action"));
             event.setCancelled(true);
         }
     }
@@ -112,7 +112,7 @@ public class ModeratorAuthListener implements Listener {
                 return;
             }
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("commands.auth.blocked-action"));
+            player.sendMessage(lang.getMessage("auth.blocked-action"));
             event.setCancelled(true);
         }
     }
@@ -140,7 +140,7 @@ public class ModeratorAuthListener implements Listener {
         Player player = event.getPlayer();
         if (needsAuth(player)) {
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("commands.auth.blocked-chat"));
+            player.sendMessage(lang.getMessage("auth.blocked-chat"));
             event.setCancelled(true);
         }
     }
@@ -150,7 +150,7 @@ public class ModeratorAuthListener implements Listener {
         Player player = event.getPlayer();
         if (needsAuth(player)) {
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("commands.auth.blocked-action"));
+            player.sendMessage(lang.getMessage("auth.blocked-action"));
             event.setCancelled(true);
         }
     }
@@ -161,7 +161,7 @@ public class ModeratorAuthListener implements Listener {
         Player player = (Player) event.getEntity();
         if (needsAuth(player)) {
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("commands.auth.blocked-action"));
+            player.sendMessage(lang.getMessage("auth.blocked-action"));
             event.setCancelled(true);
         }
     }
