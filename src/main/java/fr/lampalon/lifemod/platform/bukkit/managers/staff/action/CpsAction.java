@@ -2,12 +2,11 @@ package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.Deque;
 import java.util.HashMap;
@@ -19,16 +18,16 @@ public class CpsAction implements IStaffAction {
     private final Map<UUID, UUID> activeTests = new HashMap<>();
 
     @Override
-    public void onInteract(Player player, PlayerInteractEvent event) {
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        player.sendMessage(lang.getMessage("mod.items.no-target"));
-    }
+    public void execute(StaffActionContext context) {
+        Player player = context.getPlayer();
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
-    @Override
-    public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
-        if (!(event.getRightClicked() instanceof Player)) return;
-        Player target = (Player) event.getRightClicked();
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        if (!context.hasEntityTarget() || !(context.getTargetEntity() instanceof Player)) {
+            player.sendMessage(lang.getMessage("mod.items.no-target"));
+            return;
+        }
+
+        Player target = (Player) context.getTargetEntity();
 
         if (activeTests.containsKey(player.getUniqueId())) {
             player.sendMessage(lang.getMessage("mod.items.cps.already-active"));
@@ -49,8 +48,7 @@ public class CpsAction implements IStaffAction {
 
             Deque<Long> clicks = LifeMod.getInstance().getCpsMap().get(target.getUniqueId());
             if (clicks == null || clicks.isEmpty()) {
-                player.sendMessage(lang.getMessage("mod.items.cps.finish-none",
-                        "%target%", target.getName()));
+                player.sendMessage(lang.getMessage("mod.items.cps.finish-none", "%target%", target.getName()));
                 return;
             }
 
@@ -70,10 +68,8 @@ public class CpsAction implements IStaffAction {
             player.sendMessage(lang.getMessage("mod.items.cps.result-title", "%target%", target.getName()));
             player.sendMessage(lang.getMessage("mod.items.cps.result-avg", "%cps%", String.format("%.2f", cps)));
             player.sendMessage(lang.getMessage("mod.items.cps.result-total", "%clicks%", String.valueOf(clicksDuringTest.size())));
-            player.sendMessage(lang.getMessage("mod.items.cps.result-autoclicker",
-                    "%result%", resultStatus));
+            player.sendMessage(lang.getMessage("mod.items.cps.result-autoclicker", "%result%", resultStatus));
             player.sendMessage(lang.getMessage("mod.items.cps.result-footer"));
-
         }, duration * 20L);
     }
 }

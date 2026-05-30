@@ -1,11 +1,11 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 public class FreezeAction implements IStaffAction {
 
@@ -16,31 +16,28 @@ public class FreezeAction implements IStaffAction {
     }
 
     @Override
-    public void onInteract(Player player, PlayerInteractEvent event) {
-        debug.log("freeze", "FreezeAction.onInteract (no target) for " + player.getName());
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        player.sendMessage(lang.getMessage("mod.items.no-target"));
-    }
+    public void execute(StaffActionContext context) {
+        Player player = context.getPlayer();
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
-    @Override
-    public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
-        debug.log("freeze", "FreezeAction.onInteractEntity for " + player.getName() + " target=" + event.getRightClicked().getName());
-        if (event.getRightClicked() instanceof Player) {
-            Player target = (Player) event.getRightClicked();
-            LifeMod plugin = LifeMod.getInstance();
-            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-            
-            if (plugin.getFreezeManager().isPlayerFrozen(target.getUniqueId())) {
-                debug.log("freeze", "FreezeAction: unfreezing " + target.getName());
-                plugin.getFreezeManager().unfreezePlayer(player, target);
-                player.sendMessage(lang.getMessage("mod.items.freeze-off", "%player%", target.getName()));
-            } else {
-                debug.log("freeze", "FreezeAction: freezing " + target.getName());
-                plugin.getFreezeManager().freezePlayer(player, target);
-                player.sendMessage(lang.getMessage("mod.items.freeze-on", "%player%", target.getName()));
-            }
+        if (!context.hasEntityTarget() || !(context.getTargetEntity() instanceof Player)) {
+            debug.log("freeze", "FreezeAction: no player target for " + player.getName());
+            player.sendMessage(lang.getMessage("mod.items.no-target"));
+            return;
+        }
+
+        Player target = (Player) context.getTargetEntity();
+        debug.log("freeze", "FreezeAction: target=" + target.getName());
+
+        LifeMod plugin = LifeMod.getInstance();
+        if (plugin.getFreezeManager().isPlayerFrozen(target.getUniqueId())) {
+            debug.log("freeze", "FreezeAction: unfreezing " + target.getName());
+            plugin.getFreezeManager().unfreezePlayer(player, target);
+            player.sendMessage(lang.getMessage("mod.items.freeze-off", "%player%", target.getName()));
         } else {
-            debug.log("freeze", "FreezeAction: right-clicked entity is not a Player, it's " + event.getRightClicked().getType());
+            debug.log("freeze", "FreezeAction: freezing " + target.getName());
+            plugin.getFreezeManager().freezePlayer(player, target);
+            player.sendMessage(lang.getMessage("mod.items.freeze-on", "%player%", target.getName()));
         }
     }
 }

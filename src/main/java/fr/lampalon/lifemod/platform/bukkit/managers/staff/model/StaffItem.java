@@ -9,7 +9,7 @@ public class StaffItem {
     private final String key;
     private final ItemStack itemStack;
     private final int slot;
-    private final Map<String, List<String>> actionScripts; // ex: "RIGHT_CLICK" -> ["[PLAYER] jump", "[SOUND] ..."]
+    private final Map<String, List<String>> actionScripts;
 
     public StaffItem(String key, ItemStack itemStack, int slot, Map<String, List<String>> actionScripts) {
         this.key = key;

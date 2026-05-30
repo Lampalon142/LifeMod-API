@@ -1,11 +1,11 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff.action;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.Deque;
 
@@ -18,26 +18,22 @@ public class InfoViewerAction implements IStaffAction {
     }
 
     @Override
-    public void onInteract(Player player, PlayerInteractEvent event) {
-        debug.log("staff", "InfoViewerAction.onInteract for " + player.getName());
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        player.sendMessage(lang.getMessage("mod.items.info.usage"));
-    }
+    public void execute(StaffActionContext context) {
+        Player player = context.getPlayer();
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
-    @Override
-    public void onInteractEntity(Player player, PlayerInteractEntityEvent event) {
-        debug.log("staff", "InfoViewerAction.onInteractEntity for " + player.getName());
-        if (!(event.getRightClicked() instanceof Player)) {
-            debug.log("staff", "InfoViewerAction: target not a player, it's " + event.getRightClicked().getType());
+        if (!context.hasEntityTarget() || !(context.getTargetEntity() instanceof Player)) {
+            debug.log("staff", "InfoViewerAction: no player target for " + player.getName());
+            player.sendMessage(lang.getMessage("mod.items.info.usage"));
             return;
         }
-        Player target = (Player) event.getRightClicked();
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+
+        Player target = (Player) context.getTargetEntity();
+        debug.log("staff", "InfoViewerAction: viewing info for " + target.getName());
 
         int ping = target.getPing();
         Deque<Long> clicks = LifeMod.getInstance().getCpsMap().get(target.getUniqueId());
         int cps = (clicks != null) ? (int) clicks.stream().filter(t -> System.currentTimeMillis() - t <= 1000).count() : 0;
-        debug.log("staff", "InfoViewerAction: ping=" + ping + " cps=" + cps + " gm=" + target.getGameMode());
 
         String gmKey = "mod.items.info.gamemodes." + target.getGameMode().name().toLowerCase();
         String gmName = lang.getMessage(gmKey);
