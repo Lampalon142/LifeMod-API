@@ -2,9 +2,9 @@ package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.events.vanish.PlayerVanishStateChangeEvent;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -22,7 +22,7 @@ public class VanishService implements IVanishService {
     private final LifeMod plugin;
     private final Set<UUID> vanishedPlayers = new HashSet<>();
     private final NamespacedKey vanishKey;
-    private final String METADATA_KEY = "vanished";
+    private static final String METADATA_KEY = "vanished";
 
     public void handleQuit(UUID uuid) {
         vanishedPlayers.remove(uuid);
@@ -120,7 +120,7 @@ public class VanishService implements IVanishService {
     }
 
     private void broadcastFakeQuit(Player player) {
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         String formatted = lang.getMessage("vanish.fake-quit", "%player%", player.getName());
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))
@@ -128,7 +128,7 @@ public class VanishService implements IVanishService {
     }
 
     private void broadcastFakeJoin(Player player) {
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         String formatted = lang.getMessage("vanish.fake-join", "%player%", player.getName());
         Bukkit.getOnlinePlayers().stream()
                 .filter(p -> !p.hasPermission("lifemod.vanish.see"))

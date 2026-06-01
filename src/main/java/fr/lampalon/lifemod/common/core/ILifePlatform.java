@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.common.core;
 
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+
 import java.util.UUID;
 
 public interface ILifePlatform {
@@ -57,5 +59,5 @@ public interface ILifePlatform {
     /**
      * Get the NMS provider for the current platform.
      */
-    fr.lampalon.lifemod.common.nms.api.NMSProvider getNmsProvider();
+    NMSProvider getNmsProvider();
 }

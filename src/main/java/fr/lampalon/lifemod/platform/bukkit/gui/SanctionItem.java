@@ -3,8 +3,8 @@ package fr.lampalon.lifemod.platform.bukkit.gui;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -44,7 +44,7 @@ public class SanctionItem extends AbstractItem {
         
         String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            ILangService lang = ServiceRegistry.get(ILangService.class);
         
         List<String> lore = new ArrayList<>();
         lore.add(lang.getMessage("gui.history.item.separator"));
@@ -91,7 +91,7 @@ public class SanctionItem extends AbstractItem {
     public void handleClick(@NotNull ClickType clickType, @NotNull Player player, @NotNull InventoryClickEvent event) {
         if (clickType.isRightClick()) {
             LifeMod.getInstance().getDatabaseManager().getDatabaseProvider().deleteSanction(sanction.getUuid());
-            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
             player.sendMessage(lang.getMessage("gui.history.item.delete-success"));
             if (onUpdate != null) onUpdate.run();
         }

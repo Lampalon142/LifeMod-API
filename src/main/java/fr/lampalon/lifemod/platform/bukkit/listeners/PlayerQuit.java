@@ -1,9 +1,10 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
+import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import fr.lampalon.lifemod.platform.bukkit.utils.BukkitDatabaseUtil;
+import fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishService;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -31,7 +32,7 @@ public class PlayerQuit implements Listener {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
 
-            fr.lampalon.lifemod.common.model.PlayerData data = db.getPlayerData(uuid);
+            PlayerData data = db.getPlayerData(uuid);
             if (data != null) {
                 data.setInStaffMode(false);
                 data.setLastSeen(System.currentTimeMillis());
@@ -46,7 +47,7 @@ public class PlayerQuit implements Listener {
         plugin.getFreezeManager().handleQuit(uuid);
         plugin.getSpectateManager().handleQuit(uuid);
         plugin.getNoteInputManager().handleQuit(uuid);
-        if (plugin.getVanishService() instanceof fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishService vs) {
+        if (plugin.getVanishService() instanceof VanishService vs) {
             vs.handleQuit(uuid);
         }
         plugin.getCpsMap().remove(uuid);

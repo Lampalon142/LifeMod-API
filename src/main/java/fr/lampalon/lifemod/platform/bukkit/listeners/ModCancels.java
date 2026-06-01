@@ -1,7 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
-import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,8 +15,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 
 public class ModCancels implements Listener {
-
-    private final DebugManager debug = LifeMod.getInstance().getDebugManager();
 
     private boolean isRestricted(Player player) {
         LifeMod plugin = LifeMod.getInstance();

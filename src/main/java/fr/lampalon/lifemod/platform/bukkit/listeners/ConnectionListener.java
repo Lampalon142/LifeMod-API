@@ -2,6 +2,7 @@ package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
@@ -9,7 +10,6 @@ import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -39,8 +39,7 @@ public class ConnectionListener implements Listener {
         PlayerData data = new PlayerData(uuid, name, ip, System.currentTimeMillis(), firstSeen, sessionCount, inStaffMode);
         db.savePlayerData(data);
 
-        // Mise à jour de la réputation IP (comptes légitimes)
-        if (sessionCount == 6) { // On vient de passer le seuil des 5 sessions
+        if (sessionCount == 6) {
             String subnet = getSubnet(ip);
             DatabaseProvider.IPReputation rep = db.getIPReputation(ip);
             int legits = db.getLegitimateAccountCount(ip);
@@ -55,18 +54,18 @@ public class ConnectionListener implements Listener {
         try {
             Sanction activeBan = sanctionService.getActiveSanction(uuid, name, SanctionType.BAN).get(5, TimeUnit.SECONDS);
 
-        if (activeBan != null) {
-            fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-            String expiration = activeBan.isPermanent() ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis());
-            String message = lang.getMessage("sanctions.ban.login",
-                    "%reason%", activeBan.getReason(),
-                    "%issuer%", activeBan.getIssuerName(),
-                    "%expiration%", expiration,
-                    "%id%", activeBan.getUuid().toString().substring(0, 8),
-                    "%server%", activeBan.getServerName());
+            if (activeBan != null) {
+                ILangService lang = ServiceRegistry.get(ILangService.class);
+                String expiration = activeBan.isPermanent() ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(activeBan.getExpirationTime() - System.currentTimeMillis());
+                String message = lang.getMessage("sanctions.ban.login",
+                        "%reason%", activeBan.getReason(),
+                        "%issuer%", activeBan.getIssuerName(),
+                        "%expiration%", expiration,
+                        "%id%", activeBan.getUuid().toString().substring(0, 8),
+                        "%server%", activeBan.getServerName());
 
-            event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message);
-        }
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, message);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -45,6 +45,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -84,7 +85,7 @@ public class LifeMod extends JavaPlugin {
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
     private Set<UUID> moderators = new HashSet<>();
-    private final Map<UUID, Deque<Long>> cpsMap = new HashMap<>();
+    private final Map<UUID, Deque<Long>> cpsMap = new ConcurrentHashMap<>();
     public String webHookUrl;
 
     public static LifeMod getInstance() {
@@ -344,7 +345,7 @@ public class LifeMod extends JavaPlugin {
         getLogger().info("&6&lLifeMod &7- &aSuccessfully Enabled");
         getLogger().info(" ");
         getLogger().info("&e• &fVersion: &b" + getDescription().getVersion());
-        getLogger().info("&e• &fPlatform: &b" + nmsVersion + "&e)");
+        getLogger().info("&e• &fPlatform: &b" + nmsVersion);
         getLogger().info("&e• &fDatabase: &a" + configConfig.getString("database.type").toUpperCase());
         getLogger().info("&e• &fCommands: &aAuto-Registered (" + commandRegistry.getCommands().size() + ")");
         getLogger().info("&e• &fStartup Time: &e" + elapsed + "ms");

@@ -3,8 +3,9 @@ package fr.lampalon.lifemod.platform.bukkit.listeners;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -37,10 +38,10 @@ public class SanctionListener implements Listener {
                     return;
                 }
 
-                fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+                IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
                 String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
 
-                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                ILangService lang = ServiceRegistry.get(ILangService.class);
                 String expirationMsg = ban.isPermanent() ? lang.getMessage("sanctions.permanent") : new SimpleDateFormat(dateFormat).format(new Date(ban.getExpirationTime()));
                 String message = lang.getMessage("sanctions.ban.login",
                         "%reason%", ban.getReason(),
@@ -63,9 +64,9 @@ public class SanctionListener implements Listener {
             Sanction mute = sanctionService.getActiveSanction(event.getPlayer().getUniqueId(), event.getPlayer().getName(), SanctionType.MUTE).get(5, TimeUnit.SECONDS);
             if (mute != null && !mute.isExpired()) {
                 event.setCancelled(true);
-                fr.lampalon.lifemod.common.service.IConfigurationService config = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.IConfigurationService.class);
+                IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
                 String dateFormat = config.getString("server.date-format", "dd/MM/yyyy HH:mm:ss");
-                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                ILangService lang = ServiceRegistry.get(ILangService.class);
                 String expMsg = mute.isPermanent() ? lang.getMessage("sanctions.permanent") : new SimpleDateFormat(dateFormat).format(new Date(mute.getExpirationTime()));
                 String message = lang.getMessage("sanctions.mute.chat-blocked",
                         "%reason%", mute.getReason(),

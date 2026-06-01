@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -7,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class AltCommand extends LifeCommand {
@@ -27,7 +30,7 @@ public class AltCommand extends LifeCommand {
         String targetName = context.getArgs()[0];
         Player target = Bukkit.getPlayer(targetName);
         
-        java.util.UUID targetUuid;
+        UUID targetUuid;
         String ip = "127.0.0.1";
 
         if (target != null) {
@@ -36,18 +39,19 @@ public class AltCommand extends LifeCommand {
                 ip = target.getAddress().getAddress().getHostAddress();
             }
         } else {
-            // Support pour les joueurs hors-ligne (si on a leurs données)
-            fr.lampalon.lifemod.common.database.DatabaseProvider db = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.database.DatabaseProvider.class);
-            // On peut chercher l'UUID par le nom si on avait une méthode pour ça, sinon on utilise un placeholder ou on refuse.
-            // Pour l'instant on se limite aux joueurs en ligne ou on cherche dans PlayerData si possible.
-            // Comme le moteur a besoin de l'UUID pour l'historique, c'est crucial.
+            DatabaseProvider db = ServiceRegistry.get(DatabaseProvider.class);
             context.getSender().sendMessage(context.getLang().getMessage("antialt.offline-note"));
-            return; // Simplification pour l'instant
+            return;
         }
 
         context.getSender().sendMessage(context.getLang().getMessage("antialt.analyzing", "%player%", targetName));
 
-        context.getPlugin().getAntiAltManager().getEngine().analyze(targetUuid, targetName, ip).thenAccept(result -> {
+        var engine = context.getPlugin().getAntiAltManager();
+        if (engine == null) {
+            context.getSender().sendMessage(context.getLang().getMessage("system.error"));
+            return;
+        }
+        engine.getEngine().analyze(targetUuid, targetName, ip).thenAccept(result -> {
             String rules = result.getTriggeredRules().isEmpty() 
                 ? context.getLang().getMessage("antialt.no-rules") 
                 : result.getTriggeredRules().stream()
@@ -62,6 +66,9 @@ public class AltCommand extends LifeCommand {
             context.getSender().sendMessage(context.getLang().getMessage("antialt.rules-triggered", "%rules%", rules));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.fingerprint", "%fingerprint%", result.getFingerprint()));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.footer"));
+        }).exceptionally(ex -> {
+            context.getSender().sendMessage(context.getLang().getMessage("system.error"));
+            return null;
         });
     }
 

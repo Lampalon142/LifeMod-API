@@ -10,7 +10,6 @@ import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -36,7 +35,6 @@ public class PlayerJoin implements Listener {
         Player player = event.getPlayer();
         ILangService lang = ServiceRegistry.get(ILangService.class);
 
-        // Update Notification
         if (player.hasPermission("lifemod.notify") && lang.getBoolean("system.update.enabled")) {
             updateChecker.checkForUpdates(result -> {
                 if (!player.isOnline()) return;
@@ -74,9 +72,9 @@ public class PlayerJoin implements Listener {
             });
         }
 
-        // Staff Mode & Sanction Check
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            String ip = player.getAddress().getAddress().getHostAddress();
+            if (!player.isOnline()) return;
+            String ip = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : "127.0.0.1";
             PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
 
             if (data != null) {

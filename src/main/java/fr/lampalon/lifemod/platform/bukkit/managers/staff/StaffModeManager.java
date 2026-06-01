@@ -3,12 +3,14 @@ package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
-import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -41,14 +43,13 @@ public class StaffModeManager {
 
     private void setStaffModeState(Player player, boolean state) {
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            fr.lampalon.lifemod.common.model.PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
+            PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
             if (data != null) {
                 data.setInStaffMode(state);
                 plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
             }
 
-            // Publish to Redis
-            IMessagingService messaging = fr.lampalon.lifemod.common.core.ServiceRegistry.get(IMessagingService.class);
+            IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
             if (messaging != null) {
                 messaging.publish("lifemod:staff", "UPDATE|" + player.getUniqueId() + "|" + state + "|" + plugin.getServerName());
             }
@@ -58,7 +59,7 @@ public class StaffModeManager {
     public void enableStaffMode(Player player) {
         if (isMod(player)) return;
 
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
         // 1. Sauvegarder Globalement
         setStaffModeState(player, true);
@@ -78,7 +79,7 @@ public class StaffModeManager {
     public void disableStaffMode(Player player) {
         if (!isMod(player)) return;
 
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
 
         // 1. Sauvegarder Globalement
         setStaffModeState(player, false);
@@ -98,7 +99,7 @@ public class StaffModeManager {
     // Applique uniquement les effets visuels et donne les items
     private void applyStaffState(Player player) {
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         player.getInventory().clear();
         player.setGameMode(GameMode.valueOf(config.getString("modules.mod-mode.effects.game-mode", "SURVIVAL")));
         player.setAllowFlight(config.getBoolean("modules.mod-mode.effects.allow-flight", true));
@@ -123,7 +124,7 @@ public class StaffModeManager {
     }
 
     private void removeStaffState(Player player) {
-        fr.lampalon.lifemod.common.service.ILangService lang = ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         player.getInventory().clear();
         player.setAllowFlight(false);
         player.setFlying(false);
@@ -160,7 +161,7 @@ public class StaffModeManager {
 
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                byte[] data = fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.serializeInventory(contents, armor);
+                byte[] data = InventoryUtil.serializeInventory(contents, armor);
                 plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -187,7 +188,7 @@ public class StaffModeManager {
                 if (data != null) {
                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                         try {
-                            fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil.deserializeInventory(player, data);
+                            InventoryUtil.deserializeInventory(player, data);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
                         } catch (Exception e) { e.printStackTrace(); }
                     });

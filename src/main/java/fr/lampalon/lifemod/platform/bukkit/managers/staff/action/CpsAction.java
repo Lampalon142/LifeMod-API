@@ -10,8 +10,10 @@ import org.bukkit.entity.Player;
 
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class CpsAction implements IStaffAction {
 
@@ -53,9 +55,9 @@ public class CpsAction implements IStaffAction {
             }
 
             long now = System.currentTimeMillis();
-            java.util.List<Long> clicksDuringTest = clicks.stream()
+            List<Long> clicksDuringTest = clicks.stream()
                     .filter(t -> now - t <= duration * 1000L)
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
 
             double cps = (double) clicksDuringTest.size() / duration;
             double threshold = config.getDouble("modules.mod-mode.items.cpstester.autoclicker-threshold", 15.0);

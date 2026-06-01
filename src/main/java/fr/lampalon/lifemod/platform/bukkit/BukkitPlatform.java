@@ -1,8 +1,9 @@
 package fr.lampalon.lifemod.platform.bukkit;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.nms.api.NMSProvider;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
+import fr.lampalon.lifemod.common.service.ILangService;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -28,7 +29,7 @@ public class BukkitPlatform implements ILifePlatform {
 
     @Override
     public void broadcast(String message, String permission) {
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        ILangService lang = ServiceRegistry.get(ILangService.class);
         String formatted = lang.formatMessage(message);
         if (permission == null) {
             Bukkit.broadcastMessage(formatted);
@@ -45,7 +46,7 @@ public class BukkitPlatform implements ILifePlatform {
         runTask(() -> {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) {
-                fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+                ILangService lang = ServiceRegistry.get(ILangService.class);
                 player.kickPlayer(lang.formatMessage(reason));
             }
         });
@@ -55,7 +56,7 @@ public class BukkitPlatform implements ILifePlatform {
     public void sendMessage(UUID uuid, String message) {
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) {
-            fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+            ILangService lang = ServiceRegistry.get(ILangService.class);
             player.sendMessage(lang.formatMessage(message));
         }
     }
