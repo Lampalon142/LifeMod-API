@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow' version '8.3.3' apply false
+    id 'com.gradleup.shadow' version '8.3.3'
     id "com.modrinth.minotaur" version "2.8.7" apply false
 }
 
@@ -41,4 +41,27 @@ jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir('reports/jacoco')
     }
+}
+
+dependencies {
+    implementation project(':common')
+    implementation project(':platform:bukkit')
+    implementation project(':platform:bungee')
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    destinationDirectory.set(layout.projectDirectory.dir('out'))
+    archiveBaseName.set('LifeMod')
+
+    relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
+    relocate 'xyz.xenondevs.invui', 'fr.lampalon.lifemod.libs.invui'
+    relocate 'xyz.xenondevs.inventoryaccess', 'fr.lampalon.lifemod.libs.inventoryaccess'
+    relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
+    relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
+    relocate 'org.bstats', 'fr.lampalon.lifemod.libs.bstats'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
 }

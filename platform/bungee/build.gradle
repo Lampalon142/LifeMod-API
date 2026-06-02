@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id 'com.gradleup.shadow' version '8.3.3'
 }
 
 repositories {
@@ -27,14 +26,4 @@ processResources {
     }
 }
 
-shadowJar {
-    archiveClassifier.set('')
 
-    relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
-    relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
-    relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
-
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-}
