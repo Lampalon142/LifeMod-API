@@ -21,7 +21,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StaffListener implements Listener {
 
@@ -29,6 +31,7 @@ public class StaffListener implements Listener {
     private final StaffItemManager staffItemManager;
     private final ScriptExecutor scriptExecutor;
     private final DebugManager debug;
+    private final Map<UUID, Long> lastEntityInteract = new ConcurrentHashMap<>();
 
     public StaffListener(StaffModeManager staffModeManager, StaffItemManager staffItemManager, StaffActionManager staffActionManager) {
         this.staffModeManager = staffModeManager;
@@ -38,7 +41,7 @@ public class StaffListener implements Listener {
     }
 
     public void handleQuit(UUID playerId) {
-        // no tick map to clean anymore
+        lastEntityInteract.remove(playerId);
     }
 
     // ─── INTERACT (block/air) ───────────────────────────────────────────────
@@ -50,6 +53,11 @@ public class StaffListener implements Listener {
         if (isOffHand(event)) return;
 
         if (!staffModeManager.isMod(player)) return;
+
+        if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_AIR) {
+            Long last = lastEntityInteract.get(player.getUniqueId());
+            if (last != null && System.currentTimeMillis() - last < 100) return;
+        }
 
         event.setCancelled(true);
 
@@ -84,6 +92,7 @@ public class StaffListener implements Listener {
         List<String> scripts = staffItem.getScripts("RIGHT_CLICK");
         if (scripts == null || scripts.isEmpty()) return;
 
+        lastEntityInteract.put(player.getUniqueId(), System.currentTimeMillis());
         StaffActionContext context = new StaffActionContext(player, staffItem, "RIGHT_CLICK", null, event, event.getRightClicked());
         scriptExecutor.execute(context, scripts);
     }
@@ -181,8 +190,8 @@ public class StaffListener implements Listener {
     }
 
     private String toClickType(Action action) {
-        if (action == Action.RIGHT_CLICK_BLOCK) return "RIGHT_CLICK";
-        if (action == Action.LEFT_CLICK_BLOCK) return "LEFT_CLICK";
+        if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) return "RIGHT_CLICK";
+        if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR) return "LEFT_CLICK";
         return null;
     }
 }

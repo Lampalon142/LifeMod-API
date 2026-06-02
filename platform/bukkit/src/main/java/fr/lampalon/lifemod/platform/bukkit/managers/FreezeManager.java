@@ -35,11 +35,9 @@ public class FreezeManager {
                 if (p == null || !p.isOnline()) continue;
                 Location target = entry.getValue();
                 if (target == null) continue;
-                if (p.getLocation().distanceSquared(target) > 0.1) {
-                    p.teleport(target);
-                }
+                p.teleport(target);
             }
-        }, 1L, 1L).getTaskId();
+        }, 0L, 1L).getTaskId();
     }
 
     private void stopEnforcement() {
@@ -70,6 +68,8 @@ public class FreezeManager {
             String helmetMat = config.getString("modules.mod-mode.items.freeze.helmet-material", "PACKED_ICE");
             target.getInventory().setHelmet(new ItemStack(Material.valueOf(helmetMat)));
 
+            target.setWalkSpeed(0f);
+            target.setFlySpeed(0f);
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 255, false, false));
             target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 0, false, false));
 
@@ -99,6 +99,8 @@ public class FreezeManager {
                 }
                 frozenPlayers.remove(target.getUniqueId());
 
+                target.setWalkSpeed(0.2f);
+                target.setFlySpeed(0.1f);
                 target.removePotionEffect(PotionEffectType.SLOWNESS);
                 target.removePotionEffect(PotionEffectType.BLINDNESS);
 
@@ -118,6 +120,11 @@ public class FreezeManager {
 
     public void handleQuit(UUID playerId) {
         debug.log("freeze", "handleQuit: " + playerId + " | was in frozenPlayers=" + frozenPlayers.containsKey(playerId));
+        Player p = Bukkit.getPlayer(playerId);
+        if (p != null) {
+            p.setWalkSpeed(0.2f);
+            p.setFlySpeed(0.1f);
+        }
         playerHelmets.remove(playerId);
         frozenPlayers.remove(playerId);
         if (frozenPlayers.isEmpty()) stopEnforcement();
