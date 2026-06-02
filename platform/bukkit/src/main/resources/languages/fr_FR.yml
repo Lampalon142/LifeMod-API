@@ -569,7 +569,7 @@ commands:
           - "&8&m----------------------------------------"
           - "&c&lVOUS AVEZ ÉTÉ GELÉ !"
           - "&7Veuillez ne pas vous déconnecter."
-          - "&7Suivez les instructions du modérateur."
+          - "&7Rejoignez notre serveur Discord pour plus d'informations."
           - "&8&m----------------------------------------"
       unfreeze:
         mod: "%prefix%&aVous avez dégelé &e%player%"

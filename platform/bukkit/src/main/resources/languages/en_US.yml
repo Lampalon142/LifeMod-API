@@ -572,7 +572,7 @@ commands:
           - "&8&m----------------------------------------"
           - "&c&lYOU HAVE BEEN FROZEN!"
           - "&7Please do not disconnect."
-          - "&7Follow instructions from the moderator."
+          - "&7Join our Discord server for more information."
           - "&8&m----------------------------------------"
       unfreeze:
         mod: "%prefix%&aYou unfroze &e%player%"

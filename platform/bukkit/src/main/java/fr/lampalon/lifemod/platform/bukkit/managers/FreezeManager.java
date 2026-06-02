@@ -9,6 +9,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.Map;
 import java.util.UUID;
@@ -68,6 +70,9 @@ public class FreezeManager {
             String helmetMat = config.getString("modules.mod-mode.items.freeze.helmet-material", "PACKED_ICE");
             target.getInventory().setHelmet(new ItemStack(Material.valueOf(helmetMat)));
 
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 255, false, false));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, Integer.MAX_VALUE, 0, false, false));
+
             ILangService lang = ServiceRegistry.get(ILangService.class);
             for (String line : lang.getStringList("commands.freeze.messages.freeze.onfreeze")) {
                 target.sendMessage(line);
@@ -93,6 +98,9 @@ public class FreezeManager {
                     playerHelmets.remove(target.getUniqueId());
                 }
                 frozenPlayers.remove(target.getUniqueId());
+
+                target.removePotionEffect(PotionEffectType.SLOWNESS);
+                target.removePotionEffect(PotionEffectType.BLINDNESS);
 
                 ILangService lang = ServiceRegistry.get(ILangService.class);
                 target.sendMessage(lang.getMessage("commands.freeze.messages.unfreeze.target", "%player%", moderator.getName()));

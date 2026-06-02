@@ -181,8 +181,8 @@ public class StaffListener implements Listener {
     }
 
     private String toClickType(Action action) {
-        if (action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR) return "RIGHT_CLICK";
-        if (action == Action.LEFT_CLICK_BLOCK || action == Action.LEFT_CLICK_AIR) return "LEFT_CLICK";
+        if (action == Action.RIGHT_CLICK_BLOCK) return "RIGHT_CLICK";
+        if (action == Action.LEFT_CLICK_BLOCK) return "LEFT_CLICK";
         return null;
     }
 }
