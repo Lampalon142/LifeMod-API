@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.3'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.xenondevs.xyz/releases' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation project(':common')
+
+    compileOnly 'net.md-5:bungeecord-api:1.20-R0.2-SNAPSHOT'
+
+    implementation 'com.github.retrooper:packetevents-bungeecord:2.7.0'
+}
+
+processResources {
+    def props = [VERSION: rootProject.version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('bungee.yml') {
+        expand props
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+
+    relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
+    relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
+    relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}

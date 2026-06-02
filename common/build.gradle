@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.xenondevs.xyz/releases' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'net.luckperms:api:5.4'
+    compileOnly 'com.mysql:mysql-connector-j:8.3.0'
+    compileOnly 'org.xerial:sqlite-jdbc:3.45.1.0'
+    compileOnly 'io.github.querz:nbt:6.1'
+
+    compileOnly 'com.github.retrooper:packetevents-spigot:2.7.0'
+
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'org.mindrot:jbcrypt:0.4'
+}

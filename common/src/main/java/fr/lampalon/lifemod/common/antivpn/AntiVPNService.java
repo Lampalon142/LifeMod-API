@@ -5,7 +5,6 @@ import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
-import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 
 import java.util.List;
 import java.util.UUID;

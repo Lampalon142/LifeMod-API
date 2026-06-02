@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.3'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.xenondevs.xyz/releases' }
+    maven { url 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    maven { url 'https://repo.codemc.io/repository/maven-public/' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation project(':common')
+
+    compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'net.luckperms:api:5.4'
+
+    implementation 'com.github.retrooper:packetevents-spigot:2.7.0'
+    implementation 'xyz.xenondevs.invui:invui:1.49'
+    implementation 'org.bstats:bstats-bukkit:3.0.2'
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'org.mindrot:jbcrypt:0.4'
+    implementation 'io.netty:netty-buffer:4.1.100.Final'
+    implementation 'se.llbit:jo-nbt:1.2.0'
+}
+
+processResources {
+    def props = [VERSION: rootProject.version]
+    inputs.properties props
+    filteringCharset 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
+    }
+}
+
+shadowJar {
+    archiveClassifier.set('')
+
+    relocate 'com.github.retrooper.packetevents', 'fr.lampalon.lifemod.libs.packetevents'
+    relocate 'xyz.xenondevs.invui', 'fr.lampalon.lifemod.libs.invui'
+    relocate 'xyz.xenondevs.inventoryaccess', 'fr.lampalon.lifemod.libs.inventoryaccess'
+    relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
+    relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
+    relocate 'org.bstats', 'fr.lampalon.lifemod.libs.bstats'
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
