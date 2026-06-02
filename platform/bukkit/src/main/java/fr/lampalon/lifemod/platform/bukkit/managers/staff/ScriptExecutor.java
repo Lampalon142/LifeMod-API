@@ -7,6 +7,7 @@ import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.BukkitPlatform;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
+import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.IStaffAction;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.action.StaffActionType;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
@@ -69,6 +70,7 @@ public class ScriptExecutor {
             ILangService lang = ServiceRegistry.get(ILangService.class);
             String key = script.substring(9).trim();
             String msg = lang.getMessage(key);
+            msg = MessageUtil.formatMessage(msg);
             debug.log("staff", "[MESSAGE] key=" + key + " resolved=" + msg);
             player.sendMessage(msg);
             return;
