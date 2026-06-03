@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.world;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -12,7 +14,9 @@ import org.bukkit.World;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -53,6 +57,14 @@ public class DifficultyCommand extends LifeCommand {
                 world.setDifficulty(difficulty);
             }
             context.getSender().sendMessage(context.getLang().getMessage("commands.world.difficulty.success", "%difficulty%", difficulty.name().toLowerCase()));
+
+            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+            if (ph != null) {
+                Map<String, Object> props = new HashMap<>();
+                props.put("difficulty", difficulty.name().toLowerCase());
+                ph.capture("lifemod_difficulty_set", props);
+            }
+
             if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
                 sendDiscordAlert(context, difficultyStr);
             }

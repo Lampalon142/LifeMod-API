@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
@@ -8,7 +10,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ChatManager implements Listener {
     private final LifeMod plugin;
@@ -53,6 +57,7 @@ public class ChatManager implements Listener {
                     if (message.toLowerCase().contains(word.toLowerCase())) {
                         event.setMessage(filterWord(message, word));
                         notifyViewers(player, word);
+                        trackChatFilter();
                         debug.log("chat", player.getName() + " used blacklisted word: " + word);
                         break;
                     }
@@ -74,6 +79,15 @@ public class ChatManager implements Listener {
                         "%word%", word);
                 player.sendMessage(notification);
             }
+        }
+    }
+
+    private void trackChatFilter() {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "blocked");
+            ph.capture("lifemod_chat_filter", props);
         }
     }
 

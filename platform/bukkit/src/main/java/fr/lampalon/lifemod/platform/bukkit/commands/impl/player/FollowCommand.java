@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
@@ -57,6 +58,13 @@ public class FollowCommand extends LifeCommand {
         context.getSender().sendMessage(context.getLang().getMessage("commands.follow.success", "%target%", targetPlayer.getName()));
         context.getDebug().log("follow", player.getName() + " is now following " + targetPlayer.getName());
 
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "enable");
+            ph.capture("lifemod_follow", props);
+        }
+
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
@@ -106,6 +114,13 @@ public class FollowCommand extends LifeCommand {
             tasks.get(follower.getUniqueId()).cancel();
             tasks.remove(follower.getUniqueId());
             follower.sendMessage(ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class).getMessage("commands.follow.stopped"));
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "disable");
+            ph.capture("lifemod_follow", props);
         }
     }
 }

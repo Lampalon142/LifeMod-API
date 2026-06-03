@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
@@ -12,6 +14,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class PlayerQuit implements Listener {
@@ -28,6 +32,14 @@ public class PlayerQuit implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("player_count", Bukkit.getOnlinePlayers().size() - 1);
+            props.put("session_seconds", 0);
+            ph.capture("lifemod_player_quit", props);
+        }
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();

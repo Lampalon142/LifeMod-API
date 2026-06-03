@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.common.service;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
@@ -11,6 +12,7 @@ import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SanctionService implements ISanctionService {
 
@@ -52,6 +56,7 @@ public class SanctionService implements ISanctionService {
             }
 
             broadcastSanction(sanction);
+            trackSanction(sanction);
 
             if (messaging != null) {
                 String message = String.format("ADD|%s|%s|%s|%s|%d|%b|%s|%s",
@@ -96,9 +101,46 @@ public class SanctionService implements ISanctionService {
             }
 
             broadcastRevoke(type, playerUuid, removedByName, reason, silent);
+            trackPardon(active);
 
             return true;
         }, LIFEMOD_EXECUTOR);
+    }
+
+    private void trackPardon(Sanction sanction) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("sanction_type", sanction.getType().name());
+            props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
+            ph.capture("lifemod_sanction_pardon", props);
+        }
+    }
+
+    private void trackSanction(Sanction sanction) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("sanction_type", sanction.getType().name());
+            props.put("silent", sanction.isSilent());
+            props.put("duration_ms", sanction.getDuration());
+            props.put("auto_punish", false);
+            props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
+            ph.capture("lifemod_sanction", props);
+        }
+    }
+
+    private void trackAutoPunish(SanctionType type, long durationMs, String category, int warningCount, int threshold) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("sanction_type", type.name());
+            props.put("duration_ms", durationMs);
+            props.put("reason_category", category != null ? category : "GLOBAL");
+            props.put("warning_count", warningCount);
+            props.put("threshold_triggered", threshold);
+            ph.capture("lifemod_auto_punish", props);
+        }
     }
 
     private void broadcastSanction(Sanction sanction) {
@@ -181,7 +223,7 @@ public class SanctionService implements ISanctionService {
 
         getHistory(playerUuid).thenAccept(history -> {
             String mode = config.getString("modules.auto-punish.mode", "GLOBAL");
-            long count;
+            long count = 0;
             String command = null;
 
             if (mode.equalsIgnoreCase("CATEGORY") && category != null && !category.equals("Other") && !category.equals("None")) {
@@ -202,11 +244,44 @@ public class SanctionService implements ISanctionService {
 
             if (command != null) {
                 String finalCommand = command.replace("%player%", platform.getPlayerName(playerUuid));
+                trackAutoPunish(parseTypeFromCommand(command), parseDurationFromCommand(command), category, (int) count, (int) count);
                 platform.runTask(() -> {
                     platform.dispatchCommand(finalCommand);
                 });
             }
         }).exceptionally(ex -> { ex.printStackTrace(); return null; });
+    }
+
+    private SanctionType parseTypeFromCommand(String command) {
+        if (command == null || command.isEmpty()) return SanctionType.WARN;
+        String firstWord = command.split(" ")[0].toLowerCase();
+        switch (firstWord) {
+            case "ban": return SanctionType.BAN;
+            case "kick": return SanctionType.KICK;
+            case "mute": return SanctionType.MUTE;
+            default: return SanctionType.WARN;
+        }
+    }
+
+    private long parseDurationFromCommand(String command) {
+        if (command == null || command.isEmpty()) return 0;
+        String[] parts = command.split(" ");
+        for (int i = 1; i < parts.length; i++) {
+            String p = parts[i];
+            if (p.equals("%player%")) continue;
+            Matcher m = Pattern.compile("(\\d+)([smhd])").matcher(p);
+            if (m.matches()) {
+                long amount = Long.parseLong(m.group(1));
+                switch (m.group(2)) {
+                    case "s": return amount * 1000;
+                    case "m": return amount * 60000;
+                    case "h": return amount * 3600000;
+                    case "d": return amount * 86400000;
+                }
+            }
+            if (p.equalsIgnoreCase("permanent")) return 0;
+        }
+        return 0;
     }
 }
 

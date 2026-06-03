@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.common.model.PlayerData;
@@ -16,7 +17,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class PlayerJoin implements Listener {
@@ -34,6 +37,8 @@ public class PlayerJoin implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         ILangService lang = ServiceRegistry.get(ILangService.class);
+
+        trackPlayerJoin(player);
 
         if (player.hasPermission("lifemod.notify") && lang.getBoolean("system.update.enabled")) {
             updateChecker.checkForUpdates(result -> {
@@ -128,5 +133,16 @@ public class PlayerJoin implements Listener {
                 }
             });
         });
+    }
+
+    private void trackPlayerJoin(Player player) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph == null) return;
+        int playerCount = Bukkit.getOnlinePlayers().size();
+        Map<String, Object> props = new HashMap<>();
+        props.put("player_count", playerCount);
+        ph.capture("lifemod_player_join", props);
+        if (player.hasPlayedBefore()) return;
+        ph.capture("lifemod_player_first_join", props);
     }
 }

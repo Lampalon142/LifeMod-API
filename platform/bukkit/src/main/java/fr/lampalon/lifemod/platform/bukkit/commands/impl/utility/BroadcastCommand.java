@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.utility;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -13,7 +15,9 @@ import org.bukkit.entity.Player;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class BroadcastCommand extends LifeCommand {
@@ -42,6 +46,13 @@ public class BroadcastCommand extends LifeCommand {
         Bukkit.getConsoleSender().sendMessage(formatted);
 
         context.getDebug().log("broadcast", "Broadcast sent by " + context.getSender().getName() + ": " + message);
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("has_message", true);
+            ph.capture("lifemod_broadcast", props);
+        }
 
         if (context.getPlugin().getConfigConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context.getSender().getName(), message, context);

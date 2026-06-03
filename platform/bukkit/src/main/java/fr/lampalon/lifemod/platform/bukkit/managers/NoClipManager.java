@@ -3,6 +3,8 @@ package fr.lampalon.lifemod.platform.bukkit.managers;
 import com.github.retrooper.packetevents.PacketEvents;
 
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.listeners.NoClipPacketListener;
 import org.bukkit.Bukkit;
@@ -54,6 +56,13 @@ public class NoClipManager {
 
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         player.sendMessage(lang.getMessage("commands.noclip.activate"));
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "enable");
+            ph.capture("lifemod_noclip", props);
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -71,6 +80,13 @@ public class NoClipManager {
 
         fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
         player.sendMessage(lang.getMessage("commands.noclip.deactivate"));
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "disable");
+            ph.capture("lifemod_noclip", props);
+        }
     }
 
     // -------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Report;
 import fr.lampalon.lifemod.common.model.ReportStatus;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
@@ -68,8 +70,19 @@ public class ReportCommand extends LifeCommand {
             "%reason%", reason, 
             "%server%", context.getPlugin().getServer().getName()));
 
+        trackReport(reason != null && !reason.isEmpty());
+
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context);
+        }
+    }
+
+    private void trackReport(boolean hasReason) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            java.util.Map<String, Object> props = new java.util.HashMap<>();
+            props.put("has_reason", hasReason);
+            ph.capture("lifemod_report", props);
         }
     }
 

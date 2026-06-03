@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -8,7 +10,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TeleportCommand extends LifeCommand {
 
@@ -60,6 +64,16 @@ public class TeleportCommand extends LifeCommand {
             }
         } else {
             context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.usage"));
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            String tpType = "tp";
+            if (context.getArgs().length == 2) tpType = "tphere";
+            else if (context.getArgs().length == 3) tpType = "coords";
+            props.put("teleport_type", tpType);
+            ph.capture("lifemod_teleport", props);
         }
     }
 

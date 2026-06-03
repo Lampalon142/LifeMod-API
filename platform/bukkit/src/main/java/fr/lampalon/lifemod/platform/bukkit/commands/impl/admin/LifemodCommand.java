@@ -1,12 +1,16 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
 import org.bukkit.Bukkit;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LifemodCommand extends LifeCommand {
 
@@ -30,6 +34,11 @@ public class LifemodCommand extends LifeCommand {
             }
             context.getPlugin().reloadPluginConfig();
             context.getSender().sendMessage(context.getLang().getMessage("commands.lifemod.reload"));
+
+            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+            if (ph != null) {
+                ph.capture("lifemod_reload", new HashMap<>());
+            }
             return;
         }
 

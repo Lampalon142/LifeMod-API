@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
@@ -39,6 +41,13 @@ public class SpectateManager {
         staff.setGameMode(GameMode.SPECTATOR);
         staff.setSpectatorTarget(target);
         staff.sendMessage(getLang("commands.spectate.spectate-start", "%target%", target.getName()));
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "enable");
+            ph.capture("lifemod_spectate", props);
+        }
     }
 
     public void startFreecam(Player staff) {
@@ -77,6 +86,13 @@ public class SpectateManager {
             staff.sendMessage(getLang("commands.spectate.spectate-leave"));
         } else {
             staff.sendMessage(getLang("commands.spectate.spectate-leave-no-pos"));
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", "disable");
+            ph.capture("lifemod_spectate", props);
         }
     }
 

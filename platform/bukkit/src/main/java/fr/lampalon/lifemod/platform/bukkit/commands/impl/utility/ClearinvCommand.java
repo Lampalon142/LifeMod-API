@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.utility;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -10,7 +12,9 @@ import org.bukkit.entity.Player;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class ClearinvCommand extends LifeCommand {
@@ -41,6 +45,13 @@ public class ClearinvCommand extends LifeCommand {
         targetPlayer.getInventory().clear();
         context.getSender().sendMessage(context.getLang().getMessage("commands.clearinv.message", "%target%", targetPlayer.getName()));
         context.getDebug().log("clearinv", player.getName() + " cleared inventory of " + targetPlayer.getName());
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("target_self", player.equals(targetPlayer));
+            ph.capture("lifemod_clear_inv", props);
+        }
 
         if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context);

@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -12,7 +14,9 @@ import org.bukkit.inventory.PlayerInventory;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class InvseeCommand extends LifeCommand {
@@ -39,6 +43,14 @@ public class InvseeCommand extends LifeCommand {
         Inventory inv = createTargetInventory(context, targetPlayer);
         context.getPlugin().getInvseeManager().startViewing(context.getPlayer(), targetPlayer);
         context.getPlayer().openInventory(inv);
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("interaction", "view");
+            props.put("inventory_type", "player");
+            ph.capture("lifemod_invsee", props);
+        }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context, targetPlayer.getName());

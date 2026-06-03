@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -11,7 +13,9 @@ import org.bukkit.entity.Player;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class VanishCommand extends LifeCommand {
@@ -36,6 +40,7 @@ public class VanishCommand extends LifeCommand {
             String msgKey = newState ? "vanish.activate" : "vanish.deactivate";
             context.getSender().sendMessage(context.getLang().getMessage(msgKey));
             context.getDebug().log("vanish", player.getName() + " toggled vanish to " + newState);
+            trackVanish(newState);
         } else if (context.getArgs().length == 1) {
             Player target = Bukkit.getPlayer(context.getArgs()[0]);
             if (target != null) {
@@ -48,6 +53,7 @@ public class VanishCommand extends LifeCommand {
                 target.sendMessage(context.getLang().getMessage(targetMsgKey));
                 context.getSender().sendMessage(context.getLang().getMessage(senderMsgKey));
                 context.getDebug().log("vanish", player.getName() + " toggled vanish for " + target.getName() + " to " + newState);
+                trackVanish(newState);
             } else {
                 context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
             }
@@ -55,6 +61,15 @@ public class VanishCommand extends LifeCommand {
 
         if (context.getPlugin().getConfigConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context);
+        }
+    }
+
+    private void trackVanish(boolean enabled) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", enabled ? "enable" : "disable");
+            ph.capture("lifemod_vanish", props);
         }
     }
 

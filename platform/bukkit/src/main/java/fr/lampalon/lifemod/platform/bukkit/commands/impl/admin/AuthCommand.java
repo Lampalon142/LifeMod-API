@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.managers.ModeratorAuthService;
@@ -7,6 +9,8 @@ import fr.lampalon.lifemod.platform.bukkit.managers.ModeratorSessionManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class AuthCommand extends LifeCommand {

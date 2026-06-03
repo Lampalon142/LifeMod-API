@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.ISanctionService;
@@ -10,7 +11,9 @@ import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class CaseCommand extends LifeCommand {
@@ -31,6 +34,11 @@ public class CaseCommand extends LifeCommand {
         String targetName = context.getArgs()[0];
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         UUID uuid = target.getUniqueId();
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            ph.capture("lifemod_case_view", new HashMap<>());
+        }
 
         ISanctionService ss = ServiceRegistry.get(ISanctionService.class);
 

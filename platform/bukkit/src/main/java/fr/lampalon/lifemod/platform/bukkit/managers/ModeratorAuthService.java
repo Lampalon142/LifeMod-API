@@ -1,10 +1,15 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.common.database.DatabaseManager;
 import org.bukkit.Bukkit;
 import org.mindrot.jbcrypt.BCrypt;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -37,7 +42,19 @@ public class ModeratorAuthService implements IPinService {
 
     @Override
     public boolean verifyPin(UUID uuid, String enteredPin) {
-        return checkPassword(uuid, enteredPin);
+        boolean success = checkPassword(uuid, enteredPin);
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("success", success);
+            ph.capture("lifemod_mod_auth", props);
+            if (!success) {
+                Map<String, Object> failProps = new HashMap<>();
+                failProps.put("current_attempt", 1);
+                ph.capture("lifemod_mod_auth_fail", failProps);
+            }
+        }
+        return success;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.utility;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
@@ -8,6 +10,8 @@ import org.bukkit.entity.Player;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class ChatclearCommand extends LifeCommand {
@@ -27,6 +31,11 @@ public class ChatclearCommand extends LifeCommand {
             player.sendMessage(context.getLang().getMessage("commands.chatclear.message"));
         }
         context.getDebug().log("chatclear", "Chat cleared by " + context.getSender().getName());
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            ph.capture("lifemod_chat_clear", new HashMap<>());
+        }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context);

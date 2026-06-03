@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.world;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -10,7 +12,9 @@ import org.bukkit.entity.Player;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class WeatherCommand extends LifeCommand {
@@ -53,6 +57,13 @@ public class WeatherCommand extends LifeCommand {
             default:
                 context.getSender().sendMessage(context.getLang().getMessage("commands.world.weather.usage"));
                 return;
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("weather_type", weatherType);
+            ph.capture("lifemod_weather_set", props);
         }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {

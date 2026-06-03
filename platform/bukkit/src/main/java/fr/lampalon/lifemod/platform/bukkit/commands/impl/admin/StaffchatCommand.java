@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -10,7 +12,9 @@ import org.bukkit.entity.Player;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class StaffchatCommand extends LifeCommand {
@@ -43,6 +47,13 @@ public class StaffchatCommand extends LifeCommand {
         }
         context.getSender().sendMessage(context.getLang().getMessage("commands.staffchat.success"));
         context.getDebug().log("staffchat", player.getName() + " sent staffchat message: " + message);
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("word_count", message.split("\\s+").length);
+            ph.capture("lifemod_staff_chat", props);
+        }
 
         if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context, message);

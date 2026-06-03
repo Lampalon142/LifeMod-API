@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -10,7 +12,9 @@ import org.bukkit.entity.Player;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class HeartsCommand extends LifeCommand {
@@ -88,6 +92,13 @@ public class HeartsCommand extends LifeCommand {
                 "%amount%", String.valueOf(hearts)));
 
         target.sendMessage(context.getLang().getMessage("commands.hearts.changed", "%amount%", String.valueOf(newMaxHealth / 2.0)));
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("target_self", target.equals(context.getSender()));
+            ph.capture("lifemod_hearts", props);
+        }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context, target.getName(), action, hearts);

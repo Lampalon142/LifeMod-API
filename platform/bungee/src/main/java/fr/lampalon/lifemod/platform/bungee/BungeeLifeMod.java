@@ -4,6 +4,8 @@ import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.analytics.PostHogService;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
@@ -30,6 +32,10 @@ import net.md_5.bungee.config.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class BungeeLifeMod extends Plugin {
@@ -41,6 +47,7 @@ public class BungeeLifeMod extends Plugin {
     private BungeeAntiAltManager antiAltManager;
     private BungeeReactionManager reactionManager;
     private fr.lampalon.lifemod.common.antivpn.AntiVPNService antiVPNService;
+    private long startupTime;
 
     @Override
     public void onLoad() {
@@ -51,6 +58,7 @@ public class BungeeLifeMod extends Plugin {
     @Override
     public void onEnable() {
         long start = System.currentTimeMillis();
+        this.startupTime = start;
         instance = this;
         loadConfigs();
 
@@ -86,6 +94,8 @@ public class BungeeLifeMod extends Plugin {
         getProxy().getPluginManager().registerListener(this, new BungeeConnectionListener());
         getProxy().getPluginManager().registerListener(this, new BungeeChatListener());
         getProxy().getPluginManager().registerListener(this, new BungeeAntiAltListener(this));
+
+        setupPostHog();
 
         long elapsed = System.currentTimeMillis() - start;
 
@@ -165,5 +175,61 @@ public class BungeeLifeMod extends Plugin {
 
     public BungeeReactionManager getReactionManager() {
         return reactionManager;
+    }
+
+    private void setupPostHog() {
+        if (!config.getBoolean("modules.posthog.enabled", true)) return;
+        String host = "https://eu.posthog.com";
+
+        getLogger().info("PostHog: resolving API key...");
+        String apiKey = PostHogService.resolveApiKey();
+        String serverVersion = ProxyServer.getInstance().getVersion();
+        String javaVersion = System.getProperty("java.version");
+        String dbType = config.getString("database.type", "mysql");
+        boolean redis = config.getBoolean("redis.enabled", false);
+
+        getLogger().info("PostHog: creating service (host=" + host + ")...");
+        try {
+            PostHogService service = new PostHogService(apiKey, config.getString("server.name", "Proxy"), getDescription().getVersion(), "bungee", host, serverVersion, javaVersion, dbType, redis, -1);
+            ServiceRegistry.register(IPostHogService.class, service);
+            getLogger().info("PostHog: registered in ServiceRegistry");
+
+            OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+            Runtime runtime = Runtime.getRuntime();
+            service.sendEnvironmentEvent(
+                    os.getName(), os.getArch(), os.getVersion(),
+                    runtime.availableProcessors(),
+                    runtime.maxMemory() / 1048576,
+                    runtime.totalMemory() / 1048576
+            );
+
+            Map<String, Boolean> modules = new HashMap<>();
+            modules.put("antialt", config.getBoolean("modules.antialt.enabled", true));
+            modules.put("auto_punish", config.getBoolean("modules.auto-punish.enabled", true));
+
+            Map<String, Object> extra = new HashMap<>();
+            extra.put("database_type", config.getString("database.type", "mysql"));
+            extra.put("redis_enabled", config.getBoolean("redis.enabled", false));
+
+            service.sendConfigSnapshot(modules, extra);
+
+            getLogger().info("PostHog analytics enabled");
+        } catch (Exception e) {
+            getLogger().warning("PostHog FAILED: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onDisable() {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("plugin_version", getDescription().getVersion());
+            props.put("platform", "bungee");
+            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
+            ph.capture("lifemod_shutdown", props);
+            ph.shutdown();
+        }
     }
 }

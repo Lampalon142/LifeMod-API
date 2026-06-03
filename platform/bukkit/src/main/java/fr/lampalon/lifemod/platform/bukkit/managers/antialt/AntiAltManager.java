@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.antialt;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.antialt.AnalysisResult;
 import fr.lampalon.lifemod.common.antialt.HeuristicEngine;
 import fr.lampalon.lifemod.common.antialt.HeuristicRule;
@@ -13,6 +14,7 @@ import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -84,14 +86,28 @@ public class AntiAltManager {
         int alertPriority = config.getInt("modules.antialt.thresholds.alert-priority", 70);
         int suggestBan = config.getInt("modules.antialt.thresholds.suggest-ban", 85);
 
+        String severity;
         if (score >= suggestBan) {
             sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.ban"), true);
+            severity = "suggest_ban";
         } else if (score >= alertPriority) {
             sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.priority"), true);
+            severity = "priority";
         } else if (score >= alertAdmin) {
             sendAuditAlert(player, result, ip, lang.getMessage("antialt.recommendation.admin"), false);
-        } else if (score >= logSilent) {
+            severity = "alert";
+        } else {
             plugin.getLogger().info("[AntiAlt] Log Silencieux - Joueur: " + player.getName() + " Score: " + score + "/100");
+            severity = "silent";
+        }
+
+        trackAntiAlt(result, severity);
+
+        if (score < logSilent) {
+            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+            if (ph != null) {
+                ph.capture("lifemod_antialt_pass", new HashMap<>());
+            }
         }
     }
 
@@ -120,6 +136,21 @@ public class AntiAltManager {
             Bukkit.getOnlinePlayers().stream()
                     .filter(p -> p.hasPermission("lifemod.antialt.alerts"))
                     .forEach(p -> p.playSound(p.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 0.5f));
+        }
+    }
+
+    private void trackAntiAlt(AnalysisResult result, String severity) {
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            int score = result.getDangerScore();
+            Map<String, Object> props = new HashMap<>();
+            if (score < 50) props.put("score_range", "30-49");
+            else if (score < 70) props.put("score_range", "50-69");
+            else if (score < 85) props.put("score_range", "70-84");
+            else props.put("score_range", "85-100");
+            props.put("severity", severity);
+            props.put("signals_count", result.getTriggeredRules().size());
+            ph.capture("lifemod_antialt", props);
         }
     }
 

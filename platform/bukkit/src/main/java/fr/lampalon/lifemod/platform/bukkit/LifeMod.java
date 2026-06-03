@@ -17,6 +17,8 @@ import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.analytics.PostHogService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitItemsAdderService;
@@ -44,6 +46,8 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -86,6 +90,7 @@ public class LifeMod extends JavaPlugin {
     private FileConfiguration langConfig;
     private Set<UUID> moderators = new HashSet<>();
     private final Map<UUID, Deque<Long>> cpsMap = new ConcurrentHashMap<>();
+    private long startupTime;
     public String webHookUrl;
 
     public static LifeMod getInstance() {
@@ -101,6 +106,7 @@ public class LifeMod extends JavaPlugin {
     @Override
     public void onEnable() {
         long start = System.currentTimeMillis();
+        this.startupTime = start;
         instance = this;
         saveDefaultConfig();
         new ConfigUpdater(this).updateConfigs();
@@ -130,6 +136,7 @@ public class LifeMod extends JavaPlugin {
         registerEvents();
         registerCommands();
         setupMetrics();
+        setupPostHog();
 
         // Start Replay Recorder
         new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
@@ -306,6 +313,72 @@ public class LifeMod extends JavaPlugin {
         metrics.addCustomChart(new SingleLineChart("players", () -> Bukkit.getOnlinePlayers().size()));
     }
 
+    private void setupPostHog() {
+        if (!configConfig.getBoolean("modules.posthog.enabled", true)) return;
+
+        String host = "https://eu.posthog.com";
+
+        getLogger().info("PostHog: resolving API key...");
+        String apiKey = PostHogService.resolveApiKey();
+        String serverVersion = Bukkit.getBukkitVersion();
+        String javaVersion = System.getProperty("java.version");
+        String dbType = configConfig.getString("database.type", "sqlite");
+        boolean redis = configConfig.getBoolean("redis.enabled", false);
+        int maxPlayers = Bukkit.getMaxPlayers();
+
+        getLogger().info("PostHog: creating service (host=" + host + ")...");
+        try {
+            PostHogService service = new PostHogService(apiKey, getServerName(), getDescription().getVersion(), "bukkit", host, serverVersion, javaVersion, dbType, redis, maxPlayers);
+            ServiceRegistry.register(IPostHogService.class, service);
+            getLogger().info("PostHog: registered in ServiceRegistry");
+
+            sendEnvironmentEvent(service);
+            sendConfigSnapshot(service);
+
+            getLogger().info("PostHog analytics enabled");
+        } catch (Exception e) {
+            getLogger().severe("PostHog FAILED to initialize: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void sendEnvironmentEvent(PostHogService service) {
+        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
+        Runtime runtime = Runtime.getRuntime();
+        service.sendEnvironmentEvent(
+                os.getName(), os.getArch(), os.getVersion(),
+                runtime.availableProcessors(),
+                runtime.maxMemory() / 1048576,
+                runtime.totalMemory() / 1048576
+        );
+    }
+
+    private void sendConfigSnapshot(PostHogService service) {
+        Map<String, Boolean> modules = new HashMap<>();
+        modules.put("auto_punish", configConfig.getBoolean("modules.auto-punish.enabled", true));
+        modules.put("chat_manager", configConfig.getBoolean("modules.chat-manager.enabled", true));
+        modules.put("moderator_auth", configConfig.getBoolean("modules.moderator-auth.enabled", false));
+        modules.put("antialt", configConfig.getBoolean("modules.antialt.enabled", true));
+        modules.put("antivpn", configConfig.getBoolean("modules.antivpn.enabled", false));
+        modules.put("discord", configConfig.getBoolean("modules.discord.enabled", false));
+        modules.put("replay", true);
+
+        Map<String, Object> extra = new HashMap<>();
+        extra.put("database_type", configConfig.getString("database.type", "sqlite"));
+        extra.put("redis_enabled", configConfig.getBoolean("redis.enabled", false));
+        extra.put("commands_enabled_count", countEnabledCommands());
+
+        service.sendConfigSnapshot(modules, extra);
+    }
+
+    private int countEnabledCommands() {
+        int count = 0;
+        for (String key : configConfig.getConfigurationSection("commands.enabled").getKeys(false)) {
+            if (configConfig.getBoolean("commands.enabled." + key, false)) count++;
+        }
+        return count;
+    }
+
     private void registerEvents() {
         PluginManager pm = Bukkit.getPluginManager();
         updateChecker = new UpdateChecker(this, 112381);
@@ -355,6 +428,15 @@ public class LifeMod extends JavaPlugin {
     @Override
     public void onDisable() {
         noClipManager.shutdown();
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            java.util.Map<String, Object> props = new java.util.HashMap<>();
+            props.put("plugin_version", getDescription().getVersion());
+            props.put("platform", "bukkit");
+            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
+            ph.capture("lifemod_shutdown", props);
+            ph.shutdown();
+        }
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();

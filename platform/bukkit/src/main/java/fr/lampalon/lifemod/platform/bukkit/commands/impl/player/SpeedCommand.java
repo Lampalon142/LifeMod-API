@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -10,7 +12,9 @@ import org.bukkit.entity.Player;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class SpeedCommand extends LifeCommand {
@@ -53,6 +57,14 @@ public class SpeedCommand extends LifeCommand {
 
         context.getSender().sendMessage(context.getLang().getMessage("commands.speed.success", "%speed%", String.valueOf(speed)));
         context.getDebug().log("speed", player.getName() + " changed speed to " + speed);
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("speed_type", player.isFlying() ? "fly" : "walk");
+            props.put("speed_value", speed);
+            ph.capture("lifemod_speed", props);
+        }
 
         if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context);

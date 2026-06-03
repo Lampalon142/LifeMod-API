@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.world;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -9,7 +11,9 @@ import org.bukkit.Bukkit;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class TimeCommand extends LifeCommand {
@@ -44,6 +48,13 @@ public class TimeCommand extends LifeCommand {
 
         Bukkit.getWorlds().forEach(world -> world.setTime(ticks));
         context.getSender().sendMessage(context.getLang().getMessage("commands.world.time.success", "%time%", time));
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("time_value", time);
+            ph.capture("lifemod_time_set", props);
+        }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
             sendDiscordAlert(context, time);

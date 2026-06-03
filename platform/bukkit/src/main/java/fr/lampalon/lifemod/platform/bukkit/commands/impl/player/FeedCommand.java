@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -9,7 +11,9 @@ import org.bukkit.entity.Player;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class FeedCommand extends LifeCommand {
@@ -36,6 +40,13 @@ public class FeedCommand extends LifeCommand {
             target.sendMessage(context.getLang().getMessage("commands.utility.feed.player"));
         } else {
             context.getSender().sendMessage(context.getLang().getMessage("commands.utility.feed.usage"));
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("target_self", context.getArgs().length == 0);
+            ph.capture("lifemod_feed", props);
         }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {

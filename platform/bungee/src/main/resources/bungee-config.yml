@@ -61,6 +61,9 @@ modules:
     whitelist:
       - "PlayerToIgnore"
       
+  posthog:
+    enabled: true
+
   auto-punish:
     enabled: true
     mode: "GLOBAL"

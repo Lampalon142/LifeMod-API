@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -9,7 +11,9 @@ import org.bukkit.entity.Player;
 
 import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class GodModCommand extends LifeCommand {
@@ -52,6 +56,13 @@ public class GodModCommand extends LifeCommand {
                 context.getSender().sendMessage(context.getLang().getMessage("commands.utility.god.activate.other", "%player%", targetPlayer.getName()));
             }
             context.getDebug().log("god", "God mode enabled for " + targetPlayer.getName() + " by " + context.getSender().getName());
+        }
+
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("action", targetPlayer.isInvulnerable() ? "enable" : "disable");
+            ph.capture("lifemod_god", props);
         }
 
         if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
