@@ -43,18 +43,16 @@ public class StaffModeManager {
     }
 
     private void setStaffModeState(Player player, boolean state) {
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
-            if (data != null) {
-                data.setInStaffMode(state);
-                plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
-            }
+        PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
+        if (data != null) {
+            data.setInStaffMode(state);
+            plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
+        }
 
-            IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
-            if (messaging != null) {
-                messaging.publish("lifemod:staff", "UPDATE|" + player.getUniqueId() + "|" + state + "|" + plugin.getServerName());
-            }
-        });
+        IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
+        if (messaging != null) {
+            messaging.publish("lifemod:staff", "UPDATE|" + player.getUniqueId() + "|" + state + "|" + plugin.getServerName());
+        }
     }
 
     public void enableStaffMode(Player player) {
