@@ -25,10 +25,16 @@ public class AntiVPNPacketListener implements PacketListener {
     @Override
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getPacketType() == PacketType.Login.Client.LOGIN_START) {
-            WrapperLoginClientLoginStart loginStart = new WrapperLoginClientLoginStart(event);
-            String name = loginStart.getUsername();
-            
             if (event.getUser() == null || event.getUser().getAddress() == null) return;
+            
+            String name;
+            try {
+                WrapperLoginClientLoginStart loginStart = new WrapperLoginClientLoginStart(event);
+                name = loginStart.getUsername();
+            } catch (Exception e) {
+                return;
+            }
+            
             InetSocketAddress address = (InetSocketAddress) event.getUser().getAddress();
             String ip = address.getAddress().getHostAddress();
 

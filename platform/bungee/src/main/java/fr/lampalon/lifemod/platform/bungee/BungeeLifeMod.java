@@ -6,21 +6,21 @@ import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.analytics.PostHogService;
+import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.database.DatabaseManager;
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bungee.adapter.BungeeConfigurationService;
 import fr.lampalon.lifemod.platform.bungee.adapter.BungeeLangService;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiAltListener;
+import fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiVPNListener;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeChatListener;
 import fr.lampalon.lifemod.platform.bungee.listeners.BungeeConnectionListener;
 import fr.lampalon.lifemod.platform.bungee.managers.BungeeReactionManager;
 import fr.lampalon.lifemod.platform.bungee.managers.antialt.BungeeAntiAltManager;
-import io.github.retrooper.packetevents.bungee.factory.BungeePacketEventsBuilder;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
@@ -50,12 +50,6 @@ public class BungeeLifeMod extends Plugin {
     private long startupTime;
 
     @Override
-    public void onLoad() {
-        PacketEvents.setAPI(BungeePacketEventsBuilder.build(this));
-        PacketEvents.getAPI().load();
-    }
-
-    @Override
     public void onEnable() {
         long start = System.currentTimeMillis();
         this.startupTime = start;
@@ -73,18 +67,96 @@ public class BungeeLifeMod extends Plugin {
             String password = config.getString("redis.password", "");
             IMessagingService redis = new RedisMessagingService(host, port, password);
             ServiceRegistry.register(IMessagingService.class, redis);
+
+            ILangService lang = ServiceRegistry.get(ILangService.class);
+            redis.subscribe("lifemod:sanctions", message -> {
+                try {
+                    int pipe = message.indexOf('|');
+                    String action = pipe > 0 ? message.substring(0, pipe) : "";
+                    String data = pipe > 0 ? message.substring(pipe + 1) : "";
+
+                    if ("ADD".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 8) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String issuerName = parts[2];
+                        String reason = parts[3];
+                        long duration = Long.parseLong(parts[4]);
+                        boolean isSilent = Boolean.parseBoolean(parts[5]);
+                        String origServer = parts[6];
+
+                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
+                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
+                                : playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", issuerName,
+                                "%reason%", reason,
+                                "%time%", TimeUtil.formatTime(duration),
+                                "%server%", origServer);
+
+                        if (!msg.equals(path)) {
+                            if (isSilent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+
+                        if (type == SanctionType.BAN) {
+                            ProxiedPlayer online = ProxyServer.getInstance().getPlayer(playerUuid);
+                            if (online != null && online.isConnected()) {
+                                String kickReason = lang.getMessage("sanctions.ban.login",
+                                        "%reason%", reason,
+                                        "%issuer%", issuerName,
+                                        "%expiration%", duration == 0 ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(duration),
+                                        "%id%", playerUuid.toString().substring(0, 8),
+                                        "%server%", origServer);
+                                online.disconnect(new TextComponent(lang.formatMessage(kickReason)));
+                            }
+                        }
+                    } else if ("REMOVE".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 5) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String removedByName = parts[2];
+                        String reason = parts[3];
+                        boolean silent = Boolean.parseBoolean(parts[4]);
+
+                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
+                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
+                                : playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", removedByName,
+                                "%reason%", reason);
+
+                        if (!msg.equals(path)) {
+                            if (silent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server sanction: " + message);
+                }
+            });
         }
 
         this.databaseManager = new DatabaseManager();
         databaseManager.setupDatabase();
 
-        PacketEvents.getAPI().init();
         this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(platform);
-        PacketEvents.getAPI().getEventManager().registerListener(
-                new fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener(this.antiVPNService, platform),
-                PacketListenerPriority.LOW
-        );
         ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
+        getProxy().getPluginManager().registerListener(this, new BungeeAntiVPNListener(this, this.antiVPNService));
 
         this.antiAltManager = new BungeeAntiAltManager(this);
         this.reactionManager = new BungeeReactionManager(this);
@@ -137,7 +209,7 @@ public class BungeeLifeMod extends Plugin {
 
         File langFile = new File(langFolder, langName + ".yml");
         if (!langFile.exists()) {
-            String resourcePath = "languages/bungee_" + langName + ".yml";
+            String resourcePath = "bungee_" + langName + ".yml";
             if (getResourceAsStream(resourcePath) != null) {
                 try (InputStream in = getResourceAsStream(resourcePath)) {
                     java.nio.file.Files.copy(in, langFile.toPath());
@@ -147,7 +219,7 @@ public class BungeeLifeMod extends Plugin {
                 getLogger().warning("Language '" + langName + "' not found. Falling back to en_US.");
                 langFile = new File(langFolder, "en_US.yml");
                 if (!langFile.exists()) {
-                    try (InputStream in = getResourceAsStream("languages/bungee_en_US.yml")) {
+                    try (InputStream in = getResourceAsStream("bungee_en_US.yml")) {
                         java.nio.file.Files.copy(in, langFile.toPath());
                     } catch (IOException e) { e.printStackTrace(); }
                 }

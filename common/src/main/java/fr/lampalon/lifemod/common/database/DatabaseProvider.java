@@ -31,7 +31,9 @@ public interface DatabaseProvider {
 
     void saveRawInventory(UUID uuid, String serverName, byte[] data);
     byte[] getRawInventory(UUID uuid, String serverName);
+    byte[] getRawInventory(UUID uuid);
     void deleteRawInventory(UUID uuid, String serverName);
+    void deleteRawInventory(UUID uuid);
     
     // Simple coordinate storage
     void saveCoords(UUID uuid, String world, double x, double y, double z, float yaw, float pitch);

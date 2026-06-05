@@ -208,10 +208,29 @@ public class SQLiteManager implements DatabaseProvider {
     }
 
     @Override
+    public byte[] getRawInventory(UUID uuid) {
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT inventory_data FROM player_inventories WHERE uuid = ? ORDER BY saved_at DESC LIMIT 1")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBytes("inventory_data");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @Override
     public void deleteRawInventory(UUID uuid, String serverName) {
         try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM player_inventories WHERE uuid = ? AND server_name = ?")) {
             ps.setString(1, uuid.toString());
             ps.setString(2, serverName);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void deleteRawInventory(UUID uuid) {
+        try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM player_inventories WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }

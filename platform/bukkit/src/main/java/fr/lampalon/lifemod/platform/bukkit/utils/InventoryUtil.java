@@ -50,4 +50,29 @@ public class InventoryUtil {
             player.getInventory().setArmorContents(armor);
         }
     }
+
+    public static ItemStack[] deserializeInventoryContents(byte[] data) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+             BukkitObjectInputStream dataStream = new BukkitObjectInputStream(inputStream)) {
+            int size = dataStream.readInt();
+            ItemStack[] contents = new ItemStack[size];
+            for (int i = 0; i < size; i++) {
+                contents[i] = (ItemStack) dataStream.readObject();
+            }
+            return contents;
+        }
+    }
+
+    public static ItemStack[] deserializeInventoryArmor(byte[] data) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+             BukkitObjectInputStream dataStream = new BukkitObjectInputStream(inputStream)) {
+            dataStream.readInt();
+            int size = dataStream.readInt();
+            ItemStack[] armor = new ItemStack[size];
+            for (int i = 0; i < size; i++) {
+                armor[i] = (ItemStack) dataStream.readObject();
+            }
+            return armor;
+        }
+    }
 }

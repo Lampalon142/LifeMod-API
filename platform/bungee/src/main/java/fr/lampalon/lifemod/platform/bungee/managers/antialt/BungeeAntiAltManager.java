@@ -33,6 +33,7 @@ public class BungeeAntiAltManager {
 
         String ipAddress = connection.getSocketAddress().toString();
         engine.analyze(connection.getUniqueId(), connection.getName(), ipAddress).thenAccept(result -> {
+            if (result == null) return;
             // Execute reaction based on score
             plugin.getReactionManager().executeReactions(result, connection);
             trackAntiAlt(result);

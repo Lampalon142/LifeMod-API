@@ -150,14 +150,30 @@ public class StaffModeManager {
         String serverName = plugin.getServerName();
         UUID uuid = player.getUniqueId();
 
-        // Important: Si on a déjà des items de staff, on NE SAUVEGARDE PAS
+        if (savedInventories.containsKey(uuid)) {
+            debug.log("mod", "Skipping inventory save for " + player.getName() + " because already saved this session.");
+            return;
+        }
+
         if (hasStaffItems(player)) {
-            debug.log("mod", "Skipping inventory save for " + player.getName() + " because staff items detected.");
+            debug.log("mod", "Skipping inventory save for " + player.getName() + " because staff items detected (cross-server join).");
             return;
         }
 
         ItemStack[] contents = player.getInventory().getContents();
         ItemStack[] armor = player.getInventory().getArmorContents();
+
+        byte[] existing = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+        if (existing != null) {
+            debug.log("mod", "Using existing DB inventory for " + player.getName() + " on " + serverName + " (crash/PIN recovery).");
+            try {
+                savedInventories.put(uuid, InventoryUtil.deserializeInventoryContents(existing));
+                savedArmor.put(uuid, InventoryUtil.deserializeInventoryArmor(existing));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
         
         savedInventories.put(uuid, contents);
         savedArmor.put(uuid, armor);
@@ -188,11 +204,16 @@ public class StaffModeManager {
         } else {
             org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+                if (data == null) {
+                    data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid);
+                }
                 if (data != null) {
+                    byte[] finalData = data;
                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                         try {
-                            InventoryUtil.deserializeInventory(player, data);
+                            InventoryUtil.deserializeInventory(player, finalData);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                            plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid);
                         } catch (Exception e) { e.printStackTrace(); }
                     });
                 }

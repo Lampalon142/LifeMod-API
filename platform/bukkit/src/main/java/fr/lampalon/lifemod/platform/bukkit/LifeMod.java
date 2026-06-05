@@ -163,7 +163,112 @@ public class LifeMod extends JavaPlugin {
             IMessagingService redis = new RedisMessagingService(host, port, password);
             ServiceRegistry.register(IMessagingService.class, redis);
 
-            // Subscriptions logic would go here if needed
+            String serverName = getServerName();
+            ILangService lang = ServiceRegistry.get(ILangService.class);
+            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+
+            redis.subscribe("lifemod:sanctions", message -> {
+                try {
+                    int pipe = message.indexOf('|');
+                    String action = pipe > 0 ? message.substring(0, pipe) : "";
+                    String data = pipe > 0 ? message.substring(pipe + 1) : "";
+
+                    if ("ADD".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 8) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String issuerName = parts[2];
+                        String reason = parts[3];
+                        long duration = Long.parseLong(parts[4]);
+                        boolean isSilent = Boolean.parseBoolean(parts[5]);
+                        String origServer = parts[6];
+
+                        if (origServer.equals(serverName)) return;
+
+                        String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
+                        if (targetName == null) targetName = playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", issuerName,
+                                "%reason%", reason,
+                                "%time%", TimeUtil.formatTime(duration),
+                                "%server%", origServer);
+
+                        if (!msg.equals(path)) {
+                            if (isSilent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+
+                        if (type == SanctionType.BAN) {
+                            Player online = Bukkit.getPlayer(playerUuid);
+                            if (online != null && online.isOnline()) {
+                                String kickReason = lang.getMessage("sanctions.ban.login",
+                                        "%reason%", reason,
+                                        "%issuer%", issuerName,
+                                        "%expiration%", duration == 0 ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(duration),
+                                        "%id%", playerUuid.toString().substring(0, 8),
+                                        "%server%", origServer);
+                                String finalKickReason = kickReason;
+                                Bukkit.getScheduler().runTask(this, () -> online.kickPlayer(finalKickReason));
+                            }
+                        }
+                    } else if ("REMOVE".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 5) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String removedByName = parts[2];
+                        String reason = parts[3];
+                        boolean silent = Boolean.parseBoolean(parts[4]);
+
+                        String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
+                        if (targetName == null) targetName = playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", removedByName,
+                                "%reason%", reason);
+
+                        if (!msg.equals(path)) {
+                            if (silent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server sanction: " + message);
+                }
+            });
+
+            redis.subscribe("lifemod:staff", message -> {
+                try {
+                    String[] parts = message.split("\\|");
+                    if (parts.length >= 4 && "UPDATE".equals(parts[0])) {
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        boolean state = Boolean.parseBoolean(parts[2]);
+                        String origServer = parts[3];
+
+                        if (origServer.equals(serverName)) return;
+
+                        if (state) {
+                            moderators.add(playerUuid);
+                        } else {
+                            moderators.remove(playerUuid);
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server staff update: " + message);
+                }
+            });
         }
     }
 
