@@ -155,11 +155,6 @@ public class StaffModeManager {
             return;
         }
 
-        if (hasStaffItems(player)) {
-            debug.log("mod", "Skipping inventory save for " + player.getName() + " because staff items detected (cross-server join).");
-            return;
-        }
-
         ItemStack[] contents = player.getInventory().getContents();
         ItemStack[] armor = player.getInventory().getArmorContents();
 
@@ -174,7 +169,7 @@ public class StaffModeManager {
             }
             return;
         }
-        
+
         savedInventories.put(uuid, contents);
         savedArmor.put(uuid, armor);
 
@@ -213,7 +208,6 @@ public class StaffModeManager {
                         try {
                             InventoryUtil.deserializeInventory(player, finalData);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
-                            plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid);
                         } catch (Exception e) { e.printStackTrace(); }
                     });
                 }
@@ -222,9 +216,26 @@ public class StaffModeManager {
     }
 
     public void forceDisableOnJoin(Player player) {
-        removeStaffState(player);
-        restoreSurvivalInventory(player);
-        moderators.remove(player.getUniqueId());
+        if (moderators.contains(player.getUniqueId())) {
+            removeStaffState(player);
+            restoreSurvivalInventory(player);
+            moderators.remove(player.getUniqueId());
+        } else {
+            UUID uuid = player.getUniqueId();
+            String serverName = plugin.getServerName();
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+                if (data != null) {
+                    byte[] finalData = data;
+                    org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                        try {
+                            InventoryUtil.deserializeInventory(player, finalData);
+                            plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                        } catch (Exception e) { e.printStackTrace(); }
+                    });
+                }
+            });
+        }
     }
 
     public void cleanupMemoryOnQuit(UUID uuid) {
@@ -240,12 +251,5 @@ public class StaffModeManager {
             props.put("action", enabled ? "enable" : "disable");
             ph.capture("lifemod_staff_mode", props);
         }
-    }
-
-    private boolean hasStaffItems(Player player) {
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && itemManager.getStaffItem(item) != null) return true;
-        }
-        return false;
     }
 }
