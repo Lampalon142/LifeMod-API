@@ -32,9 +32,11 @@ public class ConnectionListener implements Listener {
         
         PlayerData existing = db.getPlayerData(uuid);
         
+        boolean inStaffMode = existing != null && existing.isInStaffMode();
+        System.out.println("[ConnectionListener] " + name + " (" + uuid + ") pre-login: existing=" + (existing != null ? "YES" : "NO") + " isInStaffMode=" + inStaffMode);
+
         long firstSeen = existing != null ? existing.getFirstSeen() : System.currentTimeMillis();
         int sessionCount = existing != null ? existing.getSessionCount() + 1 : 1;
-        boolean inStaffMode = existing != null && existing.isInStaffMode();
 
         PlayerData data = new PlayerData(uuid, name, ip, System.currentTimeMillis(), firstSeen, sessionCount, inStaffMode);
         db.savePlayerData(data);

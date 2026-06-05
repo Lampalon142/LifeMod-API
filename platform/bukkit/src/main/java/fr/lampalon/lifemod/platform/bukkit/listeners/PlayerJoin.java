@@ -83,13 +83,19 @@ public class PlayerJoin implements Listener {
             PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
 
             if (data != null) {
+                boolean staffMode = data.isInStaffMode();
+                debug.log("mod", "[PlayerJoin] " + player.getName() + " isInStaffMode=" + staffMode + " from DB on " + plugin.getServerName());
                 Bukkit.getScheduler().runTask(plugin, () -> {
-                    if (data.isInStaffMode()) {
+                    if (staffMode) {
+                        debug.log("mod", "[PlayerJoin] " + player.getName() + " calling enableStaffMode on " + plugin.getServerName());
                         plugin.getStaffModeManager().enableStaffMode(player);
                     } else {
+                        debug.log("mod", "[PlayerJoin] " + player.getName() + " calling forceDisableOnJoin on " + plugin.getServerName());
                         plugin.getStaffModeManager().forceDisableOnJoin(player);
                     }
                 });
+            } else {
+                debug.log("mod", "[PlayerJoin] " + player.getName() + " PlayerData is null on " + plugin.getServerName());
             }
 
             List<PlayerData> alts = plugin.getDatabaseManager().getDatabaseProvider().getAlts(ip);

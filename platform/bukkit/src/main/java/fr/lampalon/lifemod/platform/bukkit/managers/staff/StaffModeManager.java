@@ -43,10 +43,14 @@ public class StaffModeManager {
     }
 
     private void setStaffModeState(Player player, boolean state) {
+        debug.log("mod", "[setStaffModeState] " + player.getName() + " saving isInStaffMode=" + state + " on server=" + plugin.getServerName());
         PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
         if (data != null) {
             data.setInStaffMode(state);
             plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
+            debug.log("mod", "[setStaffModeState] " + player.getName() + " saved isInStaffMode=" + state + " (old was " + !state + ")");
+        } else {
+            debug.log("mod", "[setStaffModeState] " + player.getName() + " PlayerData is null, cannot save state!");
         }
 
         IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
@@ -186,6 +190,7 @@ public class StaffModeManager {
         UUID uuid = player.getUniqueId();
 
         if (savedInventories.containsKey(uuid)) {
+            debug.log("mod", "[restoreSurvivalInventory] " + player.getName() + " restoring from cache on " + serverName);
             player.getInventory().setContents(savedInventories.get(uuid));
             player.getInventory().setArmorContents(savedArmor.get(uuid));
             savedInventories.remove(uuid);
@@ -197,8 +202,10 @@ public class StaffModeManager {
         } else {
             org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 byte[] data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+                debug.log("mod", "[restoreSurvivalInventory] " + player.getName() + " DB lookup on " + serverName + " per-server: " + (data != null ? "FOUND" : "null"));
                 if (data == null) {
                     data = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid);
+                    debug.log("mod", "[restoreSurvivalInventory] " + player.getName() + " DB lookup global fallback: " + (data != null ? "FOUND" : "null"));
                 }
                 if (data != null) {
                     byte[] finalData = data;
@@ -206,8 +213,11 @@ public class StaffModeManager {
                         try {
                             InventoryUtil.deserializeInventory(player, finalData);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                            debug.log("mod", "[restoreSurvivalInventory] " + player.getName() + " restored from DB on " + serverName);
                         } catch (Exception e) { e.printStackTrace(); }
                     });
+                } else {
+                    debug.log("mod", "[restoreSurvivalInventory] " + player.getName() + " nothing to restore on " + serverName + " (no cache, no DB)");
                 }
             });
         }
@@ -215,10 +225,12 @@ public class StaffModeManager {
 
     public void forceDisableOnJoin(Player player) {
         if (moderators.contains(player.getUniqueId())) {
+            debug.log("mod", "[forceDisableOnJoin] " + player.getName() + " in moderators set, cleaning up on " + plugin.getServerName());
             removeStaffState(player);
             restoreSurvivalInventory(player);
             moderators.remove(player.getUniqueId());
         } else {
+            debug.log("mod", "[forceDisableOnJoin] " + player.getName() + " not in moderators on " + plugin.getServerName() + ", checking DB for orphan save");
             UUID uuid = player.getUniqueId();
             String serverName = plugin.getServerName();
             org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -229,8 +241,11 @@ public class StaffModeManager {
                         try {
                             InventoryUtil.deserializeInventory(player, finalData);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
+                            debug.log("mod", "[forceDisableOnJoin] " + player.getName() + " restored orphan save on " + serverName);
                         } catch (Exception e) { e.printStackTrace(); }
                     });
+                } else {
+                    debug.log("mod", "[forceDisableOnJoin] " + player.getName() + " no orphan save on " + serverName + ", leaving inventory untouched");
                 }
             });
         }
