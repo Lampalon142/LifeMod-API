@@ -46,7 +46,7 @@ public class PlayerQuit implements Listener {
 
             PlayerData data = db.getPlayerData(uuid);
             if (data != null) {
-                data.setInStaffMode(false);
+                debug.log("mod", "[PlayerQuit] " + player.getName() + " isInStaffMode preserved as " + data.isInStaffMode() + " on quit");
                 data.setLastSeen(System.currentTimeMillis());
                 db.savePlayerData(data);
             }
