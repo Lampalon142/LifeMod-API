@@ -43,6 +43,8 @@
 
 ## Reference
 - `GEMINI.md` — supplementary project overview
+- `PostHogSetup.java` — standalone CLI to create all LifeMod PostHog dashboards/insights
+- `PosthogClear.java` — standalone CLI to delete all LifeMod PostHog dashboards/insights (supports `--dry-run`)
 
 ---
 
