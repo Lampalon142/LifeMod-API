@@ -3,6 +3,10 @@ package fr.lampalon.lifemod.common.analytics;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +70,21 @@ public class PosthogClear {
         if (dryRun) System.out.println("*** DRY RUN — no changes will be made ***");
         System.out.println();
 
+        // Delete ALL insights in the project
+        List<String> allInsightIds = fetchAllInsightIds();
+        System.out.println("Found " + allInsightIds.size() + " total insight(s) to delete");
+        for (String insightId : allInsightIds) {
+            System.out.print("  Deleting insight ID=" + insightId + "... ");
+            if (dryRun) {
+                System.out.println("SKIP (dry-run)");
+            } else {
+                deleteInsight(insightId);
+                System.out.println("OK");
+            }
+        }
+        System.out.println();
+
+        // Delete all LifeMod dashboards
         List<DashboardInfo> allDashboards = fetchAllDashboards();
         System.out.println("Found " + allDashboards.size() + " total dashboard(s)");
 
@@ -78,44 +97,91 @@ public class PosthogClear {
 
         if (lifemodDashboards.isEmpty()) {
             System.out.println("No \"LifeMod\" dashboards found. Nothing to clear.");
-            return;
-        }
+        } else {
+            System.out.println("Found " + lifemodDashboards.size() + " LifeMod dashboard(s) to delete:");
+            for (DashboardInfo d : lifemodDashboards) {
+                System.out.println("  \"" + d.name + "\" (ID=" + d.id + ")");
+            }
+            System.out.println();
 
-        System.out.println("Found " + lifemodDashboards.size() + " LifeMod dashboard(s) to delete:");
-        for (DashboardInfo d : lifemodDashboards) {
-            System.out.println("  \"" + d.name + "\" (ID=" + d.id + ")");
-        }
-        System.out.println();
-
-        for (DashboardInfo d : lifemodDashboards) {
-            List<String> insightIds = fetchInsightIdsForDashboard(d.id);
-            System.out.println("Dashboard \"" + d.name + "\": " + insightIds.size() + " insight(s)");
-
-            for (String insightId : insightIds) {
-                System.out.print("  Deleting insight ID=" + insightId + "... ");
+            for (DashboardInfo d : lifemodDashboards) {
+                System.out.print("Deleting dashboard \"" + d.name + "\" (ID=" + d.id + ")... ");
                 if (dryRun) {
                     System.out.println("SKIP (dry-run)");
                 } else {
-                    deleteInsight(insightId);
+                    deleteDashboard(d.id);
                     System.out.println("OK");
                 }
+                System.out.println();
             }
-
-            System.out.print("Deleting dashboard \"" + d.name + "\" (ID=" + d.id + ")... ");
-            if (dryRun) {
-                System.out.println("SKIP (dry-run)");
-            } else {
-                deleteDashboard(d.id);
-                System.out.println("OK");
-            }
-            System.out.println();
         }
 
         if (dryRun) {
-            System.out.println("=== Dry-run complete. Pass --dry-run to actually delete. ===");
+            System.out.println("=== Dry-run complete. Remove --dry-run to actually delete. ===");
         } else {
-            System.out.println("=== All LifeMod dashboards and insights cleared! ===");
+            System.out.println("=== All insights and LifeMod dashboards cleared! ===");
         }
+    }
+
+    private List<String> fetchAllInsightIds() throws Exception {
+        List<String> result = new ArrayList<>();
+        String url = baseUrl + "/api/environments/" + environmentId + "/insights/?limit=500";
+        while (url != null) {
+            String response = get(url);
+            String searchKey = "\"results\":[";
+            int idx = response.indexOf(searchKey);
+            if (idx == -1) break;
+
+            int start = idx + searchKey.length();
+            int end = response.indexOf("]}", start);
+            if (end == -1) end = response.length();
+
+            String json = response.substring(start, end);
+            int pos = 0;
+            while (pos < json.length()) {
+                int idPos = json.indexOf("\"id\":", pos);
+                if (idPos == -1) break;
+
+                int objEnd = findMatchingBrace(json, idPos);
+                if (objEnd == -1) break;
+
+                String obj = json.substring(idPos, objEnd + 1);
+                String id = extractStringValue(obj, "\"id\":", ",");
+                if (id != null) {
+                    result.add(id);
+                }
+                pos = objEnd + 1;
+            }
+
+            // Handle pagination via "next" link
+            url = extractNextUrl(response);
+        }
+        return result;
+    }
+
+    private String extractNextUrl(String response) {
+        String key = "\"next\":";
+        int idx = response.indexOf(key);
+        if (idx == -1) return null;
+        int afterValue = idx + key.length();
+        // Check for null value
+        if (response.substring(afterValue).trim().startsWith("null")) return null;
+        int start = response.indexOf("\"", afterValue);
+        if (start == -1) return null;
+        int end = response.indexOf("\"", start + 1);
+        if (end == -1) return null;
+        String url = response.substring(start + 1, end);
+        return url.isEmpty() ? null : url;
+    }
+
+    private String fetchEnvironmentId() throws Exception {
+        String response = get(baseUrl + "/api/projects/");
+        String searchKey = "\"id\":";
+        int idx = response.indexOf(searchKey);
+        if (idx == -1) throw new RuntimeException("Could not find project ID in response");
+        int start = idx + searchKey.length();
+        int end = response.indexOf(",", start);
+        return response.substring(start, end).trim();
     }
 
     private List<DashboardInfo> fetchAllDashboards() throws Exception {
@@ -153,58 +219,31 @@ public class PosthogClear {
         return result;
     }
 
-    private List<String> fetchInsightIdsForDashboard(String dashboardId) throws Exception {
-        List<String> result = new ArrayList<>();
-        String response = get(baseUrl + "/api/environments/" + environmentId + "/insights/?dashboards=" + dashboardId + "&limit=200");
-        String searchKey = "\"results\":[";
-        int idx = response.indexOf(searchKey);
-        if (idx == -1) return result;
-
-        int start = idx + searchKey.length();
-        int end = response.lastIndexOf("]}");
-        if (end == -1) end = response.length();
-
-        String json = response.substring(start, end);
-        int pos = 0;
-        while (pos < json.length()) {
-            int idPos = json.indexOf("\"id\":", pos);
-            if (idPos == -1) break;
-
-            int objEnd = findMatchingBrace(json, idPos);
-            if (objEnd == -1) break;
-
-            String obj = json.substring(idPos, objEnd + 1);
-            String id = extractStringValue(obj, "\"id\":", ",");
-
-            if (id != null) {
-                result.add(id);
-            }
-
-            pos = objEnd + 1;
-        }
-        return result;
-    }
-
-    private String fetchEnvironmentId() throws Exception {
-        String response = get(baseUrl + "/api/projects/");
-        String searchKey = "\"id\":";
-        int idx = response.indexOf(searchKey);
-        if (idx == -1) throw new RuntimeException("Could not find project ID in response");
-        int start = idx + searchKey.length();
-        int end = response.indexOf(",", start);
-        return response.substring(start, end).trim();
-    }
-
     private void deleteInsight(String insightId) throws Exception {
-        delete(baseUrl + "/api/environments/" + environmentId + "/insights/" + insightId + "/");
+        patch(baseUrl + "/api/environments/" + environmentId + "/insights/" + insightId + "/", "{\"deleted\":true}");
     }
 
     private void deleteDashboard(String dashboardId) throws Exception {
-        delete(baseUrl + "/api/environments/" + environmentId + "/dashboards/" + dashboardId + "/");
+        patch(baseUrl + "/api/environments/" + environmentId + "/dashboards/" + dashboardId + "/", "{\"deleted\":true}");
+    }
+
+    private void patch(String urlString, String json) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(urlString))
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                .header("Authorization", "Bearer " + personalApiKey)
+                .header("Content-Type", "application/json")
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        int code = response.statusCode();
+        if (code >= 400 && code != 404) {
+            System.err.println("PATCH " + urlString + " returned " + code + ": " + response.body());
+        }
     }
 
     private String get(String urlString) throws Exception {
-        HttpURLConnection conn = (HttpURLConnection) new URI(urlString).toURL().openConnection();
+        HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Authorization", "Bearer " + personalApiKey);
         conn.setRequestProperty("Content-Type", "application/json");
@@ -219,26 +258,13 @@ public class PosthogClear {
         return body;
     }
 
-    private void delete(String urlString) throws Exception {
-        HttpURLConnection conn = (HttpURLConnection) new URI(urlString).toURL().openConnection();
-        conn.setRequestMethod("DELETE");
-        conn.setRequestProperty("Authorization", "Bearer " + personalApiKey);
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setConnectTimeout(15000);
-        conn.setReadTimeout(15000);
-
-        int code = conn.getResponseCode();
-        if (code >= 400) {
-            String body = readBody(conn);
-            System.err.println("DELETE " + urlString + " returned " + code + ": " + body);
-        }
-    }
-
     private String readBody(HttpURLConnection conn) throws Exception {
         try (Scanner scanner = new Scanner(conn.getInputStream(), StandardCharsets.UTF_8).useDelimiter("\\A")) {
             return scanner.hasNext() ? scanner.next() : "";
         } catch (Exception e) {
-            try (Scanner scanner = new Scanner(conn.getErrorStream(), StandardCharsets.UTF_8).useDelimiter("\\A")) {
+            java.io.InputStream err = conn.getErrorStream();
+            if (err == null) return "";
+            try (Scanner scanner = new Scanner(err, StandardCharsets.UTF_8).useDelimiter("\\A")) {
                 return scanner.hasNext() ? scanner.next() : "";
             }
         }
@@ -268,6 +294,21 @@ public class PosthogClear {
             char c = json.charAt(i);
             if (c == '{') depth++;
             else if (c == '}') {
+                depth--;
+                if (depth == 0) return i;
+            }
+        }
+        return -1;
+    }
+
+    private static int findMatchingBracket(String json, int from) {
+        int bracket = json.indexOf("[", from);
+        if (bracket == -1) return -1;
+        int depth = 0;
+        for (int i = bracket; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '[') depth++;
+            else if (c == ']') {
                 depth--;
                 if (depth == 0) return i;
             }
