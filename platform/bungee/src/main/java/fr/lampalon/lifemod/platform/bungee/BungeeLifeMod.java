@@ -282,6 +282,8 @@ public class BungeeLifeMod extends Plugin {
             Map<String, Object> extra = new HashMap<>();
             extra.put("database_type", config.getString("database.type", "mysql"));
             extra.put("redis_enabled", config.getBoolean("redis.enabled", false));
+            extra.put("antivpn_geo_mode", "NONE");
+            extra.put("auto_punish_mode", config.getString("modules.auto-punish.mode", "GLOBAL"));
 
             service.sendConfigSnapshot(modules, extra);
 

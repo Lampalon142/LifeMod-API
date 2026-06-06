@@ -237,7 +237,7 @@ public class PostHogSetup {
                 insight("lifemod_startup", "Par type de base de données", Map.of("date_from", "-30d", "breakdown", "database_type", "display", "ActionsPie")),
                 insight("lifemod_startup", "Redis activé ?", Map.of("date_from", "-30d", "breakdown", "redis_enabled", "display", "ActionsPie")),
                 insight("lifemod_environment", "OS des serveurs", Map.of("date_from", "-30d", "breakdown", "os_name", "display", "ActionsBarValue")),
-                insight("lifemod_environment", "Mémoire allouée", Map.of("date_from", "-30d", "display", "ActionsBarValue", "math_values", "allocated_memory_mb"))
+                insight("lifemod_environment", "Mémoire allouée (MB)", Map.of("date_from", "-30d", "display", "ActionsBarValue", "math", "avg", "math_values", "allocated_memory_mb"))
             )
         ));
 
@@ -272,7 +272,7 @@ public class PostHogSetup {
                 insight("lifemod_sanction", "Sanctions / jour (7j)", Map.of("date_from", "-7d")),
                 insight("lifemod_sanction", "Répartition par type", Map.of("date_from", "-30d", "breakdown", "sanction_type", "display", "ActionsPie")),
                 insight("lifemod_sanction", "Bans silencieux vs publics", Map.of("date_from", "-30d", "breakdown", "silent", "display", "ActionsBarValue")),
-                insight("lifemod_sanction", "Durées des sanctions", Map.of("date_from", "-30d", "breakdown", "duration_human", "display", "ActionsBarValue")),
+                insight("lifemod_sanction", "Durées des sanctions", Map.of("date_from", "-30d", "breakdown", "duration_ms", "display", "ActionsBarValue")),
                 insight("lifemod_sanction", "% sanctions automatiques", Map.of("date_from", "-30d", "breakdown", "auto_punish", "display", "ActionsPie")),
                 insight("lifemod_auto_punish", "Auto-punish par catégorie", Map.of("date_from", "-30d", "breakdown", "reason_category", "display", "ActionsBarValue"))
             )
@@ -287,7 +287,7 @@ public class PostHogSetup {
                 insight("lifemod_antivpn_block", "Raisons de blocage", Map.of("date_from", "-30d", "breakdown", "reason", "display", "ActionsPie")),
                 insight("lifemod_antialt", "Détections Anti-Alt / jour (7j)", Map.of("date_from", "-7d")),
                 insight("lifemod_antialt", "Sévérité des détections", Map.of("date_from", "-30d", "breakdown", "severity", "display", "ActionsPie")),
-                insight("lifemod_antialt", "Actions prises", Map.of("date_from", "-30d", "breakdown", "action_taken", "display", "ActionsBarValue"))
+                insight("lifemod_antialt", "Actions prises", Map.of("date_from", "-30d", "breakdown", "severity", "display", "ActionsBarValue"))
             )
         ));
 
@@ -308,10 +308,10 @@ public class PostHogSetup {
             "tags", List.of("performance", "health", "errors"),
             "insights", List.of(
                 insight("lifemod_error", "Erreurs / jour (7j)", Map.of("date_from", "-7d")),
-                insight("lifemod_error", "Top 10 exceptions", Map.of("date_from", "-30d", "breakdown", "exception_class", "display", "ActionsBarValue")),
-                insight("lifemod_error", "Erreurs par contexte", Map.of("date_from", "-30d", "breakdown", "origin", "display", "ActionsBarValue")),
+                insight("lifemod_error", "Top 10 messages d'erreur", Map.of("date_from", "-30d", "breakdown", "message", "display", "ActionsBarValue")),
+                insight("lifemod_error", "Erreurs par contexte", Map.of("date_from", "-30d", "breakdown", "context", "display", "ActionsBarValue")),
                 insight("lifemod_error", "Erreurs par version", Map.of("date_from", "-30d", "breakdown", "plugin_version", "display", "ActionsBarValue")),
-                insight("lifemod_environment", "Mémoire max", Map.of("date_from", "-30d", "display", "ActionsBarValue"))
+                insight("lifemod_environment", "Mémoire max (MB)", Map.of("date_from", "-30d", "display", "ActionsBarValue", "math", "max", "math_values", "max_memory_mb"))
             )
         ));
 

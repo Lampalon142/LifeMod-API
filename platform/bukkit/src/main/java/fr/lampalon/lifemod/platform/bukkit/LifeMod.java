@@ -472,6 +472,8 @@ public class LifeMod extends JavaPlugin {
         extra.put("database_type", configConfig.getString("database.type", "sqlite"));
         extra.put("redis_enabled", configConfig.getBoolean("redis.enabled", false));
         extra.put("commands_enabled_count", countEnabledCommands());
+        extra.put("antivpn_geo_mode", configConfig.getString("modules.antivpn.geo-blocking.mode", "NONE"));
+        extra.put("auto_punish_mode", configConfig.getString("modules.auto-punish.mode", "GLOBAL"));
 
         service.sendConfigSnapshot(modules, extra);
     }
