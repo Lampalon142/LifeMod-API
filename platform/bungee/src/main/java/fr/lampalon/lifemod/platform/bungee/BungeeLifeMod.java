@@ -262,7 +262,7 @@ public class BungeeLifeMod extends Plugin {
 
         getLogger().info("PostHog: creating service (host=" + host + ")...");
         try {
-            PostHogService service = new PostHogService(apiKey, config.getString("server.name", "Proxy"), getDescription().getVersion(), "bungee", host, serverVersion, javaVersion, dbType, redis, -1);
+            PostHogService service = new PostHogService(apiKey, config.getString("server.name", "Proxy"), getDescription().getVersion(), "bungee", host, serverVersion, javaVersion, dbType, redis, -1, getDataFolder().getPath());
             ServiceRegistry.register(IPostHogService.class, service);
             getLogger().info("PostHog: registered in ServiceRegistry");
 

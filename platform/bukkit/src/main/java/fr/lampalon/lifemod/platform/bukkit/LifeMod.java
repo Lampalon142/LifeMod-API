@@ -433,7 +433,7 @@ public class LifeMod extends JavaPlugin {
 
         getLogger().info("PostHog: creating service (host=" + host + ")...");
         try {
-            PostHogService service = new PostHogService(apiKey, getServerName(), getDescription().getVersion(), "bukkit", host, serverVersion, javaVersion, dbType, redis, maxPlayers);
+            PostHogService service = new PostHogService(apiKey, getServerName(), getDescription().getVersion(), "bukkit", host, serverVersion, javaVersion, dbType, redis, maxPlayers, getDataFolder().getPath());
             ServiceRegistry.register(IPostHogService.class, service);
             getLogger().info("PostHog: registered in ServiceRegistry");
 

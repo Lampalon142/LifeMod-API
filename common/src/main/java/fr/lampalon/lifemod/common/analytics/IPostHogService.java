@@ -10,5 +10,7 @@ public interface IPostHogService {
 
     void capture(String eventName, String distinctId, Map<String, Object> properties);
 
+    void captureError(String message, String context);
+
     void shutdown();
 }

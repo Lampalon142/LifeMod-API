@@ -6,8 +6,12 @@ import com.posthog.server.PostHogConfig;
 import com.posthog.server.PostHogInterface;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,13 +23,14 @@ public class PostHogService implements IPostHogService {
 
     private final PostHogInterface posthog;
     private final String serverName;
+    private final String serverInstanceId;
     private final String pluginVersion;
     private final String platform;
     private final boolean enabled;
     private final String host;
 
-    public PostHogService(String apiKey, String serverName, String pluginVersion, String platform, String host, String serverVersion, String javaVersion, String databaseType, boolean redisEnabled, int playerMax) {
-        this(apiKey, serverName, pluginVersion, platform, host);
+    public PostHogService(String apiKey, String serverName, String pluginVersion, String platform, String host, String serverVersion, String javaVersion, String databaseType, boolean redisEnabled, int playerMax, String dataFolderPath) {
+        this(apiKey, serverName, pluginVersion, platform, host, dataFolderPath);
 
         LOG.info("PostHog initialized for server=" + serverName + " platform=" + platform + " host=" + host);
 
@@ -37,13 +42,14 @@ public class PostHogService implements IPostHogService {
         }
     }
 
-    public PostHogService(String apiKey, String serverName, String pluginVersion, String platform, String host) {
+    public PostHogService(String apiKey, String serverName, String pluginVersion, String platform, String host, String dataFolderPath) {
         this.serverName = serverName;
+        this.serverInstanceId = loadOrCreateInstanceId(dataFolderPath);
         this.pluginVersion = pluginVersion;
         this.platform = platform;
         this.host = host;
 
-        LOG.info("Creating PostHogService: host=" + host + " serverName=" + serverName);
+        LOG.info("Creating PostHogService: host=" + host + " serverName=" + serverName + " instanceId=" + serverInstanceId);
 
         try {
             PostHogConfig config = PostHogConfig
@@ -59,6 +65,26 @@ public class PostHogService implements IPostHogService {
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "FAILED to initialize PostHog SDK", e);
             throw e;
+        }
+    }
+
+    private static String loadOrCreateInstanceId(String dataFolderPath) {
+        try {
+            Path dir = Paths.get(dataFolderPath);
+            Files.createDirectories(dir);
+            Path file = dir.resolve("server.id");
+            if (Files.exists(file)) {
+                String id = Files.readString(file).trim();
+                LOG.info("Loaded existing server instance ID: " + id);
+                return id;
+            }
+            String id = UUID.randomUUID().toString();
+            Files.writeString(file, id);
+            LOG.info("Generated new server instance ID: " + id);
+            return id;
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Could not load/create server.id, using fallback", e);
+            return UUID.randomUUID().toString();
         }
     }
 
@@ -110,6 +136,15 @@ public class PostHogService implements IPostHogService {
         capture("lifemod_config_snapshot", props);
     }
 
+    public void captureError(String message, String context) {
+        Map<String, Object> props = new HashMap<>();
+        props.put("message", message);
+        props.put("context", context != null ? context : "unknown");
+        props.put("plugin_version", pluginVersion);
+        props.put("platform", platform);
+        capture("lifemod_error", props);
+    }
+
     @Override
     public boolean isEnabled() {
         return enabled;
@@ -126,6 +161,7 @@ public class PostHogService implements IPostHogService {
             LOG.warning("capture() called but PostHog is disabled (event=" + eventName + ")");
             return;
         }
+        properties.put("instance_id", serverInstanceId);
         LOG.info(">>> CAPTURE event=" + eventName + " distinctId=" + distinctId + " props=" + properties);
         try {
             PostHogCaptureOptions options = PostHogCaptureOptions.builder()

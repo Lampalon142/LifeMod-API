@@ -37,7 +37,8 @@ public class PlayerQuit implements Listener {
         if (ph != null) {
             Map<String, Object> props = new HashMap<>();
             props.put("player_count", Bukkit.getOnlinePlayers().size() - 1);
-            props.put("session_seconds", 0);
+            props.put("server_name", plugin.getServerName());
+            props.put("is_staff", player.hasPermission("lifemod.moderator"));
             ph.capture("lifemod_player_quit", props);
         }
 

@@ -113,6 +113,8 @@ public class SanctionService implements ISanctionService {
             Map<String, Object> props = new HashMap<>();
             props.put("sanction_type", sanction.getType().name());
             props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
+            props.put("is_permanent", sanction.isPermanent());
+            props.put("server_name", sanction.getServerName() != null ? sanction.getServerName() : "unknown");
             ph.capture("lifemod_sanction_pardon", props);
         }
     }
@@ -126,6 +128,9 @@ public class SanctionService implements ISanctionService {
             props.put("duration_ms", sanction.getDuration());
             props.put("auto_punish", false);
             props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
+            props.put("is_permanent", sanction.isPermanent());
+            props.put("server_name", sanction.getServerName() != null ? sanction.getServerName() : "unknown");
+            props.put("category", sanction.getCategory() != null ? sanction.getCategory() : "GLOBAL");
             ph.capture("lifemod_sanction", props);
         }
     }
@@ -139,6 +144,7 @@ public class SanctionService implements ISanctionService {
             props.put("reason_category", category != null ? category : "GLOBAL");
             props.put("warning_count", warningCount);
             props.put("threshold_triggered", threshold);
+            props.put("is_permanent", durationMs == 0);
             ph.capture("lifemod_auto_punish", props);
         }
     }

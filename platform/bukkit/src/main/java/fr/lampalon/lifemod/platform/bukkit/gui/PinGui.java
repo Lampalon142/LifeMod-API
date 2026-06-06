@@ -1,5 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.gui;
 
+import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
@@ -12,6 +13,9 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PinGui {
 
@@ -164,6 +168,8 @@ public class PinGui {
     private void validate() {
         if (currentPin.isEmpty()) return;
 
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+
         if (isRegistering) {
             String ip = player.getAddress().getAddress().getHostAddress();
             authService.registerModerator(player.getUniqueId(), player.getName(), currentPin, ip);
@@ -171,14 +177,35 @@ public class PinGui {
             authService.saveSession(player.getUniqueId(), ip);
             player.sendMessage(lang.getMessage("auth.registered"));
             player.closeInventory();
+
+            if (ph != null) {
+                Map<String, Object> props = new HashMap<>();
+                props.put("action", "register");
+                props.put("success", true);
+                props.put("session_restored", false);
+                ph.capture("lifemod_mod_auth", props);
+            }
         } else {
             if (authService.checkPassword(player.getUniqueId(), currentPin)) {
                 sessionManager.authenticate(player.getUniqueId());
                 authService.saveSession(player.getUniqueId(), player.getAddress().getAddress().getHostAddress());
                 player.sendMessage(lang.getMessage("auth.login-success"));
                 player.closeInventory();
+
+                if (ph != null) {
+                    Map<String, Object> props = new HashMap<>();
+                    props.put("action", "login");
+                    props.put("success", true);
+                    props.put("session_restored", false);
+                    ph.capture("lifemod_mod_auth", props);
+                }
             } else {
                 int attemptsLeft = sessionManager.decrementAttempts(player.getUniqueId());
+                if (ph != null) {
+                    Map<String, Object> failProps = new HashMap<>();
+                    failProps.put("current_attempt", 1);
+                    ph.capture("lifemod_mod_auth_fail", failProps);
+                }
                 if (attemptsLeft <= 0) {
                     sessionManager.lock(player.getUniqueId());
                     player.kickPlayer(lang.getMessage("auth.login-locked"));
