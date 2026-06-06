@@ -165,13 +165,16 @@ public class PinGui {
         if (currentPin.isEmpty()) return;
 
         if (isRegistering) {
-            authService.registerModerator(player.getUniqueId(), player.getName(), currentPin, player.getAddress().getAddress().getHostAddress());
+            String ip = player.getAddress().getAddress().getHostAddress();
+            authService.registerModerator(player.getUniqueId(), player.getName(), currentPin, ip);
             sessionManager.authenticate(player.getUniqueId());
+            authService.saveSession(player.getUniqueId(), ip);
             player.sendMessage(lang.getMessage("auth.registered"));
             player.closeInventory();
         } else {
             if (authService.checkPassword(player.getUniqueId(), currentPin)) {
                 sessionManager.authenticate(player.getUniqueId());
+                authService.saveSession(player.getUniqueId(), player.getAddress().getAddress().getHostAddress());
                 player.sendMessage(lang.getMessage("auth.login-success"));
                 player.closeInventory();
             } else {

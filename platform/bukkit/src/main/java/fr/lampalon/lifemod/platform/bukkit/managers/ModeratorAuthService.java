@@ -86,13 +86,24 @@ public class ModeratorAuthService implements IPinService {
                              "name VARCHAR(32)," +
                              "password_hash VARCHAR(256) NOT NULL," +
                              "ip VARCHAR(64)," +
-                             "last_update BIGINT" +
+                             "last_update BIGINT," +
+                             "last_auth_ip VARCHAR(64)," +
+                             "last_auth_time BIGINT" +
                              ")"
              )) {
             ps.executeUpdate();
         } catch (SQLException e) {
             plugin.getLogger().severe("[LifeMod] Unable to create moderator_auth table: " + e.getMessage());
         }
+        // Migration for existing tables that lack the new columns
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("ALTER TABLE moderator_auth ADD COLUMN last_auth_ip VARCHAR(64)")) {
+            ps.executeUpdate();
+        } catch (SQLException ignored) {}
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement("ALTER TABLE moderator_auth ADD COLUMN last_auth_time BIGINT")) {
+            ps.executeUpdate();
+        } catch (SQLException ignored) {}
     }
 
     public boolean isRegistered(UUID uuid) {
@@ -161,6 +172,50 @@ public class ModeratorAuthService implements IPinService {
         } catch (SQLException e) {
             plugin.getLogger().severe("[LifeMod] updateIp error: " + e.getMessage());
         }
+    }
+
+    public void saveSession(UUID uuid, String ip) {
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE moderator_auth SET last_auth_ip = ?, last_auth_time = ? WHERE uuid = ?")) {
+            ps.setString(1, ip);
+            ps.setLong(2, System.currentTimeMillis());
+            ps.setString(3, uuid.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            plugin.getLogger().severe("[LifeMod] saveSession error: " + e.getMessage());
+        }
+    }
+
+    public long getLastAuthTime(UUID uuid) {
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT last_auth_time FROM moderator_auth WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    long val = rs.getLong("last_auth_time");
+                    return rs.wasNull() ? 0 : val;
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[LifeMod] getLastAuthTime error: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public String getLastAuthIp(UUID uuid) {
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT last_auth_ip FROM moderator_auth WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("last_auth_ip");
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().warning("[LifeMod] getLastAuthIp error: " + e.getMessage());
+        }
+        return null;
     }
 
     public UUID getUUIDByName(String name) {

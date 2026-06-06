@@ -4,6 +4,8 @@ import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.gui.PinGui;
+import fr.lampalon.lifemod.platform.bukkit.managers.ModeratorAuthService;
+import fr.lampalon.lifemod.platform.bukkit.managers.ModeratorSessionManager;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -51,15 +53,33 @@ public class ModeratorAuthListener implements Listener {
             player.kickPlayer(lang.getMessage("auth.login-locked"));
             return;
         }
-        if (needsAuth(player)) {
-            Bukkit.getScheduler().runTaskLater(LifeMod.getInstance(), () -> {
-                if (player.isOnline() && needsAuth(player)) {
-                    PinGui gui = new PinGui(player);
-                    activeGuis.put(player.getUniqueId(), gui);
-                    gui.open();
-                }
-            }, 10L);
+        if (!player.hasPermission("lifemod.moderator")) return;
+
+        ModeratorSessionManager sessionManager = LifeMod.getInstance().getModeratorSessionManager();
+        ModeratorAuthService authService = LifeMod.getInstance().getModeratorAuthService();
+
+        // Already authenticated this in-memory session
+        if (sessionManager.isAuthenticated(player.getUniqueId())) return;
+
+        // Try to restore session from DB (same IP + within timeout)
+        String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : null;
+        String lastIp = authService.getLastAuthIp(player.getUniqueId());
+        long lastTime = authService.getLastAuthTime(player.getUniqueId());
+        long timeoutMs = 5L * 60L * 1000L; // 5 minutes
+
+        if (currentIp != null && currentIp.equals(lastIp) && lastTime > 0 && (System.currentTimeMillis() - lastTime) < timeoutMs) {
+            sessionManager.authenticate(player.getUniqueId());
+            return;
         }
+
+        // Otherwise ask for PIN
+        Bukkit.getScheduler().runTaskLater(LifeMod.getInstance(), () -> {
+            if (player.isOnline() && needsAuth(player)) {
+                PinGui gui = new PinGui(player);
+                activeGuis.put(player.getUniqueId(), gui);
+                gui.open();
+            }
+        }, 10L);
     }
 
     @EventHandler

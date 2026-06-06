@@ -239,6 +239,13 @@ public class StaffModeManager {
                     byte[] finalData = data;
                     org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                         try {
+                            // Clean up any lingering staff effects from another server
+                            player.setAllowFlight(false);
+                            player.setFlying(false);
+                            player.setInvulnerable(false);
+                            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+                            plugin.getVanishService().setVanished(player, false, false);
+                            // Then restore inventory
                             InventoryUtil.deserializeInventory(player, finalData);
                             plugin.getDatabaseManager().getDatabaseProvider().deleteRawInventory(uuid, serverName);
                             debug.log("mod", "[forceDisableOnJoin] " + player.getName() + " restored orphan save on " + serverName);

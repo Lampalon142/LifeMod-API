@@ -68,4 +68,20 @@ shadowJar {
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
+
+    doLast {
+        def jarFile = destinationDirectory.get().asFile.toPath().resolve(archiveFileName.get()).toFile()
+        def targets = [
+            'C:/Users/Lampalon/Desktop/serveurs/Lobby/plugins',
+            'C:/Users/Lampalon/Desktop/serveurs/Proxy/plugins',
+            'C:/Users/Lampalon/Desktop/serveurs/Skyblock/plugins'
+        ]
+        targets.each { dir ->
+            copy {
+                from jarFile
+                into file(dir)
+            }
+            println "Deployed LifeMod to ${dir}"
+        }
+    }
 }
