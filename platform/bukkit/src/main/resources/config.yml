@@ -351,6 +351,21 @@ modules:
         play-material: GREEN_WOOL
         speed-material: LIME_WOOL
 
+  # Map & Inventory Scan System
+  scan:
+    # Max locations stored in memory (0 = unlimited)
+    max-locations: 5000
+    # Max locations shown in chat report
+    max-report-locations: 10
+    # Timeout in seconds before scan auto-cancels (0 = no timeout)
+    timeout-seconds: 120
+    # Scan unloaded chunks via region files (.mca)
+    region-file-scan: true
+    # Max region files to process per world (0 = unlimited)
+    max-region-files: 0
+    # Use strict item matching (compare full NBT/components when available)
+    strict-item-matching: true
+
 # --- COMMANDS STATUS ---
 commands:
   enabled:

@@ -669,6 +669,8 @@ commands:
     report-containers-header: "&e&lContainers:"
     report-container-entry: "  &7- &f%world% %x%, %y%, %z% : &e%count%"
     report-more: "  &7... and &e%count% &7more locations."
+    cancelled: "&cScan cancelled."
+    not-running: "&cNo scan is currently running."
     progress:
       starting: "&7Starting scan (%type%)..."
       inventories-all: "&7Scanning all players' inventories..."

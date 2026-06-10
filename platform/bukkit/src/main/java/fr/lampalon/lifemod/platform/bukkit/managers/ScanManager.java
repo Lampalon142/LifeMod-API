@@ -2,37 +2,98 @@ package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.model.ScanResult;
 import org.bukkit.*;
-import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import se.llbit.nbt.CompoundTag;
-import se.llbit.nbt.ListTag;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class ScanManager {
     private final LifeMod plugin;
+    private final ScanConfig scanConfig;
     private final IItemsAdderService itemsAdderService;
+    private final AtomicBoolean cancelled = new AtomicBoolean(false);
+
+    // Oraxen reflection cache
+    private boolean oraxenChecked = false;
+    private Method oraxenGetIdByItem;
+    private Method oraxenGetItemById;
 
     public ScanManager(LifeMod plugin) {
         this.plugin = plugin;
+        this.scanConfig = new ScanConfig(ServiceRegistry.get(IConfigurationService.class));
         this.itemsAdderService = ServiceRegistry.get(IItemsAdderService.class);
+        initOraxen();
+    }
+
+    private void initOraxen() {
+        try {
+            if (Bukkit.getPluginManager().getPlugin("Oraxen") != null) {
+                Class<?> oraxenItems = Class.forName("io.th0rgal.oraxen.api.OraxenItems");
+                oraxenGetIdByItem = oraxenItems.getMethod("getIdByItem", ItemStack.class);
+                oraxenGetItemById = oraxenItems.getMethod("getItemById", String.class);
+                plugin.getLogger().info("[ScanManager] Oraxen integration enabled");
+            }
+        } catch (Exception ignored) {}
+        oraxenChecked = true;
+    }
+
+    private String getOraxenId(ItemStack item) {
+        if (!oraxenChecked || oraxenGetIdByItem == null || item == null) return null;
+        try {
+            Object result = oraxenGetIdByItem.invoke(null, item);
+            return result instanceof String s ? s : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private ItemStack getOraxenItem(String id) {
+        if (!oraxenChecked || oraxenGetItemById == null || id == null) return null;
+        try {
+            Object result = oraxenGetItemById.invoke(null, id);
+            return result instanceof ItemStack is ? is : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void cancel() {
+        cancelled.set(true);
+    }
+
+    public boolean isCancelled() {
+        return cancelled.get();
+    }
+
+    public void resetCancel() {
+        cancelled.set(false);
+    }
+
+    public ScanConfig getScanConfig() {
+        return scanConfig;
+    }
+
+    private boolean reachedLimit(ScanResult result) {
+        int limit = scanConfig.getMaxLocations();
+        return limit > 0 && result.getTotalCount() >= limit;
     }
 
     /**
@@ -40,81 +101,103 @@ public class ScanManager {
      */
     public CompletableFuture<ScanResult> scan(String type, String target, ItemStack targetItem, Consumer<String> progressCallback) {
         ILangService lang = ServiceRegistry.get(ILangService.class);
-        return CompletableFuture.supplyAsync(() -> {
+        resetCancel();
+        CompletableFuture<ScanResult> future = CompletableFuture.supplyAsync(() -> {
             ScanResult result = new ScanResult();
-            progressCallback.accept(lang.getMessage("scan.progress.starting", "%type%", type));
+            try {
+                progressCallback.accept(lang.getMessage("commands.scan.progress.starting", "%type%", type));
 
-            if (type.equalsIgnoreCase("inventories") || type.equalsIgnoreCase("all")) {
-                scanInventories(target, targetItem, result, progressCallback);
-            }
+                if (cancelled.get()) return result;
 
-            if (type.equalsIgnoreCase("enderchest") || type.equalsIgnoreCase("all")) {
-                scanEnderchests(target, targetItem, result, progressCallback);
-            }
+                if (type.equalsIgnoreCase("inventories") || type.equalsIgnoreCase("all")) {
+                    scanInventories(target, targetItem, result, progressCallback);
+                }
 
-            if (type.equalsIgnoreCase("map") || type.equalsIgnoreCase("all")) {
-                scanMap(targetItem, result, progressCallback);
+                if (cancelled.get()) return result;
+
+                if (type.equalsIgnoreCase("enderchest") || type.equalsIgnoreCase("all")) {
+                    scanEnderchests(target, targetItem, result, progressCallback);
+                }
+
+                if (cancelled.get()) return result;
+
+                if (type.equalsIgnoreCase("map") || type.equalsIgnoreCase("all")) {
+                    scanMap(targetItem, result, progressCallback);
+                }
+
+                return result;
+            } finally {
+                result.complete();
             }
-            
-            result.complete();
-            return result;
         });
+        int timeout = scanConfig.getTimeoutSeconds();
+        if (timeout > 0) {
+            future = future.orTimeout(timeout, TimeUnit.SECONDS);
+        }
+        return future;
     }
 
     private void scanMap(ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
-        ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
         ILangService lang = ServiceRegistry.get(ILangService.class);
+        NMSProvider nmsProvider = ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
+        if (nmsProvider == null) {
+            progressCallback.accept(lang.getMessage("commands.scan.progress.error", "%message%", "NMS not available"));
+            return;
+        }
 
         // Collecte des chunks DÉJÀ chargés sur le main thread (safe, rapide)
-        CompletableFuture<Map<org.bukkit.World, List<Container>>> loadedFuture = new CompletableFuture<>();
+        CompletableFuture<Map<World, List<Container>>> loadedFuture = new CompletableFuture<>();
         Bukkit.getScheduler().runTask(plugin, () -> {
             Map<World, List<Container>> map = new HashMap<>();
-            for (org.bukkit.World world : Bukkit.getWorlds()) {
-                List<Container> containers = new ArrayList<>();
-                for (Chunk chunk : world.getLoadedChunks()) {
-                    for (BlockState state : chunk.getTileEntities()) {
-                        if (state instanceof Container c) containers.add(c);
-                    }
-                }
-                map.put(world, containers);
+            for (World world : Bukkit.getWorlds()) {
+                map.put(world, nmsProvider.getLoadedContainers(world));
             }
             loadedFuture.complete(map);
         });
 
         try {
-            Map<org.bukkit.World, List<Container>> loadedContainers = loadedFuture.get(10, TimeUnit.SECONDS);
+            Map<World, List<Container>> loadedContainers = loadedFuture.get(10, TimeUnit.SECONDS);
 
             // 1. Scan des chunks chargés (inventaire live)
             for (var entry : loadedContainers.entrySet()) {
-                progressCallback.accept(lang.getMessage("scan.progress.containers", "%count%", String.valueOf(entry.getValue().size()), "%world%", entry.getKey().getName()));
+                progressCallback.accept(lang.getMessage("commands.scan.progress.containers", "%count%", String.valueOf(entry.getValue().size()), "%world%", entry.getKey().getName()));
                 for (Container container : entry.getValue()) {
                     int count = countItems(container.getInventory().getContents(), targetItem);
                     if (count > 0) result.addLocation(container.getLocation(), count);
+                    if (reachedLimit(result)) {
+                        progressCallback.accept(lang.getMessage("commands.scan.progress.error", "%message%", "Hit max-locations limit"));
+                        return;
+                    }
                 }
+                if (cancelled.get()) return;
             }
 
             // 2. Scan des fichiers région (chunks non chargés) — ASYNC, pas de freeze
-            for (org.bukkit.World world : Bukkit.getWorlds()) {
-                scanRegionFiles(world, targetItem, result, progressCallback);
+            if (scanConfig.isRegionFileScan()) {
+                for (World world : Bukkit.getWorlds()) {
+                    if (cancelled.get()) return;
+                    scanRegionFiles(world, targetItem, result, progressCallback);
+                }
             }
 
         } catch (Exception e) {
-            progressCallback.accept(lang.getMessage("scan.progress.error", "%message%", e.getMessage()));
+            progressCallback.accept(lang.getMessage("commands.scan.progress.error", "%message%", e.getMessage()));
         }
     }
 
     private void scanInventories(String target, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
         ILangService lang = ServiceRegistry.get(ILangService.class);
         if (target.equalsIgnoreCase("all")) {
-            progressCallback.accept(lang.getMessage("scan.progress.inventories-all"));
+            progressCallback.accept(lang.getMessage("commands.scan.progress.inventories-all"));
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (cancelled.get() || reachedLimit(result)) return;
                 int count = countItems(player.getInventory().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
         } else {
             Player player = Bukkit.getPlayer(target);
             if (player != null) {
-                progressCallback.accept(lang.getMessage("scan.progress.inventory-player", "%player%", player.getName()));
+                progressCallback.accept(lang.getMessage("commands.scan.progress.inventory-player", "%player%", player.getName()));
                 int count = countItems(player.getInventory().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
@@ -124,15 +207,16 @@ public class ScanManager {
     private void scanEnderchests(String target, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
         ILangService lang = ServiceRegistry.get(ILangService.class);
         if (target.equalsIgnoreCase("all")) {
-            progressCallback.accept(lang.getMessage("scan.progress.enderchests-all"));
+            progressCallback.accept(lang.getMessage("commands.scan.progress.enderchests-all"));
             for (Player player : Bukkit.getOnlinePlayers()) {
+                if (cancelled.get() || reachedLimit(result)) return;
                 int count = countItems(player.getEnderChest().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
         } else {
             Player player = Bukkit.getPlayer(target);
             if (player != null) {
-                progressCallback.accept(lang.getMessage("scan.progress.enderchest-player", "%player%", player.getName()));
+                progressCallback.accept(lang.getMessage("commands.scan.progress.enderchest-player", "%player%", player.getName()));
                 int count = countItems(player.getEnderChest().getContents(), targetItem);
                 if (count > 0) result.addPlayer(player.getUniqueId(), count);
             }
@@ -163,32 +247,47 @@ public class ScanManager {
 
     /**
      * Checks if two ItemStacks match.
-     * Supports Materials, CustomModelData and ItemsAdder IDs.
+     * Supports: Materials, CustomModelData, ItemsAdder, Oraxen, full NBT (isSimilar).
      */
     public boolean isMatch(ItemStack item, ItemStack target) {
         if (item == null || item.getType() == Material.AIR) return false;
         if (target == null || target.getType() == Material.AIR) return false;
 
+        // 1. ItemsAdder match
         if (itemsAdderService != null && itemsAdderService.isEnabled()) {
             String itemId = itemsAdderService.getItemId(item);
             String targetId = itemsAdderService.getItemId(target);
-            
             if (itemId != null || targetId != null) {
                 return itemId != null && itemId.equals(targetId);
             }
         }
 
+        // 2. Oraxen match
+        String oraxenItemId = getOraxenId(item);
+        String oraxenTargetId = getOraxenId(target);
+        if (oraxenItemId != null || oraxenTargetId != null) {
+            return oraxenItemId != null && oraxenItemId.equals(oraxenTargetId);
+        }
+
+        // 3. Material mismatch
         if (item.getType() != target.getType()) return false;
 
-        if (item.hasItemMeta() && target.hasItemMeta()) {
-            if (item.getItemMeta().hasCustomModelData() != target.getItemMeta().hasCustomModelData()) return false;
-            if (item.getItemMeta().hasCustomModelData() && item.getItemMeta().getCustomModelData() != target.getItemMeta().getCustomModelData()) return false;
+        // 4. Strict matching via ItemStack.isSimilar (compares full item meta + data)
+        if (scanConfig.isStrictItemMatching()) {
+            if (item.hasItemMeta() != target.hasItemMeta()) return false;
+            if (item.hasItemMeta() && !Bukkit.getItemFactory().equals(item.getItemMeta(), target.getItemMeta())) return false;
+        } else {
+            // Legacy: compare only CustomModelData
+            if (item.hasItemMeta() && target.hasItemMeta()) {
+                if (item.getItemMeta().hasCustomModelData() != target.getItemMeta().hasCustomModelData()) return false;
+                if (item.getItemMeta().hasCustomModelData() && item.getItemMeta().getCustomModelData() != target.getItemMeta().getCustomModelData()) return false;
+            }
         }
 
         return true;
     }
 
-    private void scanRegionFiles(org.bukkit.World world, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
+    private void scanRegionFiles(World world, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
         ILangService lang = ServiceRegistry.get(ILangService.class);
         File regionDir = new File(world.getWorldFolder(), "region");
         if (!regionDir.exists()) return;
@@ -196,21 +295,29 @@ public class ScanManager {
         File[] regionFiles = regionDir.listFiles((d, name) -> name.endsWith(".mca"));
         if (regionFiles == null || regionFiles.length == 0) return;
 
-        progressCallback.accept(lang.getMessage("scan.progress.region-files", "%files%", String.valueOf(regionFiles.length), "%world%", world.getName()));
+        progressCallback.accept(lang.getMessage("commands.scan.progress.region-files", "%files%", String.valueOf(regionFiles.length), "%world%", world.getName()));
 
         String targetMaterial = targetItem.getType().name();
         String targetIAId = (itemsAdderService != null && itemsAdderService.isEnabled())
                 ? itemsAdderService.getItemId(targetItem) : null;
 
-        int found = 0;
-        for (File regionFile : regionFiles) {
-            try {
-                found += scanRegionFile(regionFile, world, targetMaterial, targetIAId, result);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        int maxFiles = scanConfig.getMaxRegionFiles();
+        if (maxFiles > 0 && regionFiles.length > maxFiles) {
+            regionFiles = Arrays.copyOf(regionFiles, maxFiles);
         }
-        progressCallback.accept(lang.getMessage("scan.progress.region-found", "%found%", String.valueOf(found), "%world%", world.getName()));
+
+        int found = Arrays.stream(regionFiles)
+                .takeWhile(f -> !cancelled.get())
+                .mapToInt(file -> {
+                    try {
+                        return scanRegionFile(file, world, targetMaterial, targetIAId, result);
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("[ScanManager] Error reading " + file.getName() + ": " + e.getMessage());
+                        return 0;
+                    }
+                })
+                .sum();
+        progressCallback.accept(lang.getMessage("commands.scan.progress.region-found", "%found%", String.valueOf(found), "%world%", world.getName()));
     }
 
     private int scanRegionFile(File regionFile, org.bukkit.World world, String targetMaterial, String targetIAId, ScanResult result) throws Exception {
@@ -381,10 +488,15 @@ public class ScanManager {
         return null;
     }
 
+    private static final Set<String> CONTAINER_IDS = Set.of(
+            "minecraft:chest", "minecraft:trapped_chest",
+            "minecraft:barrel", "minecraft:hopper",
+            "minecraft:dispenser", "minecraft:dropper",
+            "minecraft:furnace", "minecraft:blast_furnace", "minecraft:smoker",
+            "minecraft:shulker_box"
+    );
+
     private boolean isContainerType(String id) {
-        return id.contains("chest") || id.contains("barrel") || id.contains("hopper")
-                || id.contains("dispenser") || id.contains("dropper") || id.contains("furnace")
-                || id.contains("blast_furnace") || id.contains("smoker") || id.contains("shulker_box")
-                || id.contains("trapped_chest");
+        return CONTAINER_IDS.contains(id);
     }
 }

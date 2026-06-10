@@ -6,8 +6,8 @@ import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
+import fr.lampalon.lifemod.platform.bukkit.managers.ScanManager;
 import fr.lampalon.lifemod.platform.bukkit.model.ScanResult;
-import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -36,9 +36,26 @@ public class ScanCommand extends LifeCommand {
 
     @Override
     public void execute(CommandContext context) {
+        ScanManager scanManager = plugin.getScanManager();
+
+        // Cancel subcommand
+        if (context.getArgs().length == 1 && context.getArgs()[0].equalsIgnoreCase("cancel")) {
+            if (scanManager.isCancelled()) {
+                context.getSender().sendMessage(context.getLang().getMessage("commands.scan.not-running"));
+            } else {
+                scanManager.cancel();
+                context.getSender().sendMessage(context.getLang().getMessage("commands.scan.cancelled"));
+            }
+            return;
+        }
+
         if (context.getArgs().length < 3) {
             context.getSender().sendMessage(context.getLang().getMessage("commands.scan.usage"));
             return;
+        }
+
+        if (scanManager.isCancelled()) {
+            scanManager.resetCancel();
         }
 
         String type = context.getArgs()[0];
@@ -109,7 +126,7 @@ public class ScanCommand extends LifeCommand {
         if (!result.getFoundLocations().isEmpty()) {
             sender.sendMessage(" ");
             sender.sendMessage(context.getLang().getMessage("commands.scan.report-containers-header"));
-            int limit = 10;
+            int limit = plugin.getScanManager().getScanConfig().getMaxReportLocations();
             int count = 0;
             for (var entry : result.getFoundLocations().entrySet()) {
                 if (count >= limit) {
@@ -133,7 +150,7 @@ public class ScanCommand extends LifeCommand {
     @Override
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1) {
-            return Arrays.asList("map", "inventories", "enderchest", "all").stream()
+            return Arrays.asList("map", "inventories", "enderchest", "all", "cancel").stream()
                     .filter(s -> s.startsWith(context.getArgs()[0].toLowerCase()))
                     .collect(Collectors.toList());
         }

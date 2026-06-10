@@ -708,6 +708,8 @@ commands:
     report-containers-header: "&e&lConteneurs :"
     report-container-entry: "  &7- &f%world% %x%, %y%, %z% : &e%count%"
     report-more: "  &7... et &e%count% &7autres positions."
+    cancelled: "&cScan annulé."
+    not-running: "&cAucun scan en cours."
     progress:
       starting: "&7Lancement du scan (%type%)..."
       inventories-all: "&7Scan des inventaires de tous les joueurs..."

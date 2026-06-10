@@ -110,6 +110,7 @@ commands:
     permission: lifemod.admin.ac
   scan:
     description: Scan map
+    permission: lifemod.admin.scan
   auth:
     description: Authentification system
 

@@ -1,14 +1,15 @@
 package fr.lampalon.lifemod.platform.bukkit.model;
 
 import org.bukkit.Location;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ScanResult {
-    private final Map<Location, Integer> foundLocations = new HashMap<>();
-    private final Map<UUID, Integer> foundPlayers = new HashMap<>();
-    private int totalCount = 0;
+    private final Map<Location, Integer> foundLocations = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> foundPlayers = new ConcurrentHashMap<>();
+    private final AtomicInteger totalCount = new AtomicInteger(0);
     private final long startTime;
     private long endTime;
 
@@ -17,13 +18,14 @@ public class ScanResult {
     }
 
     public void addLocation(Location location, int count) {
-        foundLocations.put(location, foundLocations.getOrDefault(location, 0) + count);
-        totalCount += count;
+        Location blockLoc = location.getBlock().getLocation();
+        foundLocations.merge(blockLoc, count, Integer::sum);
+        totalCount.addAndGet(count);
     }
 
     public void addPlayer(UUID playerUUID, int count) {
-        foundPlayers.put(playerUUID, foundPlayers.getOrDefault(playerUUID, 0) + count);
-        totalCount += count;
+        foundPlayers.merge(playerUUID, count, Integer::sum);
+        totalCount.addAndGet(count);
     }
 
     public void complete() {
@@ -39,7 +41,7 @@ public class ScanResult {
     }
 
     public int getTotalCount() {
-        return totalCount;
+        return totalCount.get();
     }
 
     public long getDuration() {
