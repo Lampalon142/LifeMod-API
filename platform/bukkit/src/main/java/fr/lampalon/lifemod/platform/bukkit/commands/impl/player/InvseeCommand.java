@@ -1,10 +1,14 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -12,9 +16,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 
 public class InvseeCommand extends LifeCommand {
     private final LifeMod plugin;
@@ -46,7 +48,7 @@ public class InvseeCommand extends LifeCommand {
         plugin.getInvseeManager().startViewing(player, targetPlayer);
         player.openInventory(inv);
 
-        if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context, targetPlayer.getName());
         }
     }
@@ -74,22 +76,26 @@ public class InvseeCommand extends LifeCommand {
     }
 
     private void sendDiscordAlert(CommandContext context, String targetName) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.invsee.title", ""))
-                    .setDescription(context.getConfig().getString("discord.invsee.description", "")
-                            .replace("%player%", context.getSender().getName())
-                            .replace("%target%", targetName))
-                    .setFooter(context.getConfig().getString("discord.invsee.footer.title", ""),
-                            context.getConfig().getString("discord.invsee.footer.logo", ""))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.invsee.color", "")))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.generic.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.generic.description", "")
+                                .replace("%player%", playerName)
+                                .replace("%target%", targetName))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.generic.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 
     @Override

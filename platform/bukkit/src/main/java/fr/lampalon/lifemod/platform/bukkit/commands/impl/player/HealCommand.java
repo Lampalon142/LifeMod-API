@@ -2,27 +2,24 @@ package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
-import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class HealCommand extends LifeCommand {
-    private final LifeMod plugin;
-
-    public HealCommand(LifeMod plugin) {
+    public HealCommand() {
         super("heal", "lifemod.heal", true);
-        this.plugin = plugin;
         setDescription("Heals a player, restoring their health and hunger.");
         setUsage("/heal [player]");
     }
@@ -58,26 +55,31 @@ public class HealCommand extends LifeCommand {
             ph.capture("lifemod_heal", props);
         }
 
-        if (context.getPlugin().getConfig().getBoolean("discord.enabled")) {
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context);
         }
     }
 
     private void sendDiscordAlert(CommandContext context) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.heal.title", ""))
-                    .setDescription(context.getConfig().getString("discord.heal.description", "").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.heal.footer.title", ""),
-                            context.getConfig().getString("discord.heal.footer.logo", "").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.heal.color", "")))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.generic.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.generic.description", "")
+                                .replace("%player%", playerName))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.generic.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 
     @Override

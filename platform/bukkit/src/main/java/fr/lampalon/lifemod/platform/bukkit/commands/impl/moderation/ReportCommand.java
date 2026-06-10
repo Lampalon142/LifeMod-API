@@ -7,16 +7,17 @@ import fr.lampalon.lifemod.common.model.ReportStatus;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 public class ReportCommand extends LifeCommand {
@@ -72,7 +73,7 @@ public class ReportCommand extends LifeCommand {
 
         trackReport(reason != null && !reason.isEmpty());
 
-        if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context);
         }
     }
@@ -87,20 +88,25 @@ public class ReportCommand extends LifeCommand {
     }
 
     private void sendDiscordAlert(CommandContext context) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.report.title", ""))
-                    .setDescription(context.getConfig().getString("discord.report.description", "").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.report.footer.title", ""),
-                            context.getConfig().getString("discord.report.footer.logo", "").replace("%player%", context.getSender().getName()))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.report.color", "")))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.report.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.report.description", "")
+                                .replace("%player%", playerName))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.report.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 
     @Override

@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.mindrot:jbcrypt:0.4'
     implementation 'io.netty:netty-buffer:4.1.100.Final'
     implementation 'se.llbit:jo-nbt:1.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.9'
 }
 
 processResources {

@@ -2,12 +2,16 @@ package fr.lampalon.lifemod.platform.bukkit.commands.impl.utility;
 
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
-import java.io.IOException;
+
 import java.util.Objects;
 
 public class StafflistCommand extends LifeCommand {
@@ -36,25 +40,30 @@ public class StafflistCommand extends LifeCommand {
 
         context.getSender().sendMessage(modList.toString());
 
-        if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context);
         }
     }
 
     private void sendDiscordAlert(CommandContext context) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.stafflist.title", ""))
-                    .setDescription(context.getConfig().getString("discord.stafflist.description", "").replace("%player%", context.getSender().getName()))
-                    .setFooter(context.getConfig().getString("discord.stafflist.footer.title", ""),
-                            context.getConfig().getString("discord.stafflist.footer.logo", ""))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.stafflist.color", "")))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.generic.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.generic.description", "")
+                                .replace("%player%", playerName))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.generic.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 }

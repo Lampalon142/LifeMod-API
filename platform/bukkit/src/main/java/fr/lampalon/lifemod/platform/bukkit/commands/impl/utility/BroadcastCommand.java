@@ -6,14 +6,17 @@ import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil; // Keep MessageUtil for parseColors
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
-import java.io.IOException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,11 +24,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class BroadcastCommand extends LifeCommand {
-    private final LifeMod plugin;
-
-    public BroadcastCommand(LifeMod plugin) {
+    public BroadcastCommand() {
         super("broadcast", "lifemod.bc", false, "bc");
-        this.plugin = plugin;
         setDescription("Broadcasts a message to the entire server.");
         setUsage("/broadcast <message>");
     }
@@ -54,33 +54,32 @@ public class BroadcastCommand extends LifeCommand {
             ph.capture("lifemod_broadcast", props);
         }
 
-        if (context.getPlugin().getConfigConfig().getBoolean("modules.discord.enabled", false)) {
-            sendDiscordAlert(context.getSender().getName(), message, context);
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
+            sendDiscordAlert(context, message);
         }
     }
 
-    private void sendDiscordAlert(String playerName, String message, CommandContext context) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("modules.discord.broadcast.title", ""))
-                    .setDescription(context.getConfig().getString("modules.discord.broadcast.description", "")
-                            .replace("%player%", playerName)
-                            .replace("%message%", message))
-                    .setFooter(
-                            context.getConfig().getString("modules.discord.broadcast.footer.title", ""),
-                            context.getConfig().getString("modules.discord.broadcast.footer.logo", "")
-                                    .replace("%player%", playerName)
-                    )
-                    .setColor(Color.decode(Objects.requireNonNull(
-                            context.getConfig().getString("modules.discord.broadcast.color", "#60a5fa")
-                    ))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void sendDiscordAlert(CommandContext context, String message) {
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.generic.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.generic.description", "")
+                                .replace("%player%", playerName)
+                                .replace("%message%", message))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.generic.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 
     @Override

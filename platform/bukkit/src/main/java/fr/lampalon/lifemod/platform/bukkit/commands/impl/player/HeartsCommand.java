@@ -5,17 +5,18 @@ import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.platform.bukkit.managers.DiscordWebhook;
+import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
+import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
+import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.awt.*;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class HeartsCommand extends LifeCommand {
     private static final double MAX_HEARTS = 20.0;
@@ -100,30 +101,34 @@ public class HeartsCommand extends LifeCommand {
             ph.capture("lifemod_hearts", props);
         }
 
-        if (context.getPlugin().getConfigConfig().getBoolean("discord.enabled")) {
+        if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
             sendDiscordAlert(context, target.getName(), action, hearts);
         }
     }
 
     private void sendDiscordAlert(CommandContext context, String targetName, String action, double amount) {
-        try {
-            DiscordWebhook webhook = new DiscordWebhook(context.getPlugin().webHookUrl);
-            webhook.addEmbed(new DiscordWebhook.EmbedObject()
-                    .setTitle(context.getConfig().getString("discord.hearts.title", ""))
-                    .setDescription(context.getConfig().getString("discord.hearts.description", "")
-                            .replace("%player%", context.getSender().getName())
-                            .replace("%target%", targetName)
-                            .replace("%action%", action)
-                            .replace("%amount%", String.valueOf(amount)))
-                    .setFooter(context.getConfig().getString("discord.hearts.footer.title", ""),
-                            context.getConfig().getString("discord.hearts.footer.logo", ""))
-                    .setColor(Color.decode(Objects.requireNonNull(context.getConfig().getString("discord.hearts.color", "")))));
-            webhook.execute();
-        } catch (IOException e) {
-            context.getDebug().log("discord", "Webhook error: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
+        if (webhook == null || !webhook.isEnabled()) return;
+        String playerName = context.getSender().getName();
+        webhook.send(new WebhookMessage.Builder()
+                .addEmbed(new WebhookEmbed.Builder()
+                        .setTitle(context.getConfig().getString("modules.discord.alerts.hearts.title", ""))
+                        .setDescription(context.getConfig().getString("modules.discord.alerts.hearts.description", "")
+                                .replace("%player%", playerName)
+                                .replace("%target%", targetName)
+                                .replace("%action%", action)
+                                .replace("%amount%", String.valueOf(amount)))
+                        .setFooter(new WebhookFooter(
+                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
+                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                        .replace("%player%", playerName)))
+                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.hearts.color", "#FF0000")).getRGB())
+                        .build())
+                .build()).whenComplete((result, error) -> {
+                    if (error != null) {
+                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
+                    }
+                });
     }
 
     @Override

@@ -15,6 +15,7 @@ import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
+import fr.lampalon.lifemod.common.service.IWebhookService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
@@ -31,6 +32,7 @@ import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.platform.bukkit.nms.NMSLoader;
 import fr.lampalon.lifemod.platform.bukkit.utils.ConfigUpdater;
+import fr.lampalon.lifemod.platform.bukkit.webhook.BukkitWebhookService;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
@@ -91,7 +93,6 @@ public class LifeMod extends JavaPlugin {
     private Set<UUID> moderators = new HashSet<>();
     private final Map<UUID, Deque<Long>> cpsMap = new ConcurrentHashMap<>();
     private long startupTime;
-    public String webHookUrl;
 
     public static LifeMod getInstance() {
         return instance;
@@ -123,7 +124,8 @@ public class LifeMod extends JavaPlugin {
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
 
-        this.webHookUrl = configConfig.getString("modules.discord.webhook-url");
+        ServiceRegistry.register(IWebhookService.class,
+                new BukkitWebhookService(configConfig.getString("modules.discord.webhook-url")));
         this.spectateManager = new SpectateManager();
         this.debugManager = new DebugManager(this);
         initializeManagers();
