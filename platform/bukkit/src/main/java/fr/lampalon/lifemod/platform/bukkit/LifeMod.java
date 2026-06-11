@@ -578,7 +578,11 @@ public class LifeMod extends JavaPlugin {
     public Set<UUID> getModerators() { return moderators; }
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
-    public void reloadPluginConfig() { configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml")); }
+    public void reloadPluginConfig() {
+        configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
+        debugManager.reloadCache();
+        if (staffModeManager != null) staffModeManager.reloadEffectsConfig();
+    }
 
     public fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager getReplayPlayerManager() {
         return replayPlayerManager;

@@ -15,14 +15,24 @@ import java.awt.*;
 
 public class ModCommand extends LifeCommand {
     private final StaffModeManager staffModeManager;
-    private final LifeMod plugin; // Keep plugin reference for webhook URL
+    private final LifeMod plugin;
+    private final int cachedColor;
 
-    public ModCommand(LifeMod plugin) { // Constructor now takes LifeMod
+    public ModCommand(LifeMod plugin) {
         super("mod", "lifemod.mod", true, "staff");
         this.plugin = plugin;
-        this.staffModeManager = plugin.getStaffModeManager(); // Access manager from plugin
+        this.staffModeManager = plugin.getStaffModeManager();
+        this.cachedColor = parseColor(plugin.getConfigConfig().getString("modules.discord.alerts.mod.color", "#FF0000"));
         setDescription("Toggles staff mode on or off.");
         setUsage("/mod");
+    }
+
+    private static int parseColor(String hex) {
+        try {
+            return Color.decode(hex).getRGB() & 0xFFFFFF;
+        } catch (Exception e) {
+            return 0xFF0000;
+        }
     }
 
     @Override
@@ -44,21 +54,18 @@ public class ModCommand extends LifeCommand {
         IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
         if (webhook == null || !webhook.isEnabled()) return;
         String playerName = context.getSender().getName();
+        var cfg = context.getConfig();
         webhook.send(new WebhookMessage.Builder()
                 .addEmbed(new WebhookEmbed.Builder()
-                        .setTitle(context.getConfig().getString("modules.discord.alerts.mod.title", ""))
-                        .setDescription(context.getConfig().getString("modules.discord.alerts.mod.description", "")
+                        .setTitle(cfg.getString("modules.discord.alerts.mod.title", ""))
+                        .setDescription(cfg.getString("modules.discord.alerts.mod.description", "")
                                 .replace("%player%", playerName))
                         .setFooter(new WebhookFooter(
-                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
-                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
+                                cfg.getString("modules.discord.alerts.footer.text", ""),
+                                cfg.getString("modules.discord.alerts.footer.logo", "")
                                         .replace("%player%", playerName)))
-                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.mod.color", "#FF0000")).getRGB())
+                        .setColor(cachedColor)
                         .build())
-                .build()).whenComplete((result, error) -> {
-                    if (error != null) {
-                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
-                    }
-                });
+                .build());
     }
 }

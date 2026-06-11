@@ -32,10 +32,27 @@ public class StaffModeManager {
     private final Map<UUID, ItemStack[]> savedArmor = new HashMap<>();
     private final DebugManager debug;
 
+    private String cachedGameMode;
+    private boolean cachedAllowFlight;
+    private boolean cachedFlying;
+    private boolean cachedInvulnerable;
+    private boolean cachedNightVision;
+
     public StaffModeManager(LifeMod plugin, StaffItemManager itemManager) {
         this.plugin = plugin;
         this.itemManager = itemManager;
         this.debug = plugin.getDebugManager();
+        reloadEffectsConfig();
+    }
+
+    public void reloadEffectsConfig() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        if (cfg == null) return;
+        cachedGameMode = cfg.getString("modules.mod-mode.effects.game-mode", "SURVIVAL");
+        cachedAllowFlight = cfg.getBoolean("modules.mod-mode.effects.allow-flight", true);
+        cachedFlying = cfg.getBoolean("modules.mod-mode.effects.flying", true);
+        cachedInvulnerable = cfg.getBoolean("modules.mod-mode.effects.invulnerable", true);
+        cachedNightVision = cfg.getBoolean("modules.mod-mode.effects.night-vision", true);
     }
 
     public boolean isMod(Player player) {
@@ -106,14 +123,13 @@ public class StaffModeManager {
 
     // Applique uniquement les effets visuels et donne les items
     private void applyStaffState(Player player) {
-        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         ILangService lang = ServiceRegistry.get(ILangService.class);
         player.getInventory().clear();
-        player.setGameMode(GameMode.valueOf(config.getString("modules.mod-mode.effects.game-mode", "SURVIVAL")));
-        player.setAllowFlight(config.getBoolean("modules.mod-mode.effects.allow-flight", true));
-        player.setFlying(config.getBoolean("modules.mod-mode.effects.flying", true));
-        player.setInvulnerable(config.getBoolean("modules.mod-mode.effects.invulnerable", true));
-        if (config.getBoolean("modules.mod-mode.effects.night-vision", true)) {
+        player.setGameMode(GameMode.valueOf(cachedGameMode));
+        player.setAllowFlight(cachedAllowFlight);
+        player.setFlying(cachedFlying);
+        player.setInvulnerable(cachedInvulnerable);
+        if (cachedNightVision) {
             player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0));
         }
         
