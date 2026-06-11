@@ -20,7 +20,6 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 
 import java.util.HashMap;
@@ -177,17 +176,6 @@ public class ModeratorAuthListener implements Listener {
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
         Player player = event.getPlayer();
-        if (needsAuth(player)) {
-            ILangService lang = ServiceRegistry.get(ILangService.class);
-            player.sendMessage(lang.getMessage("auth.blocked-action"));
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onPickup(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
-        Player player = (Player) event.getEntity();
         if (needsAuth(player)) {
             ILangService lang = ServiceRegistry.get(ILangService.class);
             player.sendMessage(lang.getMessage("auth.blocked-action"));

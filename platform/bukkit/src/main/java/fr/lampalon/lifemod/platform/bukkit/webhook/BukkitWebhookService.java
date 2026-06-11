@@ -59,7 +59,7 @@ public class BukkitWebhookService implements IWebhookService {
     @Override
     public CompletableFuture<Void> send(WebhookMessage message) {
         String json = serialize(message);
-        logger.fine("[Webhook] Sending POST to Discord webhook. Payload: " + json);
+        logger.fine("[Webhook] Payload: " + json);
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(webhookUrl)
@@ -84,6 +84,7 @@ public class BukkitWebhookService implements IWebhookService {
                     } else {
                         String body = response.body() != null ? response.body().string() : "(no body)";
                         logger.warning("[Webhook] Discord responded with HTTP " + response.code() + ": " + body);
+                        logger.warning("[Webhook] Failed payload was: " + json);
                         future.completeExceptionally(
                                 new IOException("Discord responded with " + response.code() + ": " + body));
                     }
@@ -98,7 +99,7 @@ public class BukkitWebhookService implements IWebhookService {
 
     private String serialize(WebhookMessage message) {
         Map<String, Object> root = new LinkedHashMap<>();
-        if (message.getContent() != null) root.put("content", message.getContent());
+        if (message.getContent() != null && !message.getContent().isEmpty()) root.put("content", message.getContent());
         if (message.getUsername() != null) root.put("username", message.getUsername());
         if (message.getAvatarUrl() != null) root.put("avatar_url", message.getAvatarUrl());
         root.put("tts", message.isTts());
@@ -107,23 +108,38 @@ public class BukkitWebhookService implements IWebhookService {
         if (!embeds.isEmpty()) {
             List<Map<String, Object>> embedsList = new ArrayList<>(embeds.size());
             for (WebhookEmbed embed : embeds) {
-                embedsList.add(serializeEmbed(embed));
+                Map<String, Object> serialized = serializeEmbed(embed);
+                if (hasContent(serialized)) {
+                    embedsList.add(serialized);
+                } else {
+                    logger.warning("[Webhook] Skipping embed with no title, description, or fields — Discord would reject it.");
+                }
             }
-            root.put("embeds", embedsList);
+            if (!embedsList.isEmpty()) {
+                root.put("embeds", embedsList);
+            }
+        }
+
+        if (root.isEmpty() || (!root.containsKey("content") && !root.containsKey("embeds"))) {
+            logger.warning("[Webhook] Serialized message has no content and no valid embeds — nothing to send.");
         }
 
         return gson.toJson(root);
     }
 
+    private boolean hasContent(Map<String, Object> embed) {
+        return embed.containsKey("title") || embed.containsKey("description") || embed.containsKey("fields");
+    }
+
     private Map<String, Object> serializeEmbed(WebhookEmbed embed) {
         Map<String, Object> map = new LinkedHashMap<>();
-        if (embed.getTitle() != null) map.put("title", embed.getTitle());
-        if (embed.getDescription() != null) map.put("description", embed.getDescription());
+        if (embed.getTitle() != null && !embed.getTitle().isEmpty()) map.put("title", embed.getTitle());
+        if (embed.getDescription() != null && !embed.getDescription().isEmpty()) map.put("description", embed.getDescription());
         if (embed.getUrl() != null) map.put("url", embed.getUrl());
-        map.put("color", embed.getColor());
+        if (embed.getColor() != 0) map.put("color", embed.getColor());
 
         WebhookFooter footer = embed.getFooter();
-        if (footer != null) {
+        if (footer != null && footer.text() != null && !footer.text().isEmpty()) {
             Map<String, Object> f = new LinkedHashMap<>();
             f.put("text", footer.text());
             if (footer.iconUrl() != null) f.put("icon_url", footer.iconUrl());
@@ -141,7 +157,7 @@ public class BukkitWebhookService implements IWebhookService {
         }
 
         WebhookAuthor author = embed.getAuthor();
-        if (author != null) {
+        if (author != null && author.name() != null && !author.name().isEmpty()) {
             Map<String, Object> a = new LinkedHashMap<>();
             a.put("name", author.name());
             if (author.url() != null) a.put("url", author.url());

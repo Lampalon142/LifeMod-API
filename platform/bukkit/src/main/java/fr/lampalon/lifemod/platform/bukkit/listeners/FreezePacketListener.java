@@ -19,6 +19,7 @@ public class FreezePacketListener implements PacketListener {
     public void onPacketReceive(PacketReceiveEvent event) {
         if (event.getUser() == null) return;
         UUID uuid = event.getUser().getUUID();
+        if (uuid == null) return;
         if (plugin.getFreezeManager() == null) return;
         if (plugin.getFreezeManager().isPlayerFrozen(uuid)) {
             if (isMovementPacket(event.getPacketType()) || isInteractionPacket(event.getPacketType())) {
