@@ -63,6 +63,11 @@ modules:
     session-timeout-minutes: 30
     require-ip-match: false
 
+  # Staff Chat (Cross-Server)
+  staffchat:
+    enabled: true
+    prefix: "!"
+
   # Moderation Mode (Inventory & Tools)
   mod-mode:
     effects:

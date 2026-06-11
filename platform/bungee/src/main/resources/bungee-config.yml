@@ -61,6 +61,9 @@ modules:
     whitelist:
       - "PlayerToIgnore"
       
+  staffchat:
+    enabled: true
+
   posthog:
     enabled: true
 

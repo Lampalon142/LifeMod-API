@@ -268,6 +268,16 @@ public class LifeMod extends JavaPlugin {
                         } else {
                             moderators.remove(playerUuid);
                         }
+                    } else if (parts.length >= 5 && "CHAT".equals(parts[0])) {
+                        String origServer = parts[4];
+                        if (origServer.equals(serverName)) return;
+
+                        String playerName = parts[2];
+                        String chatMessage = parts[3];
+                        String formatted = lang.getMessage("commands.staffchat.message",
+                                "%player%", playerName,
+                                "%message%", chatMessage);
+                        platform.broadcast(formatted, "lifemod.staffchat");
                     }
                 } catch (Exception e) {
                     getLogger().warning("Failed to process cross-server staff update: " + message);

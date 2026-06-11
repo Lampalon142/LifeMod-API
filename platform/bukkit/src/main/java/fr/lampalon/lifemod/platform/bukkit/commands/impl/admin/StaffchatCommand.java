@@ -1,7 +1,9 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
+import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
@@ -27,6 +29,11 @@ public class StaffchatCommand extends LifeCommand {
 
     @Override
     public void execute(CommandContext context) {
+        if (!context.getConfig().getBoolean("modules.staffchat.enabled", true)) {
+            context.getSender().sendMessage(context.getLang().getMessage("commands.staffchat.usage"));
+            return;
+        }
+
         Player player = context.getPlayer();
         String[] args = context.getArgs();
 
@@ -36,7 +43,9 @@ public class StaffchatCommand extends LifeCommand {
         }
 
         String message = String.join(" ", args);
-        String staffchatMessage = context.getLang().getMessage("commands.staffchat.message", "%player%", player.getName()) + ": " + message;
+        String staffchatMessage = context.getLang().getMessage("commands.staffchat.message",
+                "%player%", player.getName(),
+                "%message%", message);
 
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.hasPermission("lifemod.staffchat")) {
@@ -45,6 +54,12 @@ public class StaffchatCommand extends LifeCommand {
         }
         context.getSender().sendMessage(context.getLang().getMessage("commands.staffchat.success"));
         context.getDebug().log("staffchat", player.getName() + " sent staffchat message: " + message);
+
+        IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
+        if (messaging != null) {
+            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+            messaging.publish("lifemod:staff", "CHAT|" + player.getUniqueId() + "|" + player.getName() + "|" + message + "|" + platform.getServerName());
+        }
 
         IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
         if (ph != null) {

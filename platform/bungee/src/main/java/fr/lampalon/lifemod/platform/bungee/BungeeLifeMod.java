@@ -149,6 +149,21 @@ public class BungeeLifeMod extends Plugin {
                     getLogger().warning("Failed to process cross-server sanction: " + message);
                 }
             });
+
+            redis.subscribe("lifemod:staff", message -> {
+                try {
+                    if (!config.getBoolean("modules.staffchat.enabled", true)) return;
+
+                    String[] parts = message.split("\\|");
+                    if (parts.length >= 5 && "CHAT".equals(parts[0])) {
+                        String playerName = parts[2];
+                        String chatMessage = parts[3];
+                        getLogger().info("[StaffChat] " + playerName + ": " + chatMessage);
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server staffchat: " + message);
+                }
+            });
         }
 
         this.databaseManager = new DatabaseManager();
