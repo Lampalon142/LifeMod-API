@@ -136,7 +136,8 @@ public class BukkitWebhookService implements IWebhookService {
         if (embed.getTitle() != null && !embed.getTitle().isEmpty()) map.put("title", embed.getTitle());
         if (embed.getDescription() != null && !embed.getDescription().isEmpty()) map.put("description", embed.getDescription());
         if (embed.getUrl() != null) map.put("url", embed.getUrl());
-        if (embed.getColor() != 0) map.put("color", embed.getColor());
+        int color = embed.getColor();
+        if (color != 0) map.put("color", color & 0xFFFFFF);
 
         WebhookFooter footer = embed.getFooter();
         if (footer != null && footer.text() != null && !footer.text().isEmpty()) {
