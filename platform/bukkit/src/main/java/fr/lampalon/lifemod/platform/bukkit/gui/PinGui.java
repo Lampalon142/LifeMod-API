@@ -16,6 +16,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class PinGui {
 
@@ -186,35 +187,44 @@ public class PinGui {
                 ph.capture("lifemod_mod_auth", props);
             }
         } else {
-            if (authService.checkPassword(player.getUniqueId(), currentPin)) {
-                sessionManager.authenticate(player.getUniqueId());
-                authService.saveSession(player.getUniqueId(), player.getAddress().getAddress().getHostAddress());
-                player.sendMessage(lang.getMessage("auth.login-success"));
-                player.closeInventory();
+            player.sendMessage(lang.getMessage("auth.verifying"));
+            String pinToCheck = currentPin;
+            currentPin = "";
+            UUID uuid = player.getUniqueId();
+            String playerName = player.getName();
+            Player playerRef = player;
+            authService.checkPasswordAsync(uuid, pinToCheck, success -> {
+                if (!playerRef.isOnline()) return;
+                if (success) {
+                    sessionManager.authenticate(uuid);
+                    authService.saveSession(uuid, playerRef.getAddress().getAddress().getHostAddress());
+                    playerRef.sendMessage(lang.getMessage("auth.login-success"));
+                    playerRef.closeInventory();
 
-                if (ph != null) {
-                    Map<String, Object> props = new HashMap<>();
-                    props.put("action", "login");
-                    props.put("success", true);
-                    props.put("session_restored", false);
-                    ph.capture("lifemod_mod_auth", props);
-                }
-            } else {
-                int attemptsLeft = sessionManager.decrementAttempts(player.getUniqueId());
-                if (ph != null) {
-                    Map<String, Object> failProps = new HashMap<>();
-                    failProps.put("current_attempt", 1);
-                    ph.capture("lifemod_mod_auth_fail", failProps);
-                }
-                if (attemptsLeft <= 0) {
-                    sessionManager.lock(player.getUniqueId());
-                    player.kickPlayer(lang.getMessage("auth.login-locked"));
+                    if (ph != null) {
+                        Map<String, Object> props = new HashMap<>();
+                        props.put("action", "login");
+                        props.put("success", true);
+                        props.put("session_restored", false);
+                        ph.capture("lifemod_mod_auth", props);
+                    }
                 } else {
-                    player.sendMessage(lang.getMessage("auth.login-failed", "%attempts%", String.valueOf(attemptsLeft)));
-                    currentPin = "";
-                    updateInventory();
+                    int attemptsLeft = sessionManager.decrementAttempts(uuid);
+                    if (ph != null) {
+                        Map<String, Object> failProps = new HashMap<>();
+                        failProps.put("current_attempt", 1);
+                        ph.capture("lifemod_mod_auth_fail", failProps);
+                    }
+                    if (attemptsLeft <= 0) {
+                        sessionManager.lock(uuid);
+                        playerRef.kickPlayer(lang.getMessage("auth.login-locked"));
+                    } else {
+                        playerRef.sendMessage(lang.getMessage("auth.login-failed", "%attempts%", String.valueOf(attemptsLeft)));
+                        currentPin = "";
+                        updateInventory();
+                    }
                 }
-            }
+            });
         }
     }
 }

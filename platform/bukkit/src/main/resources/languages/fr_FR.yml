@@ -434,6 +434,7 @@ vanish:
 # --- AUTHENTIFICATION ---
 auth:
   login-required: "&cAuthentification requise ! Veuillez utiliser le menu PIN."
+  verifying: "&eVérification du PIN..."
   login-success: "&aConnexion réussie."
   login-failed: "&cPIN incorrect ! Tentatives restantes : &e%attempts%"
   login-locked: "&4Compte verrouillé suite à trop d'échecs."

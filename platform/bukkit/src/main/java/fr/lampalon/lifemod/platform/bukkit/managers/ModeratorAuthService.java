@@ -6,9 +6,6 @@ import fr.lampalon.lifemod.common.database.DatabaseManager;
 import org.bukkit.Bukkit;
 import org.mindrot.jbcrypt.BCrypt;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,11 +16,16 @@ import java.util.UUID;
 public class ModeratorAuthService implements IPinService {
     private final LifeMod plugin;
     private final DatabaseManager dbManager;
+    private final java.util.Map<UUID, String> hashCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public ModeratorAuthService(LifeMod plugin) {
         this.plugin = plugin;
         this.dbManager = plugin.getDatabaseManager();
         createTableIfNotExists();
+    }
+
+    public void invalidateHashCache(UUID uuid) {
+        hashCache.remove(uuid);
     }
 
     @Override
@@ -108,6 +110,7 @@ public class ModeratorAuthService implements IPinService {
 
     public void registerModerator(UUID uuid, String name, String password, String ip) {
         String hash = hash(password);
+        hashCache.put(uuid, hash);
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "REPLACE INTO moderator_auth (uuid, name, password_hash, ip, last_update) VALUES (?, ?, ?, ?, ?)")) {
@@ -242,24 +245,32 @@ public class ModeratorAuthService implements IPinService {
     }
 
     public boolean checkPassword(UUID uuid, String password) {
-        try (Connection conn = dbManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "SELECT password_hash FROM moderator_auth WHERE uuid = ?")) {
-            ps.setString(1, uuid.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String hash = rs.getString("password_hash");
-                    return BCrypt.checkpw(password, hash);
+        String hash = hashCache.computeIfAbsent(uuid, u -> {
+            try (Connection conn = dbManager.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                         "SELECT password_hash FROM moderator_auth WHERE uuid = ?")) {
+                ps.setString(1, u.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getString("password_hash");
                 }
+            } catch (SQLException e) {
+                plugin.getLogger().warning("[LifeMod] checkPassword error: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            plugin.getLogger().warning("[LifeMod] checkPassword error: " + e.getMessage());
-        }
-        return false;
+            return null;
+        });
+        return hash != null && BCrypt.checkpw(password, hash);
+    }
+
+    public void checkPasswordAsync(UUID uuid, String password, java.util.function.Consumer<Boolean> callback) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            boolean result = checkPassword(uuid, password);
+            Bukkit.getScheduler().runTask(plugin, () -> callback.accept(result));
+        });
     }
 
     public void changePassword(UUID uuid, String newPassword) {
         String hash = hash(newPassword);
+        hashCache.put(uuid, hash);
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                      "UPDATE moderator_auth SET password_hash = ?, last_update = ? WHERE uuid = ?")) {

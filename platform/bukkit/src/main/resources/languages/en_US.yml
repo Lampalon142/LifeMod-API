@@ -26,6 +26,7 @@ system:
 
 # --- AUTHENTICATION ---
 auth:
+  verifying: "&eVerifying PIN..."
   login-required: "&cAuthentication required! Please use the PIN menu."
   login-success: "&aLogged in successfully."
   login-failed: "&cIncorrect PIN! Attempts left: &e%attempts%"
