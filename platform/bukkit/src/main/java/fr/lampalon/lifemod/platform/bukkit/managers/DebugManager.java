@@ -9,37 +9,57 @@ import java.util.logging.Level;
 
 public class DebugManager {
     private final LifeMod plugin;
+    private boolean cachedEnabled;
+    private final java.util.Map<String, Boolean> cachedModules = new java.util.concurrent.ConcurrentHashMap<>();
+    private Level cachedLogLevel;
+    private String cachedPrefix;
 
     public DebugManager(LifeMod plugin) {
         this.plugin = plugin;
         if (plugin.getConfigConfig() == null) {
             Bukkit.getLogger().warning("[LifeMod] DebugManager initialized before config loaded!");
         }
+        reloadCache();
+    }
+
+    public void reloadCache() {
+        if (plugin.getConfigConfig() == null) return;
+        cachedEnabled = plugin.getConfigConfig().getBoolean("debug.enabled", false);
+        cachedModules.clear();
+        Level level;
+        try {
+            String lvl = plugin.getConfigConfig().getString("debug.log-level", "INFO").toUpperCase();
+            switch (lvl) {
+                case "DEBUG": level = Level.FINE; break;
+                case "WARNING": level = Level.WARNING; break;
+                case "ERROR": level = Level.SEVERE; break;
+                default: level = Level.INFO;
+            }
+        } catch (Exception e) {
+            level = Level.INFO;
+        }
+        cachedLogLevel = level;
+        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
+        cachedPrefix = lang != null ? lang.getMessage("debug.messages.prefix") : "";
     }
 
     public boolean isEnabled() {
-        return plugin.getConfigConfig().getBoolean("debug.enabled", false);
+        return cachedEnabled;
     }
 
     public boolean isModuleEnabled(String module) {
-        return plugin.getConfigConfig().getBoolean("debug.modules." + module.toLowerCase(), false);
+        return cachedModules.computeIfAbsent(module.toLowerCase(),
+                m -> plugin.getConfigConfig().getBoolean("debug.modules." + m, false));
     }
 
-    public Level getLogLevel() {
-        String level = plugin.getConfigConfig().getString("debug.log-level").toUpperCase();
-        switch (level) {
-            case "DEBUG": return Level.FINE;
-            case "WARNING": return Level.WARNING;
-            case "ERROR": return Level.SEVERE;
-            default: return Level.INFO;
-        }
+    private Level getLogLevel() {
+        return cachedLogLevel;
     }
 
     public void log(String module, String message) {
-        if (!isEnabled() || !isModuleEnabled(module)) return;
-        fr.lampalon.lifemod.common.service.ILangService lang = fr.lampalon.lifemod.common.core.ServiceRegistry.get(fr.lampalon.lifemod.common.service.ILangService.class);
-        String prefix = lang.getMessage("debug.messages.prefix");
-        Bukkit.getLogger().log(getLogLevel(), prefix + "[" + module.toUpperCase() + "] " + message);
+        if (!cachedEnabled) return;
+        if (!isModuleEnabled(module)) return;
+        Bukkit.getLogger().log(cachedLogLevel, cachedPrefix + "[" + module.toUpperCase() + "] " + message);
     }
 
     public void userError(CommandSender sender, String context, Exception e) {

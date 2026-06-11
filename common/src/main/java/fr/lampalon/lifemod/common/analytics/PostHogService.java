@@ -162,15 +162,13 @@ public class PostHogService implements IPostHogService {
             return;
         }
         properties.put("instance_id", serverInstanceId);
-        LOG.info(">>> CAPTURE event=" + eventName + " distinctId=" + distinctId + " props=" + properties);
+        LOG.fine("capture event=" + eventName + " distinctId=" + distinctId + " props=" + properties);
         try {
             PostHogCaptureOptions options = PostHogCaptureOptions.builder()
                     .properties(properties)
                     .build();
-            LOG.info("    options.properties=" + options.getProperties());
             posthog.capture(distinctId, eventName, options);
-            posthog.flush();
-            LOG.info("<<< CAPTURE + FLUSH OK event=" + eventName);
+            LOG.fine("capture OK event=" + eventName);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "CAPTURE FAILED event=" + eventName, e);
         }

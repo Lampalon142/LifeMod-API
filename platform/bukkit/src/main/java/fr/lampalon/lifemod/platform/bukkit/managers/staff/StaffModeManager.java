@@ -43,20 +43,23 @@ public class StaffModeManager {
     }
 
     private void setStaffModeState(Player player, boolean state) {
-        debug.log("mod", "[setStaffModeState] " + player.getName() + " saving isInStaffMode=" + state + " on server=" + plugin.getServerName());
-        PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(player.getUniqueId());
-        if (data != null) {
-            data.setInStaffMode(state);
-            plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
-            debug.log("mod", "[setStaffModeState] " + player.getName() + " saved isInStaffMode=" + state + " (old was " + !state + ")");
-        } else {
-            debug.log("mod", "[setStaffModeState] " + player.getName() + " PlayerData is null, cannot save state!");
-        }
-
+        UUID uuid = player.getUniqueId();
+        String serverName = plugin.getServerName();
         IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
         if (messaging != null) {
-            messaging.publish("lifemod:staff", "UPDATE|" + player.getUniqueId() + "|" + state + "|" + plugin.getServerName());
+            messaging.publish("lifemod:staff", "UPDATE|" + uuid + "|" + state + "|" + serverName);
         }
+
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            PlayerData data = plugin.getDatabaseManager().getDatabaseProvider().getPlayerData(uuid);
+            if (data != null) {
+                data.setInStaffMode(state);
+                plugin.getDatabaseManager().getDatabaseProvider().savePlayerData(data);
+                debug.log("mod", "[setStaffModeState] " + player.getName() + " saved isInStaffMode=" + state);
+            } else {
+                debug.log("mod", "[setStaffModeState] " + player.getName() + " PlayerData is null, cannot save state!");
+            }
+        });
     }
 
     public void enableStaffMode(Player player) {
@@ -160,22 +163,23 @@ public class StaffModeManager {
         ItemStack[] contents = player.getInventory().getContents();
         ItemStack[] armor = player.getInventory().getArmorContents();
 
-        byte[] existing = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
-        if (existing != null) {
-            debug.log("mod", "Using existing DB inventory for " + player.getName() + " on " + serverName + " (crash/PIN recovery).");
-            try {
-                savedInventories.put(uuid, InventoryUtil.deserializeInventoryContents(existing));
-                savedArmor.put(uuid, InventoryUtil.deserializeInventoryArmor(existing));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return;
-        }
-
         savedInventories.put(uuid, contents);
         savedArmor.put(uuid, armor);
 
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            byte[] existing = plugin.getDatabaseManager().getDatabaseProvider().getRawInventory(uuid, serverName);
+            if (existing != null) {
+                debug.log("mod", "Using existing DB inventory for " + player.getName() + " on " + serverName + " (crash/PIN recovery).");
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    try {
+                        savedInventories.put(uuid, InventoryUtil.deserializeInventoryContents(existing));
+                        savedArmor.put(uuid, InventoryUtil.deserializeInventoryArmor(existing));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                return;
+            }
             try {
                 byte[] data = InventoryUtil.serializeInventory(contents, armor);
                 plugin.getDatabaseManager().getDatabaseProvider().saveRawInventory(uuid, serverName, data);
