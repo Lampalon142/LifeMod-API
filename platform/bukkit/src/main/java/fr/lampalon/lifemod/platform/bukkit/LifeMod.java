@@ -124,8 +124,10 @@ public class LifeMod extends JavaPlugin {
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
 
+        String webhookUrl = configConfig.getString("modules.discord.webhook-url");
+        boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
         ServiceRegistry.register(IWebhookService.class,
-                new BukkitWebhookService(configConfig.getString("modules.discord.webhook-url")));
+                new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
         this.spectateManager = new SpectateManager();
         this.debugManager = new DebugManager(this);
         initializeManagers();

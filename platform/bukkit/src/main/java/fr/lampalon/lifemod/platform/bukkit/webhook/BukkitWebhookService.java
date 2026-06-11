@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 public class BukkitWebhookService implements IWebhookService {
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
@@ -17,9 +18,13 @@ public class BukkitWebhookService implements IWebhookService {
     private final OkHttpClient client;
     private final String webhookUrl;
     private final Gson gson;
+    private final Logger logger;
+    private final boolean configEnabled;
 
-    public BukkitWebhookService(String webhookUrl) {
+    public BukkitWebhookService(String webhookUrl, boolean configEnabled, Logger logger) {
         this.webhookUrl = webhookUrl;
+        this.configEnabled = configEnabled;
+        this.logger = logger;
         this.client = new OkHttpClient.Builder()
                 .connectionPool(new ConnectionPool(5, 30, TimeUnit.SECONDS))
                 .connectTimeout(2, TimeUnit.SECONDS)
@@ -28,17 +33,33 @@ public class BukkitWebhookService implements IWebhookService {
                 .retryOnConnectionFailure(false)
                 .build();
         this.gson = new Gson();
+
+        if (!configEnabled) {
+            logger.info("[Webhook] modules.discord.enabled = false. Set to true in config.yml to activate Discord alerts.");
+        } else if (webhookUrl == null || webhookUrl.isEmpty()) {
+            logger.warning("[Webhook] modules.discord.enabled = true but no webhook URL configured (null/empty). Discord alerts will be disabled.");
+        } else if ("INSERT_YOUR_WEBHOOK_HERE".equals(webhookUrl)) {
+            logger.warning("[Webhook] modules.discord.enabled = true but webhook URL is still the default placeholder. Discord alerts will be disabled.");
+        } else {
+            logger.info("[Webhook] Webhook URL configured. Discord alerts are enabled.");
+        }
     }
 
     @Override
     public boolean isEnabled() {
-        return webhookUrl != null && !webhookUrl.isEmpty()
+        if (!configEnabled) return false;
+        boolean urlValid = webhookUrl != null && !webhookUrl.isEmpty()
                 && !"INSERT_YOUR_WEBHOOK_HERE".equals(webhookUrl);
+        if (!urlValid) {
+            logger.fine("[Webhook] isEnabled() = false — webhook URL is missing or still the placeholder.");
+        }
+        return urlValid;
     }
 
     @Override
     public CompletableFuture<Void> send(WebhookMessage message) {
         String json = serialize(message);
+        logger.fine("[Webhook] Sending POST to Discord webhook. Payload: " + json);
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(webhookUrl)
@@ -50,6 +71,7 @@ public class BukkitWebhookService implements IWebhookService {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                logger.warning("[Webhook] Request failed: " + e.getMessage());
                 future.completeExceptionally(e);
             }
 
@@ -57,11 +79,17 @@ public class BukkitWebhookService implements IWebhookService {
             public void onResponse(Call call, Response response) {
                 try (response) {
                     if (response.isSuccessful()) {
+                        logger.fine("[Webhook] Sent successfully (HTTP " + response.code() + ")");
                         future.complete(null);
                     } else {
+                        String body = response.body() != null ? response.body().string() : "(no body)";
+                        logger.warning("[Webhook] Discord responded with HTTP " + response.code() + ": " + body);
                         future.completeExceptionally(
-                                new IOException("Discord responded with " + response.code()));
+                                new IOException("Discord responded with " + response.code() + ": " + body));
                     }
+                } catch (IOException e) {
+                    logger.warning("[Webhook] Failed to read response body: " + e.getMessage());
+                    future.completeExceptionally(e);
                 }
             }
         });
