@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
@@ -18,13 +19,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class StaffchatCommand extends LifeCommand {
 
     public StaffchatCommand() {
         super("staffchat", "lifemod.staffchat", true);
-        setDescription("Send messages to staff members only.");
-        setUsage("/staffchat <message>");
+        setDescription("Send messages to staff members or toggle staff chat mode.");
+        setUsage("/staffchat [message]");
     }
 
     @Override
@@ -38,14 +41,24 @@ public class StaffchatCommand extends LifeCommand {
         String[] args = context.getArgs();
 
         if (args.length == 0) {
-            context.getSender().sendMessage(context.getLang().getMessage("commands.staffchat.usage"));
+            Set<UUID> toggled = ((LifeMod) context.getPlugin()).getStaffChatToggled();
+            UUID uuid = player.getUniqueId();
+            if (toggled.contains(uuid)) {
+                toggled.remove(uuid);
+                player.sendMessage(context.getLang().getMessage("commands.staffchat.toggled_off"));
+            } else {
+                toggled.add(uuid);
+                player.sendMessage(context.getLang().getMessage("commands.staffchat.toggled_on"));
+            }
             return;
         }
 
         String message = String.join(" ", args);
+        ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
         String staffchatMessage = context.getLang().getMessage("commands.staffchat.message",
                 "%player%", player.getName(),
-                "%message%", message);
+                "%message%", message,
+                "%server%", platform.getServerName());
 
         for (Player staff : Bukkit.getOnlinePlayers()) {
             if (staff.hasPermission("lifemod.staffchat")) {
@@ -57,7 +70,6 @@ public class StaffchatCommand extends LifeCommand {
 
         IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
         if (messaging != null) {
-            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
             messaging.publish("lifemod:staff", "CHAT|" + player.getUniqueId() + "|" + player.getName() + "|" + message + "|" + platform.getServerName());
         }
 

@@ -104,9 +104,11 @@ reports:
 # --- OTHER COMMANDS ---
 commands:
   staffchat:
-    usage: "%prefix%&cUsage: /staffchat <message>"
+    usage: "%prefix%&cUsage: /staffchat [message]"
     success: "%prefix%&aMessage sent to network staff chat."
-    message: "&7[&cNetwork-SC&7] &e%player%&f: %message%"
+    message: "&7[&cNetwork-SC&7] &7[&e%server%&7] &e%player%&f: %message%"
+    toggled_on: "%prefix%&aNetwork staff chat &a&lENABLED&a. All your messages will be sent to network staff."
+    toggled_off: "%prefix%&cNetwork staff chat &c&lDISABLED&c. You chat normally."
 
 antialt:
   debug: "&6[AntiAlt-Bungee] &ePlayer: &b%player% &e| Score: &b%score% &e| Reason: &b%reason%"

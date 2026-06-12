@@ -92,6 +92,7 @@ public class LifeMod extends JavaPlugin {
     private FileConfiguration langConfig;
     private Set<UUID> moderators = new HashSet<>();
     private final Map<UUID, Deque<Long>> cpsMap = new ConcurrentHashMap<>();
+    private final Set<UUID> staffChatToggled = ConcurrentHashMap.newKeySet();
     private long startupTime;
 
     public static LifeMod getInstance() {
@@ -268,16 +269,6 @@ public class LifeMod extends JavaPlugin {
                         } else {
                             moderators.remove(playerUuid);
                         }
-                    } else if (parts.length >= 5 && "CHAT".equals(parts[0])) {
-                        String origServer = parts[4];
-                        if (origServer.equals(serverName)) return;
-
-                        String playerName = parts[2];
-                        String chatMessage = parts[3];
-                        String formatted = lang.getMessage("commands.staffchat.message",
-                                "%player%", playerName,
-                                "%message%", chatMessage);
-                        platform.broadcast(formatted, "lifemod.staffchat");
                     }
                 } catch (Exception e) {
                     getLogger().warning("Failed to process cross-server staff update: " + message);
@@ -506,7 +497,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new ModCancels(), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffListener(staffModeManager, staffItemManager, staffActionManager), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.managers.staff.StaffPhysicalListener(staffModeManager), this);
-        pm.registerEvents(new Staffchatevent(this), this);
+        pm.registerEvents(new StaffChatEvent(this), this);
         pm.registerEvents(new PluginDisable(), this);
         pm.registerEvents(new PlayerQuit(this), this);
         pm.registerEvents(new PlayerTeleportEvent(), this);
@@ -577,7 +568,13 @@ public class LifeMod extends JavaPlugin {
     public ModeratorSessionManager getModeratorSessionManager() { return moderatorSessionManager; }
     public ModeratorAuthService getModeratorAuthService() { return moderatorAuthService; }
     public ReactionManager getReactionManager() { return reactionManager; }
-    public Map<UUID, Deque<Long>> getCpsMap() { return cpsMap; }
+    public Map<UUID, Deque<Long>> getCpsMap() {
+        return cpsMap;
+    }
+
+    public Set<UUID> getStaffChatToggled() {
+        return staffChatToggled;
+    }
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
     public InvseeManager getInvseeManager() { return invseeManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.ScanManager getScanManager() { return scanManager; }

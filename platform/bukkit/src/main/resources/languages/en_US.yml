@@ -590,9 +590,11 @@ commands:
     success: "&aViewing offline inventory of %target%."
 
   staffchat:
-    usage: "%prefix%&cUsage: /staffchat <message>"
+    usage: "%prefix%&cUsage: /staffchat [message]"
     success: "%prefix%&aMessage sent to staff chat."
-    message: "&7[&cStaffChat&7] &e%player%&f: %message%"
+    message: "&7[&cStaffChat&7] &7[&e%server%&7] &e%player%&f: %message%"
+    toggled_on: "%prefix%&aStaff chat &a&lENABLED&a. All chat messages will be sent to staff."
+    toggled_off: "%prefix%&cStaff chat &c&lDISABLED&c. Chat normally."
 
   stafflist:
     online: "&6Staff online: &f"

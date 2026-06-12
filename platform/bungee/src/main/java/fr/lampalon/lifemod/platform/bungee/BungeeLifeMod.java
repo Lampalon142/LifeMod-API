@@ -36,7 +36,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BungeeLifeMod extends Plugin {
 
@@ -47,6 +49,7 @@ public class BungeeLifeMod extends Plugin {
     private BungeeAntiAltManager antiAltManager;
     private BungeeReactionManager reactionManager;
     private fr.lampalon.lifemod.common.antivpn.AntiVPNService antiVPNService;
+    private final Set<UUID> staffChatToggled = ConcurrentHashMap.newKeySet();
     private long startupTime;
 
     @Override
@@ -156,9 +159,24 @@ public class BungeeLifeMod extends Plugin {
 
                     String[] parts = message.split("\\|");
                     if (parts.length >= 5 && "CHAT".equals(parts[0])) {
+                        String origServer = parts[4];
+                        // Skip messages Bungee already broadcast locally (command/toggle)
+                        if ("BungeeCord".equals(origServer)) return;
+
                         String playerName = parts[2];
                         String chatMessage = parts[3];
-                        getLogger().info("[StaffChat] " + playerName + ": " + chatMessage);
+                        String formatted = lang.getMessage("commands.staffchat.message",
+                                "%player%", playerName,
+                                "%message%", chatMessage,
+                                "%server%", origServer);
+                        TextComponent component = new TextComponent(lang.formatMessage(formatted));
+
+                        // Don't double-send to players on the origin server (already got it locally from Bukkit)
+                        ProxyServer.getInstance().getPlayers().stream()
+                                .filter(p -> p.hasPermission("lifemod.staffchat"))
+                                .filter(p -> !p.getServer().getInfo().getName().equals(origServer))
+                                .forEach(p -> p.sendMessage(component));
+                        ProxyServer.getInstance().getConsole().sendMessage(component);
                     }
                 } catch (Exception e) {
                     getLogger().warning("Failed to process cross-server staffchat: " + message);
@@ -181,6 +199,10 @@ public class BungeeLifeMod extends Plugin {
         getProxy().getPluginManager().registerListener(this, new BungeeConnectionListener());
         getProxy().getPluginManager().registerListener(this, new BungeeChatListener());
         getProxy().getPluginManager().registerListener(this, new BungeeAntiAltListener(this));
+
+        if (config.getBoolean("modules.staffchat.enabled", true)) {
+            getProxy().getPluginManager().registerCommand(this, new fr.lampalon.lifemod.platform.bungee.commands.BungeeStaffchatCommand(this));
+        }
 
         setupPostHog();
 
@@ -258,6 +280,10 @@ public class BungeeLifeMod extends Plugin {
 
     public BungeeAntiAltManager getAntiAltManager() {
         return antiAltManager;
+    }
+
+    public Set<UUID> getStaffChatToggled() {
+        return staffChatToggled;
     }
 
     public BungeeReactionManager getReactionManager() {

@@ -64,6 +64,7 @@ public class PlayerQuit implements Listener {
             vs.handleQuit(uuid);
         }
         plugin.getCpsMap().remove(uuid);
+        plugin.getStaffChatToggled().remove(uuid);
         plugin.getReplayPlayerManager().handleQuit(uuid);
 
         debug.log("playerquit", player.getName() + " data saved on quit.");

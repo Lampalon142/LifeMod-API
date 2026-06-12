@@ -587,9 +587,11 @@ commands:
     success: "&aAffichage de l'inventaire hors-ligne de %target%."
 
   staffchat:
-    usage: "%prefix%&cUtilisation : /staffchat <message>"
+    usage: "%prefix%&cUtilisation : /staffchat [message]"
     success: "%prefix%&aMessage envoyé au chat staff."
-    message: "&7[&cStaffChat&7] &e%player%&f : %message%"
+    message: "&7[&cStaffChat&7] &7[&e%server%&7] &e%player%&f : %message%"
+    toggled_on: "%prefix%&aStaff chat &a&lACTIVÉ&a. Tous vos messages seront envoyés au staff."
+    toggled_off: "%prefix%&cStaff chat &c&lDÉSACTIVÉ&c. Vous parlez normalement."
 
   stafflist:
     online: "&6Staff en ligne : &f"

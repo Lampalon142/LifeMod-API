@@ -106,9 +106,11 @@ reports:
 # --- OTHER COMMANDS ---
 commands:
   staffchat:
-    usage: "%prefix%&cUtilisation : /staffchat <message>"
+    usage: "%prefix%&cUtilisation : /staffchat [message]"
     success: "%prefix%&aMessage envoyé au chat staff réseau."
-    message: "&7[&cReseau-SC&7] &e%player%&f : %message%"
+    message: "&7[&cReseau-SC&7] &7[&e%serveur%&7] &e%player%&f : %message%"
+    toggled_on: "%prefix%&aChat staff réseau &a&lACTIVÉ&a. Tous vos messages seront envoyés au staff réseau."
+    toggled_off: "%prefix%&cChat staff réseau &c&lDÉSACTIVÉ&c. Vous parlez normalement."
 
 antialt:
   debug: "&6[AntiAlt-Bungee] &eJoueur : &b%player% &e| Score : &b%score% &e| Raison : &b%reason%"
