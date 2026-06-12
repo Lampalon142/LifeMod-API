@@ -2,6 +2,7 @@ package fr.lampalon.lifemod.platform.bungee.commands;
 
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bungee.BungeeLifeMod;
 import net.md_5.bungee.api.CommandSender;
@@ -35,6 +36,12 @@ public class BungeeLifeModCommand extends Command {
         plugin.reloadBungeeConfig();
         sender.sendMessage(TextComponent.fromLegacyText(
                 ServiceRegistry.get(ILangService.class).getMessage("commands.lifemod.reload")));
+
+        IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
+        if (messaging != null) {
+            messaging.publish("lifemod:reload", "RELOAD");
+            plugin.getLogger().info("Published cross-server reload signal to all Bukkit servers.");
+        }
 
         IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
         if (ph != null) {

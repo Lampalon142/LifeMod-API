@@ -274,6 +274,15 @@ public class LifeMod extends JavaPlugin {
                     getLogger().warning("Failed to process cross-server staff update: " + message);
                 }
             });
+
+            redis.subscribe("lifemod:reload", message -> {
+                try {
+                    getLogger().info("Received cross-server reload request, reloading...");
+                    reloadPluginConfig();
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server reload: " + message);
+                }
+            });
         }
     }
 
