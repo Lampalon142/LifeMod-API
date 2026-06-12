@@ -112,6 +112,9 @@ commands:
     toggled_on: "%prefix%&aNetwork staff chat &a&lENABLED&a. All your messages will be sent to network staff."
     toggled_off: "%prefix%&cNetwork staff chat &c&lDISABLED&c. You chat normally."
 
+  lifemod:
+    reload: "%prefix%&aProxy configuration reloaded successfully!"
+
 antialt:
   debug: "&6[AntiAlt-Bungee] &ePlayer: &b%player% &e| Score: &b%score% &e| Reason: &b%reason%"
   rules:

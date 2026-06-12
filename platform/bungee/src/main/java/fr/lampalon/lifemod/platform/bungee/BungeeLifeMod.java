@@ -204,6 +204,8 @@ public class BungeeLifeMod extends Plugin {
             getProxy().getPluginManager().registerCommand(this, new fr.lampalon.lifemod.platform.bungee.commands.BungeeStaffchatCommand(this));
         }
 
+        getProxy().getPluginManager().registerCommand(this, new fr.lampalon.lifemod.platform.bungee.commands.BungeeLifeModCommand(this));
+
         setupPostHog();
 
         long elapsed = System.currentTimeMillis() - start;
@@ -288,6 +290,158 @@ public class BungeeLifeMod extends Plugin {
 
     public BungeeReactionManager getReactionManager() {
         return reactionManager;
+    }
+
+    public void reloadBungeeConfig() {
+        getLogger().info("Reloading LifeMod Bungee configuration...");
+
+        // 1. Config + Lang
+        loadConfigs();
+
+        // 2. Core services
+        ServiceRegistry.register(IConfigurationService.class, new BungeeConfigurationService(config));
+        ServiceRegistry.register(ILangService.class, new BungeeLangService(lang));
+
+        // 3. Redis (close old, create new)
+        IMessagingService oldMsg = ServiceRegistry.get(IMessagingService.class);
+        if (oldMsg != null) {
+            oldMsg.close();
+            ServiceRegistry.register(IMessagingService.class, null);
+        }
+        if (config.getBoolean("redis.enabled", false)) {
+            String host = config.getString("redis.host", "localhost");
+            int port = config.getInt("redis.port", 6379);
+            String password = config.getString("redis.password", "");
+            IMessagingService redis = new RedisMessagingService(host, port, password);
+            ServiceRegistry.register(IMessagingService.class, redis);
+
+            ILangService lang = ServiceRegistry.get(ILangService.class);
+            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+
+            redis.subscribe("lifemod:sanctions", message -> {
+                try {
+                    int pipe = message.indexOf('|');
+                    String action = pipe > 0 ? message.substring(0, pipe) : "";
+                    String data = pipe > 0 ? message.substring(pipe + 1) : "";
+
+                    if ("ADD".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 8) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String issuerName = parts[2];
+                        String reason = parts[3];
+                        long duration = Long.parseLong(parts[4]);
+                        boolean isSilent = Boolean.parseBoolean(parts[5]);
+                        String origServer = parts[6];
+
+                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
+                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
+                                : playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", issuerName,
+                                "%reason%", reason,
+                                "%time%", TimeUtil.formatTime(duration),
+                                "%server%", origServer);
+
+                        if (!msg.equals(path)) {
+                            if (isSilent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+
+                        if (type == SanctionType.BAN) {
+                            ProxiedPlayer online = ProxyServer.getInstance().getPlayer(playerUuid);
+                            if (online != null && online.isConnected()) {
+                                String kickReason = lang.getMessage("sanctions.ban.login",
+                                        "%reason%", reason,
+                                        "%issuer%", issuerName,
+                                        "%expiration%", duration == 0 ? lang.getMessage("sanctions.permanent") : TimeUtil.formatTime(duration),
+                                        "%id%", playerUuid.toString().substring(0, 8),
+                                        "%server%", origServer);
+                                online.disconnect(new TextComponent(lang.formatMessage(kickReason)));
+                            }
+                        }
+                    } else if ("REMOVE".equals(action)) {
+                        String[] parts = data.split("\\|", -1);
+                        if (parts.length < 5) return;
+                        SanctionType type = SanctionType.valueOf(parts[0]);
+                        UUID playerUuid = UUID.fromString(parts[1]);
+                        String removedByName = parts[2];
+                        String reason = parts[3];
+                        boolean silent = Boolean.parseBoolean(parts[4]);
+
+                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
+                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
+                                : playerUuid.toString().substring(0, 8);
+
+                        String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
+                        String msg = lang.getMessage(path,
+                                "%target%", targetName,
+                                "%issuer%", removedByName,
+                                "%reason%", reason);
+
+                        if (!msg.equals(path)) {
+                            if (silent) {
+                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                            } else {
+                                platform.broadcast(msg, null);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server sanction: " + message);
+                }
+            });
+
+            redis.subscribe("lifemod:staff", message -> {
+                try {
+                    if (!config.getBoolean("modules.staffchat.enabled", true)) return;
+
+                    String[] parts = message.split("\\|");
+                    if (parts.length >= 5 && "CHAT".equals(parts[0])) {
+                        String origServer = parts[4];
+                        if ("BungeeCord".equals(origServer)) return;
+
+                        String playerName = parts[2];
+                        String chatMessage = parts[3];
+                        String formatted = lang.getMessage("commands.staffchat.message",
+                                "%player%", playerName,
+                                "%message%", chatMessage,
+                                "%server%", origServer);
+                        TextComponent component = new TextComponent(lang.formatMessage(formatted));
+
+                        ProxyServer.getInstance().getPlayers().stream()
+                                .filter(p -> p.hasPermission("lifemod.staffchat"))
+                                .filter(p -> !p.getServer().getInfo().getName().equals(origServer))
+                                .forEach(p -> p.sendMessage(component));
+                        ProxyServer.getInstance().getConsole().sendMessage(component);
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server staffchat: " + message);
+                }
+            });
+        }
+
+        // 4. PostHog (shutdown old, create new)
+        IPostHogService oldPh = ServiceRegistry.get(IPostHogService.class);
+        if (oldPh != null) {
+            oldPh.shutdown();
+            ServiceRegistry.register(IPostHogService.class, null);
+        }
+        if (config.getBoolean("modules.posthog.enabled", true)) {
+            setupPostHog();
+        }
+
+        // 5. Clear runtime caches
+        staffChatToggled.clear();
+
+        getLogger().info("LifeMod Bungee configuration reloaded successfully.");
     }
 
     private void setupPostHog() {

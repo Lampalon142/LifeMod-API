@@ -586,9 +586,53 @@ public class LifeMod extends JavaPlugin {
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void reloadPluginConfig() {
+        getLogger().info("Reloading LifeMod configuration...");
+
+        // 1. Config
         configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
+
+        // 2. Lang
+        String langName = configConfig.getString("server.language", "en_US");
+        langConfig = loadLanguageConfig(langName);
+
+        // 3. Core services
+        ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
+        ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
+
+        // 4. Webhook
+        String webhookUrl = configConfig.getString("modules.discord.webhook-url");
+        boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
+        ServiceRegistry.register(IWebhookService.class, new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
+
+        // 5. Redis (close old, create new)
+        IMessagingService oldMsg = ServiceRegistry.get(IMessagingService.class);
+        if (oldMsg != null) {
+            oldMsg.close();
+            ServiceRegistry.register(IMessagingService.class, null);
+        }
+        if (configConfig.getBoolean("redis.enabled", false)) {
+            setupRedis();
+        }
+
+        // 6. PostHog (shutdown old, create new)
+        IPostHogService oldPh = ServiceRegistry.get(IPostHogService.class);
+        if (oldPh != null) {
+            oldPh.shutdown();
+            ServiceRegistry.register(IPostHogService.class, null);
+        }
+        if (configConfig.getBoolean("modules.posthog.enabled", true)) {
+            setupPostHog();
+        }
+
+        // 7. Managers
         debugManager.reloadCache();
         if (staffModeManager != null) staffModeManager.reloadEffectsConfig();
+
+        // 8. Clear runtime caches (staff chat toggle, moderators list)
+        staffChatToggled.clear();
+        moderators.clear();
+
+        getLogger().info("LifeMod configuration reloaded successfully.");
     }
 
     public fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager getReplayPlayerManager() {

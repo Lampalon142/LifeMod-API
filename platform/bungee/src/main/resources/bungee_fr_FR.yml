@@ -112,6 +112,9 @@ commands:
     toggled_on: "%prefix%&aChat staff réseau &a&lACTIVÉ&a. Tous vos messages seront envoyés au staff réseau."
     toggled_off: "%prefix%&cChat staff réseau &c&lDÉSACTIVÉ&c. Vous parlez normalement."
 
+  lifemod:
+    reload: "%prefix%&aConfiguration du proxy rechargée avec succès !"
+
 antialt:
   debug: "&6[AntiAlt-Bungee] &eJoueur : &b%player% &e| Score : &b%score% &e| Raison : &b%reason%"
   rules:
