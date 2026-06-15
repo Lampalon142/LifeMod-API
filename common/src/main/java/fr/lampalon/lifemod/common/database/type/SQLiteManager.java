@@ -7,6 +7,9 @@ import fr.lampalon.lifemod.common.service.IConfigurationService;
 
 import java.io.File;
 import java.sql.*;
+import java.time.YearMonth;
+import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +53,8 @@ public class SQLiteManager implements DatabaseProvider {
             try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN first_seen INTEGER;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE player_data ADD COLUMN session_count INTEGER DEFAULT 0;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE player_inventories ADD COLUMN server_name TEXT;"); } catch (SQLException ignored) {}
+
+            createLogTableIfNeeded();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -548,5 +553,191 @@ public class SQLiteManager implements DatabaseProvider {
         String rb = rs.getString("removed_by_uuid");
         if (rb != null) s.revoke(UUID.fromString(rb), rs.getString("removed_by_name"), rs.getString("remove_reason"));
         return s;
+    }
+
+    private void createLogTableIfNeeded() {
+        String table = logTableName();
+        try (Statement stmt = getConnection().createStatement()) {
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS " + table + " (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "type INTEGER NOT NULL, " +
+                "player_uuid TEXT NOT NULL, " +
+                "player_name TEXT, " +
+                "target_uuid TEXT, " +
+                "target_name TEXT, " +
+                "action_data TEXT, " +
+                "world TEXT, " +
+                "x INTEGER, y INTEGER, z INTEGER, " +
+                "server_name TEXT, " +
+                "created_at INTEGER NOT NULL" +
+                ")"
+            );
+            stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_" + table + "_type ON " + table + "(type, created_at)");
+            stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_" + table + "_player ON " + table + "(player_uuid, created_at)");
+            stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_" + table + "_created ON " + table + "(created_at)");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String logTableName() {
+        YearMonth ym = YearMonth.now();
+        return "action_logs_" + ym.getYear() + "_" + String.format("%02d", ym.getMonthValue());
+    }
+
+    private Set<String> getExistingLogTables() {
+        Set<String> tables = new LinkedHashSet<>();
+        try (Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'action_logs_%' ORDER BY name")) {
+            while (rs.next()) tables.add(rs.getString("name"));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return tables;
+    }
+
+    private List<String> logTableNamesForQuery(LogQuery query) {
+        List<String> candidates = new ArrayList<>();
+        Set<String> existing = getExistingLogTables();
+        long from = query.getFromTime();
+        long to = query.getToTime() == Long.MAX_VALUE ? System.currentTimeMillis() : query.getToTime();
+        YearMonth fromMonth = YearMonth.from(
+            Instant.ofEpochMilli(from).atZone(ZoneOffset.UTC)
+        );
+        YearMonth toMonth = YearMonth.from(
+            Instant.ofEpochMilli(to).atZone(ZoneOffset.UTC)
+        );
+        YearMonth ym = fromMonth;
+        while (!ym.isAfter(toMonth)) {
+            String name = "action_logs_" + ym.getYear() + "_" + String.format("%02d", ym.getMonthValue());
+            if (existing.contains(name)) candidates.add(name);
+            ym = ym.plusMonths(1);
+        }
+        if (candidates.isEmpty()) candidates.add(logTableName());
+        return candidates;
+    }
+
+    @Override
+    public void saveLogBatch(List<LogEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        synchronized (lock) {
+            createLogTableIfNeeded();
+            String table = logTableName();
+            String sql = "INSERT INTO " + table + " (type, player_uuid, player_name, target_uuid, target_name, action_data, world, x, y, z, server_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement ps = getConnection().prepareStatement(sql)) {
+                for (LogEntry e : entries) {
+                    ps.setInt(1, e.getType());
+                    ps.setString(2, e.getPlayerUuid().toString());
+                    ps.setString(3, e.getPlayerName());
+                    ps.setString(4, e.getTargetUuid() != null ? e.getTargetUuid().toString() : null);
+                    ps.setString(5, e.getTargetName());
+                    ps.setString(6, e.getActionData());
+                    ps.setString(7, e.getWorld());
+                    ps.setInt(8, e.getX());
+                    ps.setInt(9, e.getY());
+                    ps.setInt(10, e.getZ());
+                    ps.setString(11, e.getServerName());
+                    ps.setLong(12, e.getCreatedAt());
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogs(LogQuery query) {
+        List<LogEntry> results = new ArrayList<>();
+        List<String> tables = logTableNamesForQuery(query);
+        if (tables.isEmpty()) return results;
+
+        StringBuilder sql = new StringBuilder();
+        for (int i = 0; i < tables.size(); i++) {
+            if (i > 0) sql.append(" UNION ALL ");
+            sql.append("SELECT * FROM ").append(tables.get(i)).append(" WHERE 1=1");
+            if (query.getType() != null) sql.append(" AND type = ").append(query.getType().ordinal());
+            if (query.getPlayerUuid() != null) sql.append(" AND player_uuid = '").append(query.getPlayerUuid()).append("'");
+            if (query.getTargetUuid() != null) sql.append(" AND target_uuid = '").append(query.getTargetUuid()).append("'");
+            if (query.getWorld() != null) sql.append(" AND world = '").append(query.getWorld().replace("'", "''")).append("'");
+            if (query.getServerName() != null) sql.append(" AND server_name = '").append(query.getServerName().replace("'", "''")).append("'");
+            sql.append(" AND created_at >= ").append(query.getFromTime()).append(" AND created_at <= ").append(query.getToTime());
+        }
+        sql.append(" ORDER BY created_at DESC LIMIT ").append(query.getLimit()).append(" OFFSET ").append(query.getOffset());
+
+        try (Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql.toString())) {
+            while (rs.next()) results.add(mapLogEntry(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    @Override
+    public long countLogs(LogQuery query) {
+        List<String> tables = logTableNamesForQuery(query);
+        if (tables.isEmpty()) return 0;
+
+        StringBuilder sql = new StringBuilder("SELECT SUM(cnt) FROM (");
+        for (int i = 0; i < tables.size(); i++) {
+            if (i > 0) sql.append(" UNION ALL ");
+            sql.append("SELECT COUNT(*) AS cnt FROM ").append(tables.get(i)).append(" WHERE 1=1");
+            if (query.getType() != null) sql.append(" AND type = ").append(query.getType().ordinal());
+            if (query.getPlayerUuid() != null) sql.append(" AND player_uuid = '").append(query.getPlayerUuid()).append("'");
+            if (query.getTargetUuid() != null) sql.append(" AND target_uuid = '").append(query.getTargetUuid()).append("'");
+            if (query.getWorld() != null) sql.append(" AND world = '").append(query.getWorld().replace("'", "''")).append("'");
+            if (query.getServerName() != null) sql.append(" AND server_name = '").append(query.getServerName().replace("'", "''")).append("'");
+            sql.append(" AND created_at >= ").append(query.getFromTime()).append(" AND created_at <= ").append(query.getToTime());
+        }
+        sql.append(")");
+
+        try (Statement stmt = getConnection().createStatement(); ResultSet rs = stmt.executeQuery(sql.toString())) {
+            if (rs.next()) return rs.getLong(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public void purgeLogs(Map<Integer, Long> retentionMsPerType, long defaultRetentionMs) {
+        synchronized (lock) {
+            long now = System.currentTimeMillis();
+            Set<String> tables = getExistingLogTables();
+            String currentTable = logTableName();
+            for (String table : tables) {
+                if (table.equals(currentTable)) continue;
+                String suffix = table.substring("action_logs_".length());
+                String[] parts = suffix.split("_");
+                if (parts.length != 2) continue;
+                try {
+                    int year = Integer.parseInt(parts[0]);
+                    int month = Integer.parseInt(parts[1]);
+                    YearMonth ym = YearMonth.of(year, month);
+                    long tableEndTime = ym.plusMonths(1).atDay(1)
+                        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+                    if (tableEndTime <= now - defaultRetentionMs) {
+                        try (Statement stmt = getConnection().createStatement()) {
+                            stmt.executeUpdate("DROP TABLE IF EXISTS " + table);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private LogEntry mapLogEntry(ResultSet rs) throws SQLException {
+        return LogEntry.builder()
+                .id(rs.getLong("id"))
+                .type(rs.getInt("type"))
+                .playerUuid(UUID.fromString(rs.getString("player_uuid")))
+                .playerName(rs.getString("player_name"))
+                .targetUuid(rs.getString("target_uuid") != null ? UUID.fromString(rs.getString("target_uuid")) : null)
+                .targetName(rs.getString("target_name"))
+                .actionData(rs.getString("action_data"))
+                .world(rs.getString("world"))
+                .x(rs.getInt("x")).y(rs.getInt("y")).z(rs.getInt("z"))
+                .serverName(rs.getString("server_name"))
+                .createdAt(rs.getLong("created_at"))
+                .build();
     }
 }
