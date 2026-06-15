@@ -13,9 +13,11 @@ import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
+import fr.lampalon.lifemod.common.service.ILogService;
 import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.IWebhookService;
+import fr.lampalon.lifemod.common.service.LogService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
@@ -27,7 +29,9 @@ import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
+import fr.lampalon.lifemod.platform.bukkit.listeners.hooks.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
+import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.platform.bukkit.nms.NMSLoader;
@@ -136,6 +140,11 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(IPinService.class, moderatorAuthService);
 
         PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
+
+        if (ServiceRegistry.get(ILogService.class) != null) {
+            PacketEvents.getAPI().getEventManager().registerListener(
+                new LogCommandInterceptor(), PacketListenerPriority.LOW);
+        }
 
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();
@@ -384,6 +393,11 @@ public class LifeMod extends JavaPlugin {
         DatabaseProvider dbProvider = databaseManager.getDatabaseProvider();
         ServiceRegistry.register(DatabaseProvider.class, dbProvider);
         ServiceRegistry.register(ISanctionService.class, new SanctionService(dbProvider));
+
+        if (configConfig.getBoolean("logs.enabled", true)) {
+            ServiceRegistry.register(ILogService.class,
+                new LogService(dbProvider, ServiceRegistry.get(IConfigurationService.class), ServiceRegistry.get(ExecutorService.class)));
+        }
         
         guiManager = new GuiManager(this);
         noteInputManager = new NoteInputManager(this);
@@ -528,6 +542,15 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
+
+        if (ServiceRegistry.get(ILogService.class) != null) {
+            pm.registerEvents(new LogListener(), this);
+            pm.registerEvents(new VaultHook(), this);
+            pm.registerEvents(new AxTradesHook(), this);
+            pm.registerEvents(new QuickShopHook(), this);
+            pm.registerEvents(new ChestShopHook(), this);
+            pm.registerEvents(new ShopKeepersHook(), this);
+        }
     }
 
     private void registerCommands() {
@@ -558,6 +581,8 @@ public class LifeMod extends JavaPlugin {
             ph.capture("lifemod_shutdown", props);
             ph.shutdown();
         }
+        ILogService logSvc = ServiceRegistry.get(ILogService.class);
+        if (logSvc != null) logSvc.shutdown();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
@@ -611,6 +636,9 @@ public class LifeMod extends JavaPlugin {
         }
 
         try { PacketEvents.getAPI().terminate(); } catch (Exception ignored) {}
+
+        ILogService oldLogSvc = ServiceRegistry.get(ILogService.class);
+        if (oldLogSvc != null) oldLogSvc.shutdown();
 
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
@@ -681,6 +709,13 @@ public class LifeMod extends JavaPlugin {
             new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this),
             com.github.retrooper.packetevents.event.PacketListenerPriority.NORMAL
         );
+
+        if (ServiceRegistry.get(ILogService.class) != null) {
+            PacketEvents.getAPI().getEventManager().registerListener(
+                new LogCommandInterceptor(),
+                com.github.retrooper.packetevents.event.PacketListenerPriority.LOW
+            );
+        }
 
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();

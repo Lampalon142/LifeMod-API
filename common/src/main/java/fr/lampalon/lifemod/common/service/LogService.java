@@ -41,7 +41,7 @@ public class LogService implements ILogService {
         this.config = config;
         this.asyncExecutor = asyncExecutor;
 
-        int flushInterval = config.getInt("logs.flush-interval", 5);
+        int flushInterval = config != null ? config.getInt("logs.flush-interval", 5) : 5;
         scheduler.scheduleAtFixedRate(this::flush, flushInterval, flushInterval, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(this::purgeTask, 1, 24, TimeUnit.HOURS);
     }
@@ -64,16 +64,21 @@ public class LogService implements ILogService {
 
     @Override
     public CompletableFuture<List<LogEntry>> query(LogQuery query) {
-        return CompletableFuture.supplyAsync(() -> db.queryLogs(query), asyncExecutor);
+        return CompletableFuture.supplyAsync(() -> db.queryLogs(query), asyncExecutor != null ? asyncExecutor : flushExecutor);
     }
 
     @Override
     public CompletableFuture<Long> count(LogQuery query) {
-        return CompletableFuture.supplyAsync(() -> db.countLogs(query), asyncExecutor);
+        return CompletableFuture.supplyAsync(() -> db.countLogs(query), asyncExecutor != null ? asyncExecutor : flushExecutor);
     }
 
     private void purgeTask() {
         try {
+            if (config == null) {
+                long defaultRetention = 86400000L * 30;
+                db.purgeLogs(new HashMap<>(), defaultRetention);
+                return;
+            }
             Map<Integer, Long> perType = new HashMap<>();
             for (String key : config.getStringList("logs.retention.per-type")) {
                 String[] parts = key.split(":", 2);
