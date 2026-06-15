@@ -702,7 +702,7 @@ commands:
     yourself: "%prefix%&cYou cannot open your own enderchest with this command."
 
   lifemod:
-    reload: "%prefix%&aConfiguration reloaded!"
+    reload: "%prefix%&aPlugin fully reloaded successfully!"
     help:
       header: "&6&lLifeMod &7- Help"
       reload: "&e/lifemod reload &7- Reload config"

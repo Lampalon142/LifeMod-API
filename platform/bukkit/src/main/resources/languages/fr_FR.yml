@@ -619,7 +619,7 @@ commands:
     yourself: "%prefix%&cVous ne pouvez pas ouvrir votre propre enderchest avec cette commande."
 
   lifemod:
-    reload: "%prefix%&aConfiguration rechargée !"
+    reload: "%prefix%&aPlugin rechargé complètement avec succès !"
     help:
       header: "&6&lLifeMod &7- Aide"
       reload: "&e/lifemod reload &7- Recharger la config"

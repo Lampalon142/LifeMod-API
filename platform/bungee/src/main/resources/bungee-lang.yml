@@ -111,7 +111,7 @@ commands:
     toggled_off: "%prefix%&cNetwork staff chat &c&lDISABLED&c. You chat normally."
 
   lifemod:
-    reload: "%prefix%&aProxy configuration reloaded successfully!"
+    reload: "%prefix%&aProxy fully reloaded successfully!"
 
 antialt:
   debug: "&6[AntiAlt-Bungee] &ePlayer: &b%player% &e| Score: &b%score% &e| Reason: &b%reason%"

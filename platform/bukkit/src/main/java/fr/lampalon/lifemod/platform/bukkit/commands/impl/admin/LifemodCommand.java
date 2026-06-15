@@ -32,7 +32,7 @@ public class LifemodCommand extends LifeCommand {
                 context.getSender().sendMessage(context.getLang().getMessage("system.no-permission"));
                 return;
             }
-            context.getPlugin().reloadPluginConfig();
+            context.getPlugin().fullReload();
             context.getSender().sendMessage(context.getLang().getMessage("commands.lifemod.reload"));
 
             IPostHogService ph = ServiceRegistry.get(IPostHogService.class);

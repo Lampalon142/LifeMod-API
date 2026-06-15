@@ -278,7 +278,7 @@ public class LifeMod extends JavaPlugin {
             redis.subscribe("lifemod:reload", message -> {
                 try {
                     getLogger().info("Received cross-server reload request, reloading...");
-                    reloadPluginConfig();
+                    fullReload();
                 } catch (Exception e) {
                     getLogger().warning("Failed to process cross-server reload: " + message);
                 }
@@ -594,54 +594,115 @@ public class LifeMod extends JavaPlugin {
     public Set<UUID> getModerators() { return moderators; }
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
-    public void reloadPluginConfig() {
-        getLogger().info("Reloading LifeMod configuration...");
+    public void fullReload() {
+        getLogger().info("Performing full LifeMod reload...");
 
-        // 1. Config
-        configConfig = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "config.yml"));
+        // === CLEANUP (onDisable logic) ===
+        if (noClipManager != null) noClipManager.shutdown();
 
-        // 2. Lang
-        String langName = configConfig.getString("server.language", "en_US");
-        langConfig = loadLanguageConfig(langName);
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("plugin_version", getDescription().getVersion());
+            props.put("platform", "bukkit");
+            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
+            ph.capture("lifemod_shutdown", props);
+            ph.shutdown();
+        }
 
-        // 3. Core services
+        try { PacketEvents.getAPI().terminate(); } catch (Exception ignored) {}
+
+        IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
+        if (msg != null) msg.close();
+
+        if (databaseManager != null) databaseManager.closeConnection();
+
+        // === UNREGISTER ALL BUKKIT REGISTRATIONS ===
+        org.bukkit.event.HandlerList.unregisterAll(this);
+
+        try {
+            java.lang.reflect.Field cmdField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            cmdField.setAccessible(true);
+            org.bukkit.command.CommandMap cmdMap = (org.bukkit.command.CommandMap) cmdField.get(Bukkit.getServer());
+            java.lang.reflect.Field knownField = cmdMap.getClass().getDeclaredField("knownCommands");
+            knownField.setAccessible(true);
+            Map<String, org.bukkit.command.Command> known = (Map<String, org.bukkit.command.Command>) knownField.get(cmdMap);
+            known.values().removeIf(cmd ->
+                cmd instanceof fr.lampalon.lifemod.platform.bukkit.commands.engine.BukkitCommandWrapper
+            );
+            known.values().removeIf(cmd ->
+                cmd instanceof org.bukkit.command.PluginCommand &&
+                ((org.bukkit.command.PluginCommand) cmd).getPlugin() == this
+            );
+        } catch (Exception e) {
+            getLogger().warning("Failed to unregister commands: " + e.getMessage());
+        }
+
+        // === CLEAR RUNTIME STATE ===
+        staffChatToggled.clear();
+        moderators.clear();
+        cpsMap.clear();
+
+        // === RE-RUN STARTUP ===
+        startupTime = System.currentTimeMillis();
+        instance = this;
+
+        // onLoad()
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().load();
+
+        // onEnable()
+        saveDefaultConfig();
+        new ConfigUpdater(this).updateConfigs();
+        loadConfigurations();
+
+        BukkitPlatform bukkitPlatform = new BukkitPlatform(this);
+        ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
         ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
         ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
+        ServiceRegistry.register(IItemsAdderService.class, new BukkitItemsAdderService());
 
-        // 4. Webhook
+        setupRedis();
+
+        PacketEvents.getAPI().init();
+        bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
+
         String webhookUrl = configConfig.getString("modules.discord.webhook-url");
         boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
         ServiceRegistry.register(IWebhookService.class, new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
 
-        // 5. Redis (close old, create new)
-        IMessagingService oldMsg = ServiceRegistry.get(IMessagingService.class);
-        if (oldMsg != null) {
-            oldMsg.close();
-            ServiceRegistry.register(IMessagingService.class, null);
-        }
-        if (configConfig.getBoolean("redis.enabled", false)) {
-            setupRedis();
-        }
+        this.spectateManager = new SpectateManager();
+        this.debugManager = new DebugManager(this);
+        initializeManagers();
 
-        // 6. PostHog (shutdown old, create new)
-        IPostHogService oldPh = ServiceRegistry.get(IPostHogService.class);
-        if (oldPh != null) {
-            oldPh.shutdown();
-            ServiceRegistry.register(IPostHogService.class, null);
-        }
-        if (configConfig.getBoolean("modules.posthog.enabled", true)) {
-            setupPostHog();
-        }
+        ServiceRegistry.register(IPinService.class, moderatorAuthService);
 
-        // 7. Managers
-        debugManager.reloadCache();
-        if (staffModeManager != null) staffModeManager.reloadEffectsConfig();
+        PacketEvents.getAPI().getEventManager().registerListener(
+            new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this),
+            com.github.retrooper.packetevents.event.PacketListenerPriority.NORMAL
+        );
 
-        // 8. Clear runtime caches (staff chat toggle, moderators list)
-        staffChatToggled.clear();
-        moderators.clear();
+        this.commandRegistry = new CommandRegistry(this);
+        registerEvents();
+        registerCommands();
+        setupMetrics();
+        setupPostHog();
 
-        getLogger().info("LifeMod configuration reloaded successfully.");
+        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
+
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            if (databaseManager != null && databaseManager.getDatabaseProvider() != null) {
+                databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
+            }
+        }, 20 * 60L, 20 * 60L);
+
+        ServiceRegistry.register(ExecutorService.class, Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "LifeMod-Async");
+            t.setDaemon(true);
+            return t;
+        }));
+
+        getLogger().info("LifeMod fully reloaded successfully.");
     }
 
     public fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager getReplayPlayerManager() {

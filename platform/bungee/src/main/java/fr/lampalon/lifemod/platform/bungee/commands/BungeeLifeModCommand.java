@@ -33,7 +33,7 @@ public class BungeeLifeModCommand extends Command {
             return;
         }
 
-        plugin.reloadBungeeConfig();
+        plugin.fullReload();
         sender.sendMessage(TextComponent.fromLegacyText(
                 ServiceRegistry.get(ILangService.class).getMessage("commands.lifemod.reload")));
 

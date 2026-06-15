@@ -36,5 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
+### Node.js / Discord Bot ###
+node_modules/
+discord-bot/.env
+discord-bot/data/
+discord-bot/out/
+
 ### Mac OS ###
 .DS_Store

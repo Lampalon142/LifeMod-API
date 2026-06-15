@@ -292,22 +292,41 @@ public class BungeeLifeMod extends Plugin {
         return reactionManager;
     }
 
-    public void reloadBungeeConfig() {
-        getLogger().info("Reloading LifeMod Bungee configuration...");
+    public void fullReload() {
+        getLogger().info("Performing full LifeMod Bungee reload...");
 
-        // 1. Config + Lang
+        // === CLEANUP ===
+        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
+        if (ph != null) {
+            Map<String, Object> props = new HashMap<>();
+            props.put("plugin_version", getDescription().getVersion());
+            props.put("platform", "bungee");
+            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
+            ph.capture("lifemod_shutdown", props);
+            ph.shutdown();
+        }
+
+        IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
+        if (msg != null) msg.close();
+
+        // === UNREGISTER BUNGEE LISTENERS + COMMANDS ===
+        getProxy().getPluginManager().unregisterListeners(this);
+        getProxy().getPluginManager().unregisterCommands(this);
+
+        // === CLEAR RUNTIME STATE ===
+        staffChatToggled.clear();
+
+        // === RE-RUN onEnable ===
+        startupTime = System.currentTimeMillis();
+        instance = this;
+
         loadConfigs();
 
-        // 2. Core services
+        ILifePlatform platform = new BungeePlatform(this);
+        ServiceRegistry.register(ILifePlatform.class, platform);
         ServiceRegistry.register(IConfigurationService.class, new BungeeConfigurationService(config));
         ServiceRegistry.register(ILangService.class, new BungeeLangService(lang));
 
-        // 3. Redis (close old, create new)
-        IMessagingService oldMsg = ServiceRegistry.get(IMessagingService.class);
-        if (oldMsg != null) {
-            oldMsg.close();
-            ServiceRegistry.register(IMessagingService.class, null);
-        }
         if (config.getBoolean("redis.enabled", false)) {
             String host = config.getString("redis.host", "localhost");
             int port = config.getInt("redis.port", 6379);
@@ -316,7 +335,7 @@ public class BungeeLifeMod extends Plugin {
             ServiceRegistry.register(IMessagingService.class, redis);
 
             ILangService lang = ServiceRegistry.get(ILangService.class);
-            ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
+            ILifePlatform pf = ServiceRegistry.get(ILifePlatform.class);
 
             redis.subscribe("lifemod:sanctions", message -> {
                 try {
@@ -340,18 +359,18 @@ public class BungeeLifeMod extends Plugin {
                                 : playerUuid.toString().substring(0, 8);
 
                         String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
-                        String msg = lang.getMessage(path,
+                        String m = lang.getMessage(path,
                                 "%target%", targetName,
                                 "%issuer%", issuerName,
                                 "%reason%", reason,
                                 "%time%", TimeUtil.formatTime(duration),
                                 "%server%", origServer);
 
-                        if (!msg.equals(path)) {
+                        if (!m.equals(path)) {
                             if (isSilent) {
-                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                                pf.broadcast(m, "lifemod.sanctions.see-silent");
                             } else {
-                                platform.broadcast(msg, null);
+                                pf.broadcast(m, null);
                             }
                         }
 
@@ -381,16 +400,16 @@ public class BungeeLifeMod extends Plugin {
                                 : playerUuid.toString().substring(0, 8);
 
                         String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
-                        String msg = lang.getMessage(path,
+                        String m = lang.getMessage(path,
                                 "%target%", targetName,
                                 "%issuer%", removedByName,
                                 "%reason%", reason);
 
-                        if (!msg.equals(path)) {
+                        if (!m.equals(path)) {
                             if (silent) {
-                                platform.broadcast(msg, "lifemod.sanctions.see-silent");
+                                pf.broadcast(m, "lifemod.sanctions.see-silent");
                             } else {
-                                platform.broadcast(msg, null);
+                                pf.broadcast(m, null);
                             }
                         }
                     }
@@ -428,20 +447,33 @@ public class BungeeLifeMod extends Plugin {
             });
         }
 
-        // 4. PostHog (shutdown old, create new)
-        IPostHogService oldPh = ServiceRegistry.get(IPostHogService.class);
-        if (oldPh != null) {
-            oldPh.shutdown();
-            ServiceRegistry.register(IPostHogService.class, null);
+        this.databaseManager = new DatabaseManager();
+        databaseManager.setupDatabase();
+
+        this.antiVPNService = new fr.lampalon.lifemod.common.antivpn.AntiVPNService(platform);
+        ServiceRegistry.register(fr.lampalon.lifemod.common.antivpn.AntiVPNService.class, this.antiVPNService);
+        getProxy().getPluginManager().registerListener(this, new fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiVPNListener(this, this.antiVPNService));
+
+        this.antiAltManager = new fr.lampalon.lifemod.platform.bungee.managers.antialt.BungeeAntiAltManager(this);
+        this.reactionManager = new fr.lampalon.lifemod.platform.bungee.managers.BungeeReactionManager(this);
+
+        ServiceRegistry.register(ISanctionService.class, new fr.lampalon.lifemod.common.service.SanctionService(databaseManager.getDatabaseProvider()));
+
+        getProxy().getPluginManager().registerListener(this, new fr.lampalon.lifemod.platform.bungee.listeners.BungeeConnectionListener());
+        getProxy().getPluginManager().registerListener(this, new fr.lampalon.lifemod.platform.bungee.listeners.BungeeChatListener());
+        getProxy().getPluginManager().registerListener(this, new fr.lampalon.lifemod.platform.bungee.listeners.BungeeAntiAltListener(this));
+
+        if (config.getBoolean("modules.staffchat.enabled", true)) {
+            getProxy().getPluginManager().registerCommand(this, new fr.lampalon.lifemod.platform.bungee.commands.BungeeStaffchatCommand(this));
         }
+
+        getProxy().getPluginManager().registerCommand(this, new fr.lampalon.lifemod.platform.bungee.commands.BungeeLifeModCommand(this));
+
         if (config.getBoolean("modules.posthog.enabled", true)) {
             setupPostHog();
         }
 
-        // 5. Clear runtime caches
-        staffChatToggled.clear();
-
-        getLogger().info("LifeMod Bungee configuration reloaded successfully.");
+        getLogger().info("LifeMod Bungee fully reloaded successfully.");
     }
 
     private void setupPostHog() {
