@@ -64,11 +64,11 @@ public class MySQLManager implements DatabaseProvider {
                         } catch (SQLException ignored) {}
 
                         try {
-                            // Supprimer l'ancienne PK (uuid seul) et mettre la nouvelle (uuid + server_name)
-                            // C'est l'étape CRITIQUE pour l'indépendance des inventaires.
                             stmt.executeUpdate("ALTER TABLE player_inventories DROP PRIMARY KEY;");
                             stmt.executeUpdate("ALTER TABLE player_inventories ADD PRIMARY KEY (uuid, server_name);");
                         } catch (SQLException ignored) {}
+
+            createLogTableIfNeeded();
             
         } catch (SQLException e) {
             e.printStackTrace();
@@ -82,6 +82,67 @@ public class MySQLManager implements DatabaseProvider {
 
     @Override
     public void closeConnection() {
+        if (dataSource != null) dataSource.close();
+    }
+
+    private void createLogTableIfNeeded() {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(
+                "CREATE TABLE IF NOT EXISTS action_logs (" +
+                "id BIGINT AUTO_INCREMENT, " +
+                "type SMALLINT UNSIGNED NOT NULL, " +
+                "player_uuid VARCHAR(36) NOT NULL, " +
+                "player_name VARCHAR(32), " +
+                "target_uuid VARCHAR(36), " +
+                "target_name VARCHAR(32), " +
+                "action_data TEXT, " +
+                "world VARCHAR(64), " +
+                "x INT, y INT, z INT, " +
+                "server_name VARCHAR(64), " +
+                "created_at BIGINT NOT NULL, " +
+                "INDEX idx_type_created (type, created_at), " +
+                "INDEX idx_player_created (player_uuid, created_at), " +
+                "INDEX idx_target_created (target_uuid, created_at), " +
+                "INDEX idx_created (created_at)" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            );
+            // Convert to partitioned table if not already (safe to retry)
+            try {
+                stmt.executeUpdate("ALTER TABLE action_logs PARTITION BY RANGE (created_at) (" +
+                    "PARTITION p_future VALUES LESS THAN MAXVALUE" +
+                ")");
+            } catch (SQLException ignored) {}
+            ensureLogPartitions(conn);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void ensureLogPartitions(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            int targetMonths = 6;
+            long now = System.currentTimeMillis();
+            java.time.YearMonth current = java.time.YearMonth.from(
+                java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneOffset.UTC)
+            );
+            for (int i = 0; i < targetMonths; i++) {
+                java.time.YearMonth ym = current.plusMonths(i);
+                String partName = "p_" + ym.getYear() + "_" + String.format("%02d", ym.getMonthValue());
+                long nextMonthStart = ym.plusMonths(1).atDay(1)
+                    .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli();
+                try {
+                    stmt.executeUpdate("ALTER TABLE action_logs REORGANIZE PARTITION p_future INTO (" +
+                        "PARTITION " + partName + " VALUES LESS THAN (" + nextMonthStart + "), " +
+                        "PARTITION p_future VALUES LESS THAN MAXVALUE" +
+                    ")");
+                } catch (SQLException ignored) {}
+            }
+        }
+    }
+
+    private String logTableName() {
+        return "action_logs";
+    }
         if (dataSource != null) dataSource.close();
     }
 
@@ -566,5 +627,140 @@ public class MySQLManager implements DatabaseProvider {
         String rb = rs.getString("removed_by_uuid");
         if (rb != null) s.revoke(UUID.fromString(rb), rs.getString("removed_by_name"), rs.getString("remove_reason"));
         return s;
+    }
+
+    @Override
+    public void saveLogBatch(List<LogEntry> entries) {
+        if (entries == null || entries.isEmpty()) return;
+        String sql = "INSERT INTO " + logTableName() + " (type, player_uuid, player_name, target_uuid, target_name, action_data, world, x, y, z, server_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (LogEntry e : entries) {
+                ps.setInt(1, e.getType());
+                ps.setString(2, e.getPlayerUuid().toString());
+                ps.setString(3, e.getPlayerName());
+                ps.setString(4, e.getTargetUuid() != null ? e.getTargetUuid().toString() : null);
+                ps.setString(5, e.getTargetName());
+                ps.setString(6, e.getActionData());
+                ps.setString(7, e.getWorld());
+                ps.setInt(8, e.getX());
+                ps.setInt(9, e.getY());
+                ps.setInt(10, e.getZ());
+                ps.setString(11, e.getServerName());
+                ps.setLong(12, e.getCreatedAt());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public List<LogEntry> queryLogs(LogQuery query) {
+        List<LogEntry> results = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM " + logTableName() + " WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (query.getType() != null) { sql.append(" AND type = ?"); params.add(query.getType().ordinal()); }
+        if (query.getPlayerUuid() != null) { sql.append(" AND player_uuid = ?"); params.add(query.getPlayerUuid().toString()); }
+        if (query.getTargetUuid() != null) { sql.append(" AND target_uuid = ?"); params.add(query.getTargetUuid().toString()); }
+        if (query.getWorld() != null) { sql.append(" AND world = ?"); params.add(query.getWorld()); }
+        if (query.getServerName() != null) { sql.append(" AND server_name = ?"); params.add(query.getServerName()); }
+        sql.append(" AND created_at >= ? AND created_at <= ?");
+        params.add(query.getFromTime());
+        params.add(query.getToTime());
+        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?");
+        params.add(query.getLimit());
+        params.add(query.getOffset());
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                if (p instanceof String) ps.setString(i + 1, (String) p);
+                else if (p instanceof Integer) ps.setInt(i + 1, (Integer) p);
+                else if (p instanceof Long) ps.setLong(i + 1, (Long) p);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) results.add(mapLogEntry(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    @Override
+    public long countLogs(LogQuery query) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM " + logTableName() + " WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (query.getType() != null) { sql.append(" AND type = ?"); params.add(query.getType().ordinal()); }
+        if (query.getPlayerUuid() != null) { sql.append(" AND player_uuid = ?"); params.add(query.getPlayerUuid().toString()); }
+        if (query.getTargetUuid() != null) { sql.append(" AND target_uuid = ?"); params.add(query.getTargetUuid().toString()); }
+        if (query.getWorld() != null) { sql.append(" AND world = ?"); params.add(query.getWorld()); }
+        if (query.getServerName() != null) { sql.append(" AND server_name = ?"); params.add(query.getServerName()); }
+        sql.append(" AND created_at >= ? AND created_at <= ?");
+        params.add(query.getFromTime());
+        params.add(query.getToTime());
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                if (p instanceof String) ps.setString(i + 1, (String) p);
+                else if (p instanceof Integer) ps.setInt(i + 1, (Integer) p);
+                else if (p instanceof Long) ps.setLong(i + 1, (Long) p);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    @Override
+    public void purgeLogs(Map<Integer, Long> retentionMsPerType, long defaultRetentionMs) {
+        long now = System.currentTimeMillis();
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery("SELECT PARTITION_NAME, PARTITION_DESCRIPTION FROM INFORMATION_SCHEMA.PARTITIONS WHERE TABLE_NAME = 'action_logs' AND TABLE_SCHEMA = (SELECT DATABASE()) AND PARTITION_NAME IS NOT NULL AND PARTITION_NAME != 'p_future'");
+            while (rs.next()) {
+                String partName = rs.getString("PARTITION_NAME");
+                String partDesc = rs.getString("PARTITION_DESCRIPTION");
+                if (partDesc == null || partDesc.equals("0") || partDesc.equals("MAXVALUE")) continue;
+                long partitionMax = Long.parseLong(partDesc);
+                if (partitionMax <= now - defaultRetentionMs) {
+                    // Check if any type has longer retention
+                    boolean keep = false;
+                    for (Map.Entry<Integer, Long> entry : retentionMsPerType.entrySet()) {
+                        if (entry.getValue() == 0) { keep = true; break; }
+                        if (partitionMax > now - entry.getValue()) { keep = true; break; }
+                    }
+                    if (!keep) {
+                        try {
+                            stmt.executeUpdate("ALTER TABLE action_logs DROP PARTITION " + partName);
+                        } catch (SQLException ignored) {}
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private LogEntry mapLogEntry(ResultSet rs) throws SQLException {
+        return LogEntry.builder()
+                .id(rs.getLong("id"))
+                .type(rs.getInt("type"))
+                .playerUuid(UUID.fromString(rs.getString("player_uuid")))
+                .playerName(rs.getString("player_name"))
+                .targetUuid(rs.getString("target_uuid") != null ? UUID.fromString(rs.getString("target_uuid")) : null)
+                .targetName(rs.getString("target_name"))
+                .actionData(rs.getString("action_data"))
+                .world(rs.getString("world"))
+                .x(rs.getInt("x")).y(rs.getInt("y")).z(rs.getInt("z"))
+                .serverName(rs.getString("server_name"))
+                .createdAt(rs.getLong("created_at"))
+                .build();
     }
 }
