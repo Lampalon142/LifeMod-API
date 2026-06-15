@@ -470,6 +470,31 @@ auth:
       clear: 43
       validate: 52
 
+# --- LOGS ---
+logs:
+  enabled: true
+  log-connection: true
+  log-chat: true
+  log-commands: true
+  log-block: true
+  log-container: true
+  log-item: true
+  log-entity: true
+  log-teleport: true
+  log-death: true
+  log-trade: true
+  log-world: true
+  flush-interval: 5
+  batch-size: 500
+  ignored-commands:
+    - "/shop"
+    - "/warp"
+    - "/spawn"
+    - "/tpa"
+  retention:
+    default: 30d
+    per-type: []
+
 # --- DEBUG ---
 debug:
   enabled: false

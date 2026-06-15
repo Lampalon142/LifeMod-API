@@ -270,6 +270,14 @@ report:
       - "&7[!] Left-click to assign to yourself"
       - "&7[!] Shift-click to close ticket"
 
+# --- LOGS ---
+logs:
+  usage: "&cUsage: /log lookup <player> [type] [page]"
+  invalid-type: "&cInvalid log type."
+  disabled: "&cLogs are disabled."
+  gui:
+    title: "&6Logs: &e%target%"
+
 # --- TOOLS & GUIS ---
 gui:
   pagination:

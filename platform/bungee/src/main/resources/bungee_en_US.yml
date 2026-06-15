@@ -136,5 +136,11 @@ antivpn:
     geo-blacklisted: "&c[AntiVPN] Blocking Geo (Blacklisted): %player% (%ip%) - Country: %country%"
     isp: "&c[AntiVPN] Blocking ISP: %player% (%ip%) - ISP: %isp%"
 
+# --- LOGS ---
+logs:
+  usage: "&cUsage: /log lookup <player> [type] [page]"
+  invalid-type: "&cInvalid log type."
+  disabled: "&cLogs are disabled."
+
 # Metadata
 version: 201
