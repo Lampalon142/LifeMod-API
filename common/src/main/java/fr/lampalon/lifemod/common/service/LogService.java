@@ -80,7 +80,8 @@ public class LogService implements ILogService {
                 return;
             }
             Map<Integer, Long> perType = new HashMap<>();
-            for (String key : config.getStringList("logs.retention.per-type")) {
+            java.util.List<String> retentionList = config.getStringList("logs.retention.per-type");
+            if (retentionList != null) for (String key : retentionList) {
                 String[] parts = key.split(":", 2);
                 if (parts.length == 2) {
                     try {

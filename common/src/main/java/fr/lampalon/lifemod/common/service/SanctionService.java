@@ -55,13 +55,13 @@ public class SanctionService implements ISanctionService {
                 }
             }
 
-            broadcastSanction(sanction);
             trackSanction(sanction);
 
             if (messaging != null) {
-                String message = String.format("ADD|%s|%s|%s|%s|%d|%b|%s|%s",
+                String message = String.format("ADD|%s|%s|%s|%s|%s|%d|%b|%s|%s",
                         sanction.getType().name(),
                         sanction.getPlayerUuid(),
+                        sanction.getPlayerName(),
                         sanction.getIssuerName(),
                         sanction.getReason(),
                         sanction.getDuration(),
@@ -70,6 +70,8 @@ public class SanctionService implements ISanctionService {
                         sanction.getCategory()
                 );
                 messaging.publish("lifemod:sanctions", message);
+            } else {
+                broadcastSanction(sanction);
             }
 
             if (sanction.getType() == SanctionType.WARN || sanction.getType() == SanctionType.MUTE || sanction.getType() == SanctionType.BAN) {
@@ -90,17 +92,18 @@ public class SanctionService implements ISanctionService {
             db.updateSanction(active);
 
             if (messaging != null) {
-                String message = String.format("REMOVE|%s|%s|%s|%s|%b",
+                String message = String.format("REMOVE|%s|%s|%s|%s|%s|%b",
                         type.name(),
                         playerUuid,
+                        active.getPlayerName(),
                         removedByName,
                         reason,
                         silent
                 );
                 messaging.publish("lifemod:sanctions", message);
+            } else {
+                broadcastRevoke(type, playerUuid, removedByName, reason, silent);
             }
-
-            broadcastRevoke(type, playerUuid, removedByName, reason, silent);
             trackPardon(active);
 
             return true;

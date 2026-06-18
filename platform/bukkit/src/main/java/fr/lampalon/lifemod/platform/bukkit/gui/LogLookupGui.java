@@ -10,6 +10,7 @@ import xyz.xenondevs.invui.gui.Gui;
 import xyz.xenondevs.invui.gui.PagedGui;
 import xyz.xenondevs.invui.gui.structure.Markers;
 import xyz.xenondevs.invui.item.Item;
+import xyz.xenondevs.invui.item.ItemProvider;
 import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
 import xyz.xenondevs.invui.item.impl.controlitem.PageItem;
@@ -85,6 +86,11 @@ public class LogLookupGui extends AbstractGui {
         return "logs.gui.title";
     }
 
+    @Override
+    protected String getTitle() {
+        return lang.getMessage(getTitleKey(), "%target%", targetName != null ? targetName : "?");
+    }
+
     private List<Item> buildItems() {
         List<Item> items = new ArrayList<>();
         int totalPages = (int) Math.ceil((double) totalCount / 45);
@@ -114,7 +120,8 @@ public class LogLookupGui extends AbstractGui {
         if (entry.getPlayerName() != null) builder.addLoreLines("§7Player: §f" + entry.getPlayerName());
         if (entry.getTargetName() != null) builder.addLoreLines("§7Target: §f" + entry.getTargetName());
         if (entry.getActionData() != null && !entry.getActionData().equals("{}") && !entry.getActionData().isEmpty()) {
-            builder.addLoreLines("§7Data: §f" + entry.getActionData());
+            String readable = formatActionData(type, entry.getActionData());
+            builder.addLoreLines("§7" + readable);
         }
         if (entry.getWorld() != null) {
             builder.addLoreLines("§7At: §f" + entry.getX() + " " + entry.getY() + " " + entry.getZ() + " (" + entry.getWorld() + ")");
@@ -128,6 +135,95 @@ public class LogLookupGui extends AbstractGui {
         LogType[] values = LogType.values();
         if (ordinal >= 0 && ordinal < values.length) return values[ordinal];
         return null;
+    }
+
+    private static String formatActionData(LogType type, String json) {
+        if (json == null || json.isEmpty() || json.equals("{}")) return "";
+        String raw = json.replace("{", "").replace("}", "").replace("\"", "");
+        String[] pairs = raw.split(",");
+        java.util.Map<String, String> map = new java.util.LinkedHashMap<>();
+        for (String pair : pairs) {
+            int eq = pair.indexOf(':');
+            if (eq > 0) {
+                String k = pair.substring(0, eq).trim();
+                String v = pair.substring(eq + 1).trim();
+                map.put(k, v);
+            }
+        }
+        if (type == null) return "Data: " + raw;
+        switch (type) {
+            case LOGIN_SUCCESS:
+                return "§7IP: §f" + map.getOrDefault("ip", "?");
+            case CHAT_MESSAGE:
+            case PRIVATE_MESSAGE:
+            case STAFF_CHAT_MESSAGE:
+                return "§7Message: §f" + map.getOrDefault("m", "?");
+            case COMMAND_EXECUTED:
+            case COMMAND_BLOCKED:
+                return "§7Command: §f" + map.getOrDefault("c", "?");
+            case BLOCK_BREAK:
+            case BLOCK_PLACE:
+                return "§7Block: §f" + map.getOrDefault("b", "?");
+            case BLOCK_BURN:
+            case BLOCK_FADE:
+                return "§7Block: §f" + map.getOrDefault("b", "?");
+            case BLOCK_FORM:
+                return "§7From: §f" + map.getOrDefault("s", "?") + " §7→ §f" + map.getOrDefault("f", "?");
+            case BUCKET_FILL:
+            case BUCKET_EMPTY:
+                return "§7Bucket: §f" + map.getOrDefault("b", "?");
+            case SIGN_CHANGE:
+                return "§7Text: §f" + map.getOrDefault("t", "?");
+            case EXPLOSION:
+                return "§7Entity: §f" + map.getOrDefault("e", "?") + " §7×" + map.getOrDefault("s", "?");
+            case CONTAINER_OPEN:
+                return "§7Container: §f" + map.getOrDefault("c", "?");
+            case CONTAINER_TAKE:
+            case CONTAINER_PUT:
+                return "§7Item: §f" + map.getOrDefault("i", "?") + " §7×" + map.getOrDefault("a", "1") + " §7(" + map.getOrDefault("c", "?") + ")";
+            case ITEM_DROP:
+            case ITEM_PICKUP:
+                return "§7Item: §f" + map.getOrDefault("i", "?") + " §7×" + map.getOrDefault("a", "1");
+            case ITEM_CONSUME:
+                return "§7Item: §f" + map.getOrDefault("i", "?");
+            case CRAFT:
+                return "§7Crafted: §f" + map.getOrDefault("i", "?") + " §7×" + map.getOrDefault("a", "1");
+            case ENCHANT:
+                return "§7Item: §f" + map.getOrDefault("i", "?") + " §7(" + map.getOrDefault("e", "?") + ")";
+            case FISHING:
+                return "§7State: §f" + map.getOrDefault("s", "?");
+            case VEHICLE_ENTER:
+            case VEHICLE_EXIT:
+                return "§7Vehicle: §f" + map.getOrDefault("v", "?");
+            case ENTITY_TAME:
+            case SHEEP_SHEAR:
+                return "§7Entity: §f" + map.getOrDefault("e", "?");
+            case DEATH_PLAYER:
+                return "§7Killed by: §f" + map.getOrDefault("k", "?") + " §7with §f" + map.getOrDefault("w", "?");
+            case DEATH_MOB:
+                return "§7Killed by: §f" + map.getOrDefault("m", "?");
+            case DEATH_ENVIRONMENT:
+                return "§7Cause: §f" + map.getOrDefault("c", "?");
+            case KILL_MOB:
+                return "§7Mob: §f" + map.getOrDefault("m", "?");
+            case TELEPORT:
+                return "§7Cause: §f" + map.getOrDefault("c", "?");
+            case GAMEMODE_CHANGE:
+                return "§7From: §f" + map.getOrDefault("f", "?") + " §7→ §f" + map.getOrDefault("t", "?");
+            case ECONOMY_DEPOSIT:
+            case ECONOMY_WITHDRAW:
+                return "§7Amount: §f" + map.getOrDefault("a", "?") + " §7(Balance: §f" + map.getOrDefault("b", "?") + ")";
+            case ECONOMY_TRANSFER:
+                return "§7Amount: §f" + map.getOrDefault("a", "?") + " §7→ §f" + map.getOrDefault("t", "?");
+            case SHOP_BUY:
+            case SHOP_SELL:
+                return "§7Item: §f" + map.getOrDefault("i", "?") + " §7×" + map.getOrDefault("a", "1") + " §7(§f" + map.getOrDefault("p", "?") + "§7)";
+            case TRADE_PLUGIN:
+            case TRADE_VILLAGER:
+                return "§7Trade: §f" + map.getOrDefault("i", "?") + " §7×" + map.getOrDefault("a", "1");
+            default:
+                return "§7Data: §f" + raw;
+        }
     }
 
     private static Material iconForType(LogType type) {

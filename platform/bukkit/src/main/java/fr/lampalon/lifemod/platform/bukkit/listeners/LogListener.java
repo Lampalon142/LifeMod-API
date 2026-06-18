@@ -34,7 +34,6 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
@@ -62,11 +61,6 @@ public class LogListener implements Listener {
     private final Map<UUID, Long> containerOpenSince = new HashMap<>();
     private final Map<UUID, Inventory> openContainers = new HashMap<>();
 
-    private static final String[] IGNORED_CMDS = {
-        "/shop", "/warp", "/spawn", "/tpa", "/tpahere",
-        "/bal", "/balance", "/pay", "/msg", "/r", "/reply"
-    };
-
     public LogListener() {
         this.logService = ServiceRegistry.get(ILogService.class);
         this.config = ServiceRegistry.get(IConfigurationService.class);
@@ -74,14 +68,6 @@ public class LogListener implements Listener {
 
     private boolean enabled(String path) {
         return config.getBoolean("logs." + path, true);
-    }
-
-    private boolean isIgnoredCommand(String cmd) {
-        String lower = cmd.toLowerCase();
-        for (String ignored : IGNORED_CMDS) {
-            if (lower.startsWith(ignored)) return true;
-        }
-        return false;
     }
 
     private void logAsync(LogEntry entry) {
@@ -125,20 +111,6 @@ public class LogListener implements Listener {
         logAsync(LogEntry.builder()
             .type(LogType.CHAT_MESSAGE).playerUuid(p.getUniqueId()).playerName(p.getName())
             .actionData("{\"m\":\"" + jsonEscape(event.getMessage()) + "\"}")
-            .serverName(serverName()).now().build());
-    }
-
-    // ── Commandes ──
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onCommand(PlayerCommandPreprocessEvent event) {
-        if (!enabled("log-commands")) return;
-        String cmd = event.getMessage();
-        if (isIgnoredCommand(cmd)) return;
-        Player p = event.getPlayer();
-        logAsync(LogEntry.builder()
-            .type(LogType.COMMAND_EXECUTED).playerUuid(p.getUniqueId()).playerName(p.getName())
-            .actionData("{\"c\":\"" + jsonEscape(cmd) + "\"}")
             .serverName(serverName()).now().build());
     }
 

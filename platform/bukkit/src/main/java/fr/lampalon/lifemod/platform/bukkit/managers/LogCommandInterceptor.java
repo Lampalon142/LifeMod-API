@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatCommand;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.LogEntry;
 import fr.lampalon.lifemod.common.model.LogType;
@@ -39,7 +40,8 @@ public class LogCommandInterceptor implements PacketListener {
         if (!config.getBoolean("logs.log-commands", true)) return;
 
         if (event.getPacketType() == PacketType.Play.Client.CHAT_COMMAND) {
-            String command = event.getPacket().getStrings().read(0, "");
+            WrapperPlayClientChatCommand wrapper = new WrapperPlayClientChatCommand(event);
+            String command = wrapper.getCommand();
             if (command.isEmpty()) return;
 
             String base = command.split(" ")[0].toLowerCase();

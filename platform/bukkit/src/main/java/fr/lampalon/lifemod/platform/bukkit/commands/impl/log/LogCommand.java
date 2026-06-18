@@ -51,7 +51,7 @@ public class LogCommand extends LifeCommand {
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
         UUID targetUuid = target.getUniqueId();
 
-        LogType filterType = null;
+        LogType filterType;
         if (context.getArgs().length >= 3) {
             try {
                 filterType = LogType.valueOf(context.getArgs()[2].toUpperCase());
@@ -59,14 +59,22 @@ public class LogCommand extends LifeCommand {
                 context.getSender().sendMessage(context.getLang().getMessage("logs.invalid-type"));
                 return;
             }
+        } else {
+            filterType = null;
         }
+        final LogType finalFilterType = filterType;
 
-        int page = 1;
+        int page;
         if (context.getArgs().length >= 4) {
             try {
                 page = Math.max(1, Integer.parseInt(context.getArgs()[3]));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+                page = 1;
+            }
+        } else {
+            page = 1;
         }
+        final int finalPage = page;
 
         ILogService logService = ServiceRegistry.get(ILogService.class);
         if (logService == null) {
@@ -86,7 +94,7 @@ public class LogCommand extends LifeCommand {
         logService.count(query).thenAccept(count -> {
             logService.query(query).thenAccept(entries -> {
                 Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
-                    new LogLookupGui(context.getPlayer(), entries, count, targetName, targetUuid, filterType, page).open();
+                    new LogLookupGui(context.getPlayer(), entries, count, targetName, targetUuid, finalFilterType, finalPage).open();
                 });
             });
         }).exceptionally(ex -> {

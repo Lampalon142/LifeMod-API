@@ -100,6 +100,7 @@ public class MySQLManager implements DatabaseProvider {
                 "x INT, y INT, z INT, " +
                 "server_name VARCHAR(64), " +
                 "created_at BIGINT NOT NULL, " +
+                "PRIMARY KEY (id, created_at), " +
                 "INDEX idx_type_created (type, created_at), " +
                 "INDEX idx_player_created (player_uuid, created_at), " +
                 "INDEX idx_target_created (target_uuid, created_at), " +
@@ -142,8 +143,6 @@ public class MySQLManager implements DatabaseProvider {
 
     private String logTableName() {
         return "action_logs";
-    }
-        if (dataSource != null) dataSource.close();
     }
 
     @Override

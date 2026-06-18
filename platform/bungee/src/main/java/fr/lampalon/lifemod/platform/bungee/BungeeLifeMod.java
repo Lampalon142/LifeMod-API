@@ -83,18 +83,15 @@ public class BungeeLifeMod extends Plugin {
 
                     if ("ADD".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 8) return;
+                        if (parts.length < 9) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String issuerName = parts[2];
-                        String reason = parts[3];
-                        long duration = Long.parseLong(parts[4]);
-                        boolean isSilent = Boolean.parseBoolean(parts[5]);
-                        String origServer = parts[6];
-
-                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
-                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
-                                : playerUuid.toString().substring(0, 8);
+                        String targetName = parts[2];
+                        String issuerName = parts[3];
+                        String reason = parts[4];
+                        long duration = Long.parseLong(parts[5]);
+                        boolean isSilent = Boolean.parseBoolean(parts[6]);
+                        String origServer = parts[7];
 
                         String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
                         String msg = lang.getMessage(path,
@@ -126,16 +123,13 @@ public class BungeeLifeMod extends Plugin {
                         }
                     } else if ("REMOVE".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 5) return;
+                        if (parts.length < 6) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String removedByName = parts[2];
-                        String reason = parts[3];
-                        boolean silent = Boolean.parseBoolean(parts[4]);
-
-                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
-                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
-                                : playerUuid.toString().substring(0, 8);
+                        String targetName = parts[2];
+                        String removedByName = parts[3];
+                        String reason = parts[4];
+                        boolean silent = Boolean.parseBoolean(parts[5]);
 
                         String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
                         String msg = lang.getMessage(path,
@@ -360,18 +354,15 @@ public class BungeeLifeMod extends Plugin {
 
                     if ("ADD".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 8) return;
+                        if (parts.length < 9) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String issuerName = parts[2];
-                        String reason = parts[3];
-                        long duration = Long.parseLong(parts[4]);
-                        boolean isSilent = Boolean.parseBoolean(parts[5]);
-                        String origServer = parts[6];
-
-                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
-                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
-                                : playerUuid.toString().substring(0, 8);
+                        String targetName = parts[2];
+                        String issuerName = parts[3];
+                        String reason = parts[4];
+                        long duration = Long.parseLong(parts[5]);
+                        boolean isSilent = Boolean.parseBoolean(parts[6]);
+                        String origServer = parts[7];
 
                         String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
                         String m = lang.getMessage(path,
@@ -403,16 +394,13 @@ public class BungeeLifeMod extends Plugin {
                         }
                     } else if ("REMOVE".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 5) return;
+                        if (parts.length < 6) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String removedByName = parts[2];
-                        String reason = parts[3];
-                        boolean silent = Boolean.parseBoolean(parts[4]);
-
-                        String targetName = ProxyServer.getInstance().getPlayer(playerUuid) != null
-                                ? ProxyServer.getInstance().getPlayer(playerUuid).getName()
-                                : playerUuid.toString().substring(0, 8);
+                        String targetName = parts[2];
+                        String removedByName = parts[3];
+                        String reason = parts[4];
+                        boolean silent = Boolean.parseBoolean(parts[5]);
 
                         String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
                         String m = lang.getMessage(path,

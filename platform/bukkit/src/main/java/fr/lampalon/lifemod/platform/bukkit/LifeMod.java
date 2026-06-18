@@ -142,8 +142,12 @@ public class LifeMod extends JavaPlugin {
         PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
 
         if (ServiceRegistry.get(ILogService.class) != null) {
-            PacketEvents.getAPI().getEventManager().registerListener(
-                new LogCommandInterceptor(), PacketListenerPriority.LOW);
+            try {
+                PacketEvents.getAPI().getEventManager().registerListener(
+                    new LogCommandInterceptor(), PacketListenerPriority.LOW);
+            } catch (Exception e) {
+                getLogger().warning("Failed to register LogCommandInterceptor: " + e.getMessage());
+            }
         }
 
         this.commandRegistry = new CommandRegistry(this);
@@ -189,19 +193,17 @@ public class LifeMod extends JavaPlugin {
 
                     if ("ADD".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 8) return;
+                        if (parts.length < 9) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String issuerName = parts[2];
-                        String reason = parts[3];
-                        long duration = Long.parseLong(parts[4]);
-                        boolean isSilent = Boolean.parseBoolean(parts[5]);
-                        String origServer = parts[6];
+                        String targetName = parts[2];
+                        String issuerName = parts[3];
+                        String reason = parts[4];
+                        long duration = Long.parseLong(parts[5]);
+                        boolean isSilent = Boolean.parseBoolean(parts[6]);
+                        String origServer = parts[7];
 
                         if (origServer.equals(serverName)) return;
-
-                        String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
-                        if (targetName == null) targetName = playerUuid.toString().substring(0, 8);
 
                         String path = "sanctions.broadcast." + type.name().toLowerCase() + (isSilent ? ".silent" : ".public");
                         String msg = lang.getMessage(path,
@@ -234,15 +236,13 @@ public class LifeMod extends JavaPlugin {
                         }
                     } else if ("REMOVE".equals(action)) {
                         String[] parts = data.split("\\|", -1);
-                        if (parts.length < 5) return;
+                        if (parts.length < 6) return;
                         SanctionType type = SanctionType.valueOf(parts[0]);
                         UUID playerUuid = UUID.fromString(parts[1]);
-                        String removedByName = parts[2];
-                        String reason = parts[3];
-                        boolean silent = Boolean.parseBoolean(parts[4]);
-
-                        String targetName = Bukkit.getOfflinePlayer(playerUuid).getName();
-                        if (targetName == null) targetName = playerUuid.toString().substring(0, 8);
+                        String targetName = parts[2];
+                        String removedByName = parts[3];
+                        String reason = parts[4];
+                        boolean silent = Boolean.parseBoolean(parts[5]);
 
                         String path = "sanctions.broadcast.un" + type.name().toLowerCase() + (silent ? ".silent" : ".public");
                         String msg = lang.getMessage(path,
@@ -395,8 +395,12 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(ISanctionService.class, new SanctionService(dbProvider));
 
         if (configConfig.getBoolean("logs.enabled", true)) {
-            ServiceRegistry.register(ILogService.class,
-                new LogService(dbProvider, ServiceRegistry.get(IConfigurationService.class), ServiceRegistry.get(ExecutorService.class)));
+            try {
+                ServiceRegistry.register(ILogService.class,
+                    new LogService(dbProvider, ServiceRegistry.get(IConfigurationService.class), ServiceRegistry.get(ExecutorService.class)));
+            } catch (Exception e) {
+                getLogger().severe("Failed to initialize LogService: " + e.getMessage());
+            }
         }
         
         guiManager = new GuiManager(this);
@@ -711,10 +715,14 @@ public class LifeMod extends JavaPlugin {
         );
 
         if (ServiceRegistry.get(ILogService.class) != null) {
-            PacketEvents.getAPI().getEventManager().registerListener(
-                new LogCommandInterceptor(),
-                com.github.retrooper.packetevents.event.PacketListenerPriority.LOW
-            );
+            try {
+                PacketEvents.getAPI().getEventManager().registerListener(
+                    new LogCommandInterceptor(),
+                    com.github.retrooper.packetevents.event.PacketListenerPriority.LOW
+                );
+            } catch (Exception e) {
+                getLogger().warning("Failed to register LogCommandInterceptor: " + e.getMessage());
+            }
         }
 
         this.commandRegistry = new CommandRegistry(this);
