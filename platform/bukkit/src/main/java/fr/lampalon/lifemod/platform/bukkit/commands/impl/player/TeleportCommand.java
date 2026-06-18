@@ -2,11 +2,14 @@ package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
 import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
+import fr.lampalon.lifemod.platform.bukkit.utils.BukkitDatabaseUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
@@ -18,34 +21,48 @@ public class TeleportCommand extends LifeCommand {
 
     public TeleportCommand() {
         super("teleport", "lifemod.tp", true, "tp", "tphere");
-        setDescription("Teleports yourself or another player to a location or player.");
+        setDescription("Teleports yourself or another player to a location or player (online or offline).");
         setUsage("/teleport <player> | /teleport <player1> <player2> | /teleport <x> <y> <z>");
     }
 
     @Override
     public void execute(CommandContext context) {
-        Player player = context.getPlayer(); // Sender is guaranteed to be a player by playerOnly=true
+        Player player = context.getPlayer();
 
         if (context.getArgs().length == 1) {
-            Player target = Bukkit.getPlayer(context.getArgs()[0]);
-            if (target == null) {
-                context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
-                return;
+            String targetName = context.getArgs()[0];
+            Player onlineTarget = Bukkit.getPlayer(targetName);
+            if (onlineTarget != null && onlineTarget.isOnline()) {
+                player.teleport(onlineTarget.getLocation());
+                context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.success",
+                    "%target%", onlineTarget.getName() + " §a(Online)"));
+                context.getDebug().log("tp", player.getName() + " teleported to online player " + onlineTarget.getName());
+            } else {
+                OfflinePlayer offlineTarget = Bukkit.getOfflinePlayer(targetName);
+                if (!offlineTarget.hasPlayedBefore()) {
+                    context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
+                    return;
+                }
+                Location loc = BukkitDatabaseUtil.fromStoredLocation(
+                    context.getPlugin().getDatabaseManager().getDatabaseProvider().getCoords(offlineTarget.getUniqueId()));
+                if (loc == null) {
+                    context.getSender().sendMessage(context.getLang().getMessage("commands.otp.no-position", "%target%", targetName));
+                    return;
+                }
+                player.teleport(loc);
+                context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.success",
+                    "%target%", targetName + " §c(Offline)"));
+                context.getDebug().log("tp", player.getName() + " teleported to offline player " + targetName);
             }
-            player.teleport(target.getLocation());
-            context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.success", "%target%", target.getName()));
-            context.getDebug().log("tp", player.getName() + " teleported to " + target.getName());
         } else if (context.getArgs().length == 2) {
-            // For /tp player1 player2 OR /tphere player
-            // Current implementation assumes sender is also a player
             Player target1 = Bukkit.getPlayer(context.getArgs()[0]);
             Player target2 = Bukkit.getPlayer(context.getArgs()[1]);
-            
+
             if (target1 == null || target2 == null) {
                 context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
                 return;
             }
-            
+
             target1.teleport(target2.getLocation());
             context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.success-other", "%player1%", target1.getName(), "%player2%", target2.getName()));
             context.getDebug().log("tp", player.getName() + " teleported " + target1.getName() + " to " + target2.getName());
@@ -54,7 +71,7 @@ public class TeleportCommand extends LifeCommand {
                 double x = parseCoord(context.getArgs()[0], player.getLocation().getX());
                 double y = parseCoord(context.getArgs()[1], player.getLocation().getY());
                 double z = parseCoord(context.getArgs()[2], player.getLocation().getZ());
-                
+
                 Location targetLocation = new Location(player.getWorld(), x, y, z);
                 player.teleport(targetLocation);
                 context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.success", "%target%", String.format("%.2f, %.2f, %.2f", x, y, z)));
@@ -88,9 +105,8 @@ public class TeleportCommand extends LifeCommand {
     @Override
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1 || context.getArgs().length == 2) {
-            return TabCompleterUtils.filterOnlinePlayers(context.getArgs()[context.getArgs().length -1]);
+            return TabCompleterUtils.filterOnlinePlayers(context.getArgs()[context.getArgs().length - 1]);
         }
-        // Could also add suggestions for coordinates if args.length is 3, but this is complex
         return super.onTabComplete(context);
     }
 }

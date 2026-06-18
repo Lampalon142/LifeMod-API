@@ -590,6 +590,7 @@ commands:
   invsee:
     usage: "%prefix%&cUsage: /invsee <player>"
     name: "&6Inventory: &e%player%"
+    opened: "%prefix%&aYou opened the inventory of &e%target% &a%status%"
 
   oinvsee:
     usage: "%prefix%&cUsage: /oinvsee <player>"
