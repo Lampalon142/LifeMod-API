@@ -11,7 +11,6 @@ import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.service.IWebhookService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
