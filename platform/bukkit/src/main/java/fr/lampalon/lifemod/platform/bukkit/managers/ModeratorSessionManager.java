@@ -49,6 +49,11 @@ public class ModeratorSessionManager {
         locked.add(uuid);
     }
 
+    public void unlock(UUID uuid) {
+        locked.remove(uuid);
+        attempts.remove(uuid);
+    }
+
     public boolean isLocked(UUID uuid) {
         return locked.contains(uuid);
     }

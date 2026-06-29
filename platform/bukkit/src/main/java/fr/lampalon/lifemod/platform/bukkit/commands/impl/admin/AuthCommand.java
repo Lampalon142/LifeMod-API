@@ -16,7 +16,7 @@ public class AuthCommand extends LifeCommand {
     public AuthCommand(){
         super("auth", "lifemod.auth", false);
         setDescription("Auth command");
-                        setUsage("/auth <login|register|changepass|reset|info|set|list>");
+                        setUsage("/auth <login|register|changepass|reset|info|set|list|lock|unlock>");
     }
 
 
@@ -150,17 +150,53 @@ public class AuthCommand extends LifeCommand {
             for (String name : names) {
                 context.getSender().sendMessage(context.getLang().getMessage("auth.admin-list-entry", "%name%", name));
             }
+        } else if (context.getArgs()[0].equalsIgnoreCase("lock")){
+            if (context.getArgs().length != 2) {
+                context.getSender().sendMessage(context.getLang().getMessage("auth.admin-lock-usage"));
+                return;
+            }
+
+            String targetName = context.getArgs()[1];
+            UUID targetUUID = authService.getUUIDByName(targetName);
+
+            if (targetUUID == null || !authService.isRegistered(targetUUID)) {
+                context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
+                return;
+            }
+
+            sessionManager.lock(targetUUID);
+            Player targetPlayer = org.bukkit.Bukkit.getPlayer(targetUUID);
+            if (targetPlayer != null && targetPlayer.isOnline()) {
+                targetPlayer.kickPlayer(context.getLang().getMessage("auth.login-locked"));
+            }
+            context.getSender().sendMessage(context.getLang().getMessage("auth.admin-lock-success", "%player%", targetName));
+        } else if (context.getArgs()[0].equalsIgnoreCase("unlock")){
+            if (context.getArgs().length != 2) {
+                context.getSender().sendMessage(context.getLang().getMessage("auth.admin-unlock-usage"));
+                return;
+            }
+
+            String targetName = context.getArgs()[1];
+            UUID targetUUID = authService.getUUIDByName(targetName);
+
+            if (targetUUID == null || !authService.isRegistered(targetUUID)) {
+                context.getSender().sendMessage(context.getLang().getMessage("system.player-not-found"));
+                return;
+            }
+
+            sessionManager.unlock(targetUUID);
+            context.getSender().sendMessage(context.getLang().getMessage("auth.admin-unlock-success", "%player%", targetName));
         }
     }
 
     @Override
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length <= 1) {
-            return List.of("login", "register", "changepass", "reset", "info", "set", "list");
+            return List.of("login", "register", "changepass", "reset", "info", "set", "list", "lock", "unlock");
         }
 
         String sub = context.getArgs()[0].toLowerCase();
-        if (List.of("reset", "info", "set").contains(sub) && context.getArgs().length == 2) {
+        if (List.of("reset", "info", "set", "lock", "unlock").contains(sub) && context.getArgs().length == 2) {
             return context.getPlugin().getModeratorAuthService().getAllRegisteredNames();
         }
 

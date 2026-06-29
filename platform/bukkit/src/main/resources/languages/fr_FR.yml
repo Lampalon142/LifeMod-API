@@ -675,6 +675,10 @@ commands:
   admin-invalid-pin: "&cLe PIN doit contenir entre 4 et 8 chiffres."
   admin-list-header: "&6=== Joueurs enregistrés (&e%count%&6) ==="
   admin-list-entry: "&7- &e%name%"
+  admin-lock-usage: "&cUtilisation : /auth lock <joueur>"
+  admin-lock-success: "&cLe compte de &e%player% &ca été verrouillé."
+  admin-unlock-usage: "&cUtilisation : /auth unlock <joueur>"
+  admin-unlock-success: "&aLe compte de &e%player% &aa été déverrouillé."
   gui:
       stop: "&cStop"
       pause: "&ePause"

@@ -664,6 +664,10 @@ commands:
   admin-invalid-pin: "&cPIN must be between 4 and 8 digits."
   admin-list-header: "&6=== Registered Players (&e%count%&6) ==="
   admin-list-entry: "&7- &e%name%"
+  admin-lock-usage: "&cUsage: /auth lock <player>"
+  admin-lock-success: "&cAccount of &e%player% &chas been locked."
+  admin-unlock-usage: "&cUsage: /auth unlock <player>"
+  admin-unlock-success: "&aAccount of &e%player% &ahas been unlocked."
   gui:
       stop: "&cStop"
       pause: "&ePause"
