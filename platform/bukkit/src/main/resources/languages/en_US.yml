@@ -724,27 +724,6 @@ commands:
     no-position: "%prefix%&cNo saved position for %target%."
     teleported: "%prefix%&aYou have been teleported to %target%'s last position."
 
-  spectate:
-    usage: "%prefix%&cUsage: /spectate <player|leave|fp|random|back|list>"
-    player-not-found: "%prefix%&cPlayer &e%target% &cnot found."
-    start: "%prefix%&aYou are now spectating &e%target%&a."
-    stop: "%prefix%&cYou are no longer spectating."
-    freecam: "%prefix%&aFreecam enabled."
-    back: "%prefix%&aTeleported back to your previous location."
-    self: "%prefix%&cYou cannot spectate yourself!"
-    already: "%prefix%&cYou are already spectating someone."
-    not-spectating: "%prefix%&cYou are not spectating."
-    spectate-start: "&aNow spectating &e%target%&a."
-    freecam-start: "&aFreecam mode activated."
-    spectate-leave: "&cYou have left spectate mode."
-    spectate-leave-no-pos: "&cLeft spectate mode, but could not return to previous position."
-    random-error: "&cNo suitable players found to spectate."
-    random-success: "&aNow spectating random player: &e%target%&a."
-    back-error: "&cNo previous position recorded."
-    back-success: "&aTeleported back to where you were before spectating &e%target%&a."
-    list-header: "&6Spectating Players:"
-    list-player: "&7 - &e%player%"
-
 # --- DEBUG ---
 debug:
   messages:

@@ -633,27 +633,6 @@ commands:
     no-position: "%prefix%&cPas de position sauvegardée pour %target%."
     teleported: "%prefix%&aVous avez été téléporté à la dernière position de %target%."
 
-  spectate:
-    usage: "%prefix%&cUtilisation : /spectate <joueur|leave|fp|random|back|list>"
-    player-not-found: "%prefix%&cJoueur &e%target% &cnon trouvé."
-    start: "%prefix%&aVous spectatez maintenant &e%target%&a."
-    stop: "%prefix%&cVous ne spectatez plus personne."
-    freecam: "%prefix%&aFreecam activé."
-    back: "%prefix%&aTéléporté à votre position précédente."
-    self: "%prefix%&cVous ne pouvez pas vous spectater vous-même !"
-    already: "%prefix%&cVous spectatez déjà quelqu'un."
-    not-spectating: "%prefix%&cVous ne spectatez personne."
-    spectate-start: "&aVous spectatez maintenant &e%target%&a."
-    freecam-start: "&aMode Freecam activé."
-    spectate-leave: "&cVous avez quitté le mode spectateur."
-    spectate-leave-no-pos: "&cMode spectateur quitté, mais impossible de retourner à la position précédente."
-    random-error: "&cAucun joueur éligible trouvé pour spectater."
-    random-success: "&aVous spectatez maintenant un joueur aléatoire : &e%target%&a."
-    back-error: "&cAucune position précédente enregistrée."
-    back-success: "&aTéléporté à votre position avant le spectate de &e%target%&a."
-    list-header: "&6Joueurs en Spectate :"
-    list-player: "&7 - &e%player%"
-
   replay:
     player-only: "&cSeuls les joueurs peuvent utiliser cette commande."
     not-in-replay: "&cVous n'êtes pas dans une session de replay."

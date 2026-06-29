@@ -72,9 +72,7 @@ database:
 | A-16 | `/clearinv` | Permission `lifemod.clearinv` | Inventaire vidé |
 | A-17 | `/ecopen Player2` | Permission `lifemod.ecopen` | EnderChest de Player2 affiché |
 | A-18 | `/invsee Player2` | Permission `lifemod.invsee` | Inventory de Player2 affiché (interactif) |
-| A-19 | `/spectate Player2` | Permission `lifemod.spectate` | Mode spectateur sur Player2 |
-| A-20 | `/spectate` (dans le mode) | | Menu de sélection de joueur |
-| A-21 | `/spectate back` | | Retour à sa position initiale |
+
 
 ---
 
@@ -165,7 +163,7 @@ database:
 
 ---
 
-### 2.10 Follow / Spectate
+### 2.10 Follow
 
 | # | Test | Résultat attendu |
 |---|------|------------------|

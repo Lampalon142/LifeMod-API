@@ -387,7 +387,6 @@ commands:
     oinvsee: true
     otp: true
     speed: true
-    spectate: true
     hearts: true
     difficulty: true
     settime: true

@@ -41,7 +41,7 @@ Open-source: Public codebase for transparency and potential improvements.
 /feed - nothing - To feed yourself or another player. - lifemod.feed  
 /lifemod - nothing - Use Lifemod for help or reload. - lifemod.lifemod  
 /speed - nothing - Update your speed. - lifemod.speed  
-/spectate - nothing - See a player from a command. - lifemod.spectate  
+  
 /otp - nothing - Teleport to an offline player. - lifemod.otp  
 /oinvsee - nothing - See the inventory of an offline player. - lifemod.oinvsee  
 /hearts - nothing - Manage player hearts: set or add a specific amount of hearts to any player. - lifemod.hearts  

@@ -93,7 +93,6 @@ import java.util.concurrent.Executors;
 public class LifeMod extends JavaPlugin {
     private static LifeMod instance;
     private static LifeModAPI lifeModAPI;
-    private SpectateManager spectateManager;
     private FreezeManager freezeManager;
     private DatabaseManager databaseManager;
     private UpdateChecker updateChecker;
@@ -184,7 +183,7 @@ public class LifeMod extends JavaPlugin {
         boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
         ServiceRegistry.register(IWebhookService.class,
                 new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
-        this.spectateManager = new SpectateManager();
+
         this.debugManager = new DebugManager(this);
         initializeManagers();
 
@@ -573,7 +572,6 @@ public class LifeMod extends JavaPlugin {
     public FreezeManager getFreezeManager() { return freezeManager; }
     public IVanishService getVanishService() { return vanishService; }
     public DebugManager getDebugManager() { return debugManager; }
-    public SpectateManager getSpectateManager() { return spectateManager; }
     public ModeratorSessionManager getModeratorSessionManager() { return moderatorSessionManager; }
     public ModeratorAuthService getModeratorAuthService() { return moderatorAuthService; }
     public ReactionManager getReactionManager() { return reactionManager; }

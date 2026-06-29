@@ -52,8 +52,6 @@ commands:
     description: use Lifemod for help or reload.
   speed:
     description: permit you to update your speed.
-  spectate:
-    description: See player from a command.
   hearts:
     description: "Manage player hearts: set or add a specific amount of hearts to any player."
   settime:
@@ -135,7 +133,6 @@ permissions:
       - lifemod.chat.bypass
       - lifemod.invsee.interact
       - lifemod.notify
-      - lifemod.spectate
       - lifemod.time
       - lifemod.difficulty
       - lifemod.hearts
