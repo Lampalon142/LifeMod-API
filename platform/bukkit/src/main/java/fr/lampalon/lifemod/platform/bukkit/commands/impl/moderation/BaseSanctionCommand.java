@@ -61,7 +61,11 @@ public abstract class BaseSanctionCommand extends LifeCommand {
         }
 
         String reason = String.join(" ", reasonParts);
-        if (reason.isEmpty() && type != SanctionType.NOTE) {
+        if (reason.isEmpty()) {
+            if (type == SanctionType.NOTE) {
+                context.getSender().sendMessage(context.getLang().getMessage("sanctions.cmd.usage-no-time", "%cmd%", getName()));
+                return;
+            }
             reason = context.getLang().getMessage("sanctions.cmd.default-reason");
         }
 
