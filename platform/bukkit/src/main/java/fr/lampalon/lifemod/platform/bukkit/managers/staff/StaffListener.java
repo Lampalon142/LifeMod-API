@@ -133,8 +133,14 @@ public class StaffListener implements Listener {
 
     private Player resolvePlayerLookTarget(Player player) {
         try {
-            Entity target = player.getTargetEntity(6);
-            if (target instanceof Player) return (Player) target;
+            org.bukkit.util.RayTraceResult result = player.getWorld().rayTraceEntities(
+                    player.getEyeLocation(),
+                    player.getLocation().getDirection(),
+                    6, 0.5
+            );
+            if (result != null && result.getHitEntity() instanceof Player) {
+                return (Player) result.getHitEntity();
+            }
         } catch (Exception | NoSuchMethodError ignored) {}
         return null;
     }
