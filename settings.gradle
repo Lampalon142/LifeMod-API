@@ -1,5 +1,6 @@
 rootProject.name = "LifeMod"
 
+include 'api'
 include 'common'
 include 'platform:bukkit'
 include 'platform:bungee'

@@ -57,7 +57,9 @@ import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
 import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
+import fr.lampalon.lifemod.api.LifeModAPI;
 import fr.lampalon.lifemod.nms.NmsFactory;
+import fr.lampalon.lifemod.platform.bukkit.api.LifeModAPIImpl;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder;
 import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener;
@@ -90,6 +92,7 @@ import java.util.concurrent.Executors;
 
 public class LifeMod extends JavaPlugin {
     private static LifeMod instance;
+    private static LifeModAPI lifeModAPI;
     private SpectateManager spectateManager;
     private FreezeManager freezeManager;
     private DatabaseManager databaseManager;
@@ -128,6 +131,10 @@ public class LifeMod extends JavaPlugin {
 
     public static LifeMod getInstance() {
         return instance;
+    }
+
+    public static LifeModAPI getAPI() {
+        return lifeModAPI;
     }
 
     @Override
@@ -171,6 +178,7 @@ public class LifeMod extends JavaPlugin {
 
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NmsFactory.load(getLogger(), this));
+        lifeModAPI = new LifeModAPIImpl(this);
 
         String webhookUrl = configConfig.getString("modules.discord.webhook-url");
         boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
