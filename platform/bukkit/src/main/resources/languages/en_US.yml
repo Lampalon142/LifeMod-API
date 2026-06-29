@@ -704,6 +704,7 @@ commands:
 
   clearinv:
     usage: "%prefix%&cUsage: /clearinv [player]"
+    self: "%prefix%&aYour inventory has been cleared."
     message: "%prefix%&aInventory cleared for &e%target%&a."
 
   ec:

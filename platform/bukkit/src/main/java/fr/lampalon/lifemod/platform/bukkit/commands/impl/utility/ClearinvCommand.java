@@ -21,8 +21,15 @@ public class ClearinvCommand extends LifeCommand {
     public void execute(CommandContext context) {
         Player player = context.getPlayer();
 
-        if (context.getArgs().length != 1) {
+        if (context.getArgs().length > 1) {
             context.getSender().sendMessage(context.getLang().getMessage("commands.clearinv.usage"));
+            return;
+        }
+
+        if (context.getArgs().length == 0) {
+            player.getInventory().clear();
+            context.getSender().sendMessage(context.getLang().getMessage("commands.clearinv.self"));
+            context.getDebug().log("clearinv", player.getName() + " cleared their own inventory");
             return;
         }
 

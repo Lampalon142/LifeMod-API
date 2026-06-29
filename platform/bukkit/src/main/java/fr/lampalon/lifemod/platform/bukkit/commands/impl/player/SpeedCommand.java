@@ -25,9 +25,28 @@ public class SpeedCommand extends LifeCommand {
             return;
         }
 
+        int argIndex = 0;
+        boolean fly = player.isFlying();
+        boolean walk = false;
+
+        if (context.getArgs()[0].equalsIgnoreCase("fly")) {
+            fly = true;
+            walk = false;
+            argIndex = 1;
+        } else if (context.getArgs()[0].equalsIgnoreCase("walk")) {
+            walk = true;
+            fly = false;
+            argIndex = 1;
+        }
+
+        if (argIndex >= context.getArgs().length) {
+            context.getSender().sendMessage(context.getLang().getMessage("commands.speed.provide"));
+            return;
+        }
+
         int speed;
         try {
-            speed = Integer.parseInt(context.getArgs()[0]);
+            speed = Integer.parseInt(context.getArgs()[argIndex]);
         } catch (NumberFormatException e) {
             context.getSender().sendMessage(context.getLang().getMessage("commands.speed.provide"));
             return;
@@ -38,10 +57,11 @@ public class SpeedCommand extends LifeCommand {
             return;
         }
 
-        if (player.isFlying()) {
-            player.setFlySpeed((float) speed / 10);
+        float value = (float) speed / 10;
+        if (fly) {
+            player.setFlySpeed(value);
         } else {
-            player.setWalkSpeed((float) speed / 10);
+            player.setWalkSpeed(value);
         }
 
         context.getSender().sendMessage(context.getLang().getMessage("commands.speed.success", "%speed%", String.valueOf(speed)));
@@ -55,7 +75,10 @@ public class SpeedCommand extends LifeCommand {
     @Override
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1) {
-            return TabCompleterUtils.filter(Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), context.getArgs()[0]);
+            return TabCompleterUtils.filter(Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "fly", "walk"), context.getArgs()[0]);
+        }
+        if (context.getArgs().length == 2 && (context.getArgs()[0].equalsIgnoreCase("fly") || context.getArgs()[0].equalsIgnoreCase("walk"))) {
+            return TabCompleterUtils.filter(Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"), context.getArgs()[1]);
         }
         return super.onTabComplete(context);
     }

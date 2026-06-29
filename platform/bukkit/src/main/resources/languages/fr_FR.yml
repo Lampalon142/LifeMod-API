@@ -612,6 +612,8 @@ commands:
 
   clearinv:
     usage: "%prefix%&cUtilisation : /clearinv [joueur]"
+    self: "%prefix%&aVotre inventaire a été vidé."
+    message: "%prefix%&aInventaire vidé pour &e%target%&a."
     message: "%prefix%&aInventaire vidé pour &e%target%&a."
 
   ec:
