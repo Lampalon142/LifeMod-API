@@ -38,8 +38,6 @@ commands:
     description: To tp to a person.
   tphere:
     description: Tp person to you.
-  weather:
-    description: To change the time.
   god:
     description: To activate or deactivate god for invincibility.
   freeze:
@@ -56,8 +54,6 @@ commands:
     description: "Manage player hearts: set or add a specific amount of hearts to any player."
   settime:
     description: Quickly set the world time to day, night, noon, or midnight.
-  difficulty:
-    description: Change the server difficulty to peaceful, easy, normal, or hard.
   report:
     description: Report a player
   reports:
@@ -124,7 +120,7 @@ permissions:
       - lifemod.heal
       - lifemod.tp
       - lifemod.tphere
-      - lifemod.weather
+
       - lifemod.god
       - lifemod.freeze
       - lifemod.invsee
@@ -134,7 +130,6 @@ permissions:
       - lifemod.invsee.interact
       - lifemod.notify
       - lifemod.time
-      - lifemod.difficulty
       - lifemod.hearts
       - lifemod.togglechat.bypass
       - lifemod.togglechat

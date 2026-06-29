@@ -546,23 +546,10 @@ commands:
 
   world:
     time-set: "%prefix%&aTime set to &e%time%&a."
-    difficulty-set: "%prefix%&aDifficulty set to &e%difficulty%&a."
-    weather-set: "%prefix%&aWeather set to &e%weather%&a."
-    difficulty:
-      usage: "%prefix%&cUsage: /difficulty <difficulty>"
-      success: "%prefix%&aDifficulty set to &e%difficulty%&a."
-      invalid: "%prefix%&cInvalid difficulty!"
-      current: "&eCurrent difficulty: &a%difficulty% &7(Available: &f%available%&7)"
     time:
       usage: "%prefix%&cUsage: /settime <time|day|night>"
       success: "%prefix%&aTime set to &e%time%&a."
       invalid: "%prefix%&cInvalid time format!"
-    weather:
-      usage: "%prefix%&cUsage: /weather <sun|rain|storm>"
-      sun: "%prefix%&aWeather set to SUN."
-      rain: "%prefix%&aWeather set to RAIN."
-      storm: "%prefix%&aWeather set to STORM."
-
   chatclear:
     message: "%prefix%&cThe chat has been cleared."
 

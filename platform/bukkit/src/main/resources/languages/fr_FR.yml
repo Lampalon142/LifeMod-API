@@ -535,23 +535,10 @@ commands:
 
   world:
     time-set: "%prefix%&aTemps réglé sur &e%time%&a."
-    difficulty-set: "%prefix%&aDifficulté réglée sur &e%difficulty%&a."
-    weather-set: "%prefix%&aMétéo réglée sur &e%weather%&a."
-    difficulty:
-      usage: "%prefix%&cUtilisation : /difficulty <difficulté>"
-      success: "%prefix%&aDifficulté réglée sur &e%difficulty%&a."
-      invalid: "%prefix%&cDifficulté invalide !"
-      current: "&eDifficulté actuelle : &a%difficulty% &7(Disponible : &f%available%&7)"
     time:
       usage: "%prefix%&cUtilisation : /settime <time|day|night>"
       success: "%prefix%&aTemps réglé sur &e%time%&a."
       invalid: "%prefix%&cFormat de temps invalide !"
-    weather:
-      usage: "%prefix%&cUtilisation : /weather <sun|rain|storm>"
-      sun: "%prefix%&aMétéo réglée sur SOLEIL."
-      rain: "%prefix%&aMétéo réglée sur PLUIE."
-      storm: "%prefix%&aMétéo réglée sur ORAGE."
-
   chatclear:
     message: "%prefix%&cLe chat a été effacé."
 

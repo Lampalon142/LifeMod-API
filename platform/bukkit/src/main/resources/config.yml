@@ -388,9 +388,7 @@ commands:
     otp: true
     speed: true
     hearts: true
-    difficulty: true
     settime: true
-    weather: true
     modlogin: true
     modregister: true
     modchangepass: true
