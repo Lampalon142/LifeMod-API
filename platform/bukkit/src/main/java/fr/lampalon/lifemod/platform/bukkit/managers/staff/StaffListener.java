@@ -138,8 +138,8 @@ public class StaffListener implements Listener {
                     player.getLocation().getDirection(),
                     6, 0.5
             );
-            if (result != null && result.getHitEntity() instanceof Player) {
-                return (Player) result.getHitEntity();
+            if (result != null && result.getHitEntity() instanceof Player target && !target.equals(player)) {
+                return target;
             }
         } catch (Exception | NoSuchMethodError ignored) {}
         return null;
