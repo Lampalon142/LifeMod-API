@@ -43,14 +43,11 @@ public class FreezeCommand extends LifeCommand {
 
         if (freezeManager.isPlayerFrozen(target.getUniqueId())) {
             freezeManager.unfreezePlayer(context.getPlayer(), target);
-            target.sendMessage(context.getLang().getMessage("commands.freeze.messages.unfreeze.target", "%player%", context.getSender().getName()));
-            context.getSender().sendMessage(context.getLang().getMessage("commands.freeze.messages.unfreeze.mod", "%target%", target.getName()));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.freeze.messages.unfreeze.mod", "%player%", target.getName()));
             context.getDebug().log("freeze", context.getSender().getName() + " unfroze " + target.getName());
         } else {
             freezeManager.freezePlayer(context.getPlayer(), target);
-            context.getLang().getStringList("commands.freeze.messages.freeze.onfreeze")
-                    .forEach(target::sendMessage);
-            context.getSender().sendMessage(context.getLang().getMessage("commands.freeze.messages.freeze.mod", "%target%", target.getName()));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.freeze.messages.freeze.mod", "%player%", target.getName()));
             context.getDebug().log("freeze", context.getSender().getName() + " froze " + target.getName());
         }
 
