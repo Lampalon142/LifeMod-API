@@ -62,6 +62,7 @@ public class ItemBuilder {
             im.setOwner(owner);
             is.setItemMeta(im);
         } catch (ClassCastException expected) {
+            // Not a player head
         }
         return this;
     }
@@ -109,6 +110,7 @@ public class ItemBuilder {
             im.setColor(color);
             is.setItemMeta(im);
         } catch (ClassCastException expected) {
+            // Not leather armor
         }
         return this;
     }

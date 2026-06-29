@@ -24,7 +24,7 @@ public class StaffActionManager {
         registerAction(StaffActionType.FREEZE, new FreezeAction());
         registerAction(StaffActionType.MOUNT, new MountAction());
         registerAction(StaffActionType.RANDOM_TP, new RandomTpAction());
-        registerAction(StaffActionType.CPS_TESTER, new CpsAction());
+        registerAction(StaffActionType.CPS_TESTER, new CPSAction());
         registerAction(StaffActionType.KNOCKBACK_TESTER, new KnockbackAction());
         registerAction(StaffActionType.VANISH, new VanishAction());
         registerAction(StaffActionType.INFO_VIEWER, new InfoViewerAction());

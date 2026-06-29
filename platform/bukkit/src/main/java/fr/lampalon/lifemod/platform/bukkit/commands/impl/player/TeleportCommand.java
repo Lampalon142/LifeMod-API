@@ -1,7 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
+
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -13,16 +12,14 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TeleportCommand extends LifeCommand {
 
     public TeleportCommand() {
-        super("teleport", "lifemod.tp", true, "tp", "tphere");
+        super("tp", "lifemod.tp", true, "teleport", "tphere");
         setDescription("Teleports yourself or another player to a location or player (online or offline).");
-        setUsage("/teleport <player> | /teleport <player1> <player2> | /teleport <x> <y> <z>");
+        setUsage("/tp <player> | /tp <player1> <player2> | /tp <x> <y> <z>");
     }
 
     @Override
@@ -83,15 +80,6 @@ public class TeleportCommand extends LifeCommand {
             context.getSender().sendMessage(context.getLang().getMessage("commands.teleport.usage"));
         }
 
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            String tpType = "tp";
-            if (context.getArgs().length == 2) tpType = "tphere";
-            else if (context.getArgs().length == 3) tpType = "coords";
-            props.put("teleport_type", tpType);
-            ph.capture("lifemod_teleport", props);
-        }
     }
 
     private double parseCoord(String arg, double current) {

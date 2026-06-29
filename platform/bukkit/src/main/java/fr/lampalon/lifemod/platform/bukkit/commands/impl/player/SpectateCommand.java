@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
-import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
@@ -12,20 +11,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static fr.lampalon.lifemod.platform.bukkit.utils.CompletionUtil.filter;
-
 public class SpectateCommand extends LifeCommand {
-    private final SpectateManager spectateManager;
 
-    public SpectateCommand(LifeMod plugin) {
+    public SpectateCommand() {
         super("spectate", "lifemod.spectate", true);
-        this.spectateManager = plugin.getSpectateManager();
         setDescription("Allows you to spectate other players or manage spectator mode.");
         setUsage("/spectate [player|leave|fp|random|back|list]");
     }
 
     @Override
     public void execute(CommandContext context) {
+        SpectateManager spectateManager = context.getPlugin().getSpectateManager();
         Player player = context.getPlayer();
         String[] args = context.getArgs();
 
@@ -67,7 +63,7 @@ public class SpectateCommand extends LifeCommand {
     public List<String> onTabComplete(CommandContext context) {
         if (context.getArgs().length == 1) {
             List<String> suggestions = new ArrayList<>(Arrays.asList("leave", "fp", "random", "back", "list"));
-            suggestions = filter(suggestions, context.getArgs());
+            suggestions = TabCompleterUtils.filter(suggestions, context.getArgs()[0]);
             suggestions.addAll(TabCompleterUtils.filterOnlinePlayers(context.getArgs()[0]));
             return suggestions;
         }

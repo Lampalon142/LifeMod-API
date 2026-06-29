@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
@@ -19,8 +18,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -69,14 +66,6 @@ public class StaffChatEvent implements Listener {
         IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
         if (messaging != null) {
             messaging.publish("lifemod:staff", "CHAT|" + player.getUniqueId() + "|" + player.getName() + "|" + rawMsg + "|" + platform.getServerName());
-        }
-
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("word_count", rawMsg.split("\\s+").length);
-            props.put("source", usePrefix ? "prefix" : "toggle");
-            ph.capture("lifemod_staff_chat", props);
         }
 
         if (config.getBoolean("modules.discord.enabled", false)) {

@@ -80,9 +80,6 @@ modules:
       default: 30d
       per-type: []
 
-  posthog:
-    enabled: true
-
   auto-punish:
     enabled: true
     mode: "GLOBAL"

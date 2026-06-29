@@ -87,11 +87,15 @@ public class ModeratorAuthService implements IPinService {
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement("ALTER TABLE moderator_auth ADD COLUMN last_auth_ip VARCHAR(64)")) {
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            plugin.getLogger().fine("[LifeMod] Migration skippable: " + e.getMessage());
+        }
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement("ALTER TABLE moderator_auth ADD COLUMN last_auth_time BIGINT")) {
             ps.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            plugin.getLogger().fine("[LifeMod] Migration skippable: " + e.getMessage());
+        }
     }
 
     public boolean isRegistered(UUID uuid) {

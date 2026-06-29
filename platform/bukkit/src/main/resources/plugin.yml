@@ -54,10 +54,6 @@ commands:
     description: permit you to update your speed.
   spectate:
     description: See player from a command.
-  otp:
-    description: teleport to an offline player.
-  oinvsee:
-    description: See the inventory of a offline player.
   hearts:
     description: "Manage player hearts: set or add a specific amount of hearts to any player."
   settime:
@@ -140,8 +136,6 @@ permissions:
       - lifemod.invsee.interact
       - lifemod.notify
       - lifemod.spectate
-      - lifemod.otp
-      - lifemod.oinvsee
       - lifemod.time
       - lifemod.difficulty
       - lifemod.hearts

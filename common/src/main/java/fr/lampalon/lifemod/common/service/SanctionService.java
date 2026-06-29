@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.common.service;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
@@ -12,7 +11,6 @@ import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,7 +41,7 @@ public class SanctionService implements ISanctionService {
     public CompletableFuture<Sanction> applySanction(Sanction sanction) {
         return CompletableFuture.supplyAsync(() -> {
             db.saveSanction(sanction);
-            
+
             if (sanction.getType() == SanctionType.BAN) {
                 PlayerData data = db.getPlayerData(sanction.getPlayerUuid());
                 if (data != null && data.getLastIp() != null) {
@@ -54,8 +52,6 @@ public class SanctionService implements ISanctionService {
                     db.updateIPReputation(ip, NetworkUtil.getSubnet(ip), legits, bans, System.currentTimeMillis(), false);
                 }
             }
-
-            trackSanction(sanction);
 
             if (messaging != null) {
                 String message = String.format("ADD|%s|%s|%s|%s|%s|%d|%b|%s|%s",
@@ -104,52 +100,9 @@ public class SanctionService implements ISanctionService {
             } else {
                 broadcastRevoke(type, playerUuid, removedByName, reason, silent);
             }
-            trackPardon(active);
 
             return true;
         }, LIFEMOD_EXECUTOR);
-    }
-
-    private void trackPardon(Sanction sanction) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("sanction_type", sanction.getType().name());
-            props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
-            props.put("is_permanent", sanction.isPermanent());
-            props.put("server_name", sanction.getServerName() != null ? sanction.getServerName() : "unknown");
-            ph.capture("lifemod_sanction_pardon", props);
-        }
-    }
-
-    private void trackSanction(Sanction sanction) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("sanction_type", sanction.getType().name());
-            props.put("silent", sanction.isSilent());
-            props.put("duration_ms", sanction.getDuration());
-            props.put("auto_punish", false);
-            props.put("has_reason", sanction.getReason() != null && !sanction.getReason().isEmpty());
-            props.put("is_permanent", sanction.isPermanent());
-            props.put("server_name", sanction.getServerName() != null ? sanction.getServerName() : "unknown");
-            props.put("category", sanction.getCategory() != null ? sanction.getCategory() : "GLOBAL");
-            ph.capture("lifemod_sanction", props);
-        }
-    }
-
-    private void trackAutoPunish(SanctionType type, long durationMs, String category, int warningCount, int threshold) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("sanction_type", type.name());
-            props.put("duration_ms", durationMs);
-            props.put("reason_category", category != null ? category : "GLOBAL");
-            props.put("warning_count", warningCount);
-            props.put("threshold_triggered", threshold);
-            props.put("is_permanent", durationMs == 0);
-            ph.capture("lifemod_auto_punish", props);
-        }
     }
 
     private void broadcastSanction(Sanction sanction) {
@@ -253,7 +206,6 @@ public class SanctionService implements ISanctionService {
 
             if (command != null) {
                 String finalCommand = command.replace("%player%", platform.getPlayerName(playerUuid));
-                trackAutoPunish(parseTypeFromCommand(command), parseDurationFromCommand(command), category, (int) count, (int) count);
                 platform.runTask(() -> {
                     platform.dispatchCommand(finalCommand);
                 });

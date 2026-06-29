@@ -42,6 +42,13 @@ public class CommandRegistry {
 
         commands.put(command.getName(), command);
         
+        registerWithBukkit(command);
+        for (String alias : command.getAliases()) {
+            registerAlias(command, alias);
+        }
+    }
+
+    private void registerWithBukkit(LifeCommand command) {
         org.bukkit.command.PluginCommand pluginCommand = plugin.getCommand(command.getName());
         if (pluginCommand != null) {
             BukkitCommandAdapter adapter = new BukkitCommandAdapter(command, plugin);
@@ -50,6 +57,15 @@ public class CommandRegistry {
         } else if (commandMap != null) {
             BukkitCommandWrapper wrapper = new BukkitCommandWrapper(command, plugin);
             commandMap.register(plugin.getName(), wrapper);
+        }
+    }
+
+    private void registerAlias(LifeCommand command, String alias) {
+        org.bukkit.command.PluginCommand pluginAliasCommand = plugin.getCommand(alias);
+        if (pluginAliasCommand != null) {
+            BukkitCommandAdapter adapter = new BukkitCommandAdapter(command, plugin);
+            pluginAliasCommand.setExecutor(adapter);
+            pluginAliasCommand.setTabCompleter(adapter);
         }
     }
 

@@ -1,0 +1,31 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  title-convention:
+    name: Validate title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        continue-on-error: true
+        with:
+          regexp: '^(feat|fix|chore|refactor|docs|test|ci)(\(.+\))?: .{1,}'
+
+  size-label:
+    name: Label by diff size
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        continue-on-error: true
+      - uses: pascalgn/size-label-action@v1
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

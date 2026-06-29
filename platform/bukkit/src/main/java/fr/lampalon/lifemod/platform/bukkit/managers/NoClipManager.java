@@ -2,7 +2,6 @@ package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
@@ -48,13 +47,6 @@ public class NoClipManager {
 
         ILangService lang = ServiceRegistry.get(ILangService.class);
         player.sendMessage(lang.getMessage("commands.noclip.activate"));
-
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("action", "enable");
-            ph.capture("lifemod_noclip", props);
-        }
     }
 
     public void disableNoClip(Player player) {
@@ -66,13 +58,6 @@ public class NoClipManager {
 
         ILangService lang = ServiceRegistry.get(ILangService.class);
         player.sendMessage(lang.getMessage("commands.noclip.deactivate"));
-
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("action", "disable");
-            ph.capture("lifemod_noclip", props);
-        }
     }
 
     private void spoofClientGameMode(Player player, GameMode gameMode) {

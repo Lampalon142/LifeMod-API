@@ -4,6 +4,7 @@ package fr.lampalon.lifemod.common.nms.api;
 import org.bukkit.World;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -13,6 +14,14 @@ import java.util.List;
  * Règle : Aucune importation net.minecraft ou org.bukkit.craftbukkit ne doit figurer ici.
  */
 public interface NMSProvider {
+
+    class ChunkItemHit {
+        public final int x, y, z;
+        public final int count;
+        public ChunkItemHit(int x, int y, int z, int count) {
+            this.x = x; this.y = y; this.z = z; this.count = count;
+        }
+    }
 
     /**
      * Sends an action bar message to a player.
@@ -64,4 +73,14 @@ public interface NMSProvider {
      * @return A list of containers currently loaded.
      */
     List<Container> getLoadedContainers(World world);
+
+    /**
+     * Scans a compressed chunk NBT stream for container items matching the given criteria.
+     *
+     * @param chunkData      Decompressed chunk NBT input stream.
+     * @param targetMaterial Material name to match (uppercase), or null if using IA id.
+     * @param targetIAId     ItemsAdder item id to match, or null if using material.
+     * @return List of hits with block coordinates and item counts.
+     */
+    List<ChunkItemHit> scanChunkItems(InputStream chunkData, String targetMaterial, String targetIAId);
 }

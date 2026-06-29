@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bungee.listeners;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
@@ -18,8 +17,6 @@ import net.md_5.bungee.api.event.ChatEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class BungeeChatListener implements Listener {
@@ -67,15 +64,6 @@ public class BungeeChatListener implements Listener {
             IMessagingService messaging = ServiceRegistry.get(IMessagingService.class);
             if (messaging != null) {
                 messaging.publish("lifemod:staff", "CHAT|" + uuid + "|" + player.getName() + "|" + rawMsg + "|" + serverName);
-            }
-
-            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-            if (ph != null) {
-                Map<String, Object> props = new HashMap<>();
-                props.put("word_count", rawMsg.split("\\s+").length);
-                props.put("platform", "bungee");
-                props.put("source", "toggle");
-                ph.capture("lifemod_staff_chat", props);
             }
         }
     }

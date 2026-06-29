@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.messaging.IMessagingService;
@@ -94,7 +93,6 @@ public class StaffModeManager {
         applyStaffState(player);
         
         moderators.add(player.getUniqueId());
-        trackStaffMode(true);
 
         player.sendMessage(lang.getMessage("mod.enable"));
         debug.log("mod", player.getName() + " enabled staff mode.");
@@ -115,7 +113,6 @@ public class StaffModeManager {
         restoreSurvivalInventory(player);
 
         moderators.remove(player.getUniqueId());
-        trackStaffMode(false);
 
         player.sendMessage(lang.getMessage("mod.disable"));
         debug.log("mod", player.getName() + " disabled staff mode.");
@@ -188,8 +185,9 @@ public class StaffModeManager {
                 debug.log("mod", "Using existing DB inventory for " + player.getName() + " on " + serverName + " (crash/PIN recovery).");
                 org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
                     try {
-                        savedInventories.put(uuid, InventoryUtil.deserializeInventoryContents(existing));
-                        savedArmor.put(uuid, InventoryUtil.deserializeInventoryArmor(existing));
+                        InventoryUtil.FullInventory full = InventoryUtil.deserializeFullInventory(existing);
+                        savedInventories.put(uuid, full.contents());
+                        savedArmor.put(uuid, full.armor());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -282,14 +280,5 @@ public class StaffModeManager {
         moderators.remove(uuid);
         savedInventories.remove(uuid);
         savedArmor.remove(uuid);
-    }
-
-    private void trackStaffMode(boolean enabled) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("action", enabled ? "enable" : "disable");
-            ph.capture("lifemod_staff_mode", props);
-        }
     }
 }

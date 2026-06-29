@@ -20,46 +20,73 @@ import fr.lampalon.lifemod.common.service.IWebhookService;
 import fr.lampalon.lifemod.common.service.LogService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.analytics.PostHogService;
+
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.zaxxer.hikari.HikariDataSource;
+import fr.lampalon.lifemod.common.antivpn.AntiVPNPacketListener;
+import fr.lampalon.lifemod.common.antivpn.AntiVPNService;
+import fr.lampalon.lifemod.common.core.ILifePlatform;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.database.DatabaseManager;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
+import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
+import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.replay.ReplayManager;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
+import fr.lampalon.lifemod.common.service.ILogService;
+import fr.lampalon.lifemod.common.service.IPinService;
+import fr.lampalon.lifemod.common.service.ISanctionService;
+import fr.lampalon.lifemod.common.service.IWebhookService;
+import fr.lampalon.lifemod.common.service.LogService;
+import fr.lampalon.lifemod.common.service.PinServiceImpl;
+import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitConfigurationService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.adapter.BukkitLangService;
-import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
+import fr.lampalon.lifemod.platform.bukkit.commands.engine.BukkitCommandWrapper;
+import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.listeners.hooks.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
+import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.platform.bukkit.nms.NMSLoader;
+import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager;
+import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder;
+import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener;
+import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener;
+import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener;
+import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener;
 import fr.lampalon.lifemod.platform.bukkit.utils.ConfigUpdater;
-import fr.lampalon.lifemod.platform.bukkit.webhook.BukkitWebhookService;
 import fr.lampalon.lifemod.platform.bukkit.utils.MessageUtil;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
+import fr.lampalon.lifemod.platform.bukkit.webhook.BukkitWebhookService;
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.command.CommandMap;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.github.retrooper.packetevents.event.PacketListenerPriority;
 
 public class LifeMod extends JavaPlugin {
     private static LifeMod instance;
@@ -114,6 +141,22 @@ public class LifeMod extends JavaPlugin {
         long start = System.currentTimeMillis();
         this.startupTime = start;
         instance = this;
+        startup();
+        long elapsed = System.currentTimeMillis() - start;
+        printStartupMessage(elapsed, ServiceRegistry.get(ILifePlatform.class).getNmsProvider().getName());
+    }
+
+    private void shutdown() {
+        if (noClipManager != null) noClipManager.shutdown();
+        ILogService logSvc = ServiceRegistry.get(ILogService.class);
+        if (logSvc != null) logSvc.shutdown();
+        PacketEvents.getAPI().terminate();
+        IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
+        if (msg != null) msg.close();
+        if (databaseManager != null) databaseManager.closeConnection();
+    }
+
+    private void startup() {
         saveDefaultConfig();
         new ConfigUpdater(this).updateConfigs();
         loadConfigurations();
@@ -139,7 +182,7 @@ public class LifeMod extends JavaPlugin {
 
         ServiceRegistry.register(IPinService.class, moderatorAuthService);
 
-        PacketEvents.getAPI().getEventManager().registerListener(new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this), PacketListenerPriority.NORMAL);
+        PacketEvents.getAPI().getEventManager().registerListener(new FreezePacketListener(this), PacketListenerPriority.NORMAL);
 
         if (ServiceRegistry.get(ILogService.class) != null) {
             try {
@@ -154,10 +197,8 @@ public class LifeMod extends JavaPlugin {
         registerEvents();
         registerCommands();
         setupMetrics();
-        setupPostHog();
 
-        // Start Replay Recorder
-        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
+        new ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
 
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
@@ -168,9 +209,6 @@ public class LifeMod extends JavaPlugin {
             t.setDaemon(true);
             return t;
         }));
-
-        long elapsed = System.currentTimeMillis() - start;
-        printStartupMessage(elapsed, bukkitPlatform.getNmsProvider().getName());
     }
 
     private void setupRedis() {
@@ -450,74 +488,6 @@ public class LifeMod extends JavaPlugin {
         metrics.addCustomChart(new SingleLineChart("players", () -> Bukkit.getOnlinePlayers().size()));
     }
 
-    private void setupPostHog() {
-        if (!configConfig.getBoolean("modules.posthog.enabled", true)) return;
-
-        String host = "https://eu.posthog.com";
-
-        getLogger().info("PostHog: resolving API key...");
-        String apiKey = PostHogService.resolveApiKey();
-        String serverVersion = Bukkit.getBukkitVersion();
-        String javaVersion = System.getProperty("java.version");
-        String dbType = configConfig.getString("database.type", "sqlite");
-        boolean redis = configConfig.getBoolean("redis.enabled", false);
-        int maxPlayers = Bukkit.getMaxPlayers();
-
-        getLogger().info("PostHog: creating service (host=" + host + ")...");
-        try {
-            PostHogService service = new PostHogService(apiKey, getServerName(), getDescription().getVersion(), "bukkit", host, serverVersion, javaVersion, dbType, redis, maxPlayers, getDataFolder().getPath());
-            ServiceRegistry.register(IPostHogService.class, service);
-            getLogger().info("PostHog: registered in ServiceRegistry");
-
-            sendEnvironmentEvent(service);
-            sendConfigSnapshot(service);
-
-            getLogger().info("PostHog analytics enabled");
-        } catch (Exception e) {
-            getLogger().severe("PostHog FAILED to initialize: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void sendEnvironmentEvent(PostHogService service) {
-        OperatingSystemMXBean os = ManagementFactory.getOperatingSystemMXBean();
-        Runtime runtime = Runtime.getRuntime();
-        service.sendEnvironmentEvent(
-                os.getName(), os.getArch(), os.getVersion(),
-                runtime.availableProcessors(),
-                runtime.maxMemory() / 1048576,
-                runtime.totalMemory() / 1048576
-        );
-    }
-
-    private void sendConfigSnapshot(PostHogService service) {
-        Map<String, Boolean> modules = new HashMap<>();
-        modules.put("auto_punish", configConfig.getBoolean("modules.auto-punish.enabled", true));
-        modules.put("chat_manager", configConfig.getBoolean("modules.chat-manager.enabled", true));
-        modules.put("moderator_auth", configConfig.getBoolean("modules.moderator-auth.enabled", false));
-        modules.put("antialt", configConfig.getBoolean("modules.antialt.enabled", true));
-        modules.put("antivpn", configConfig.getBoolean("modules.antivpn.enabled", false));
-        modules.put("discord", configConfig.getBoolean("modules.discord.enabled", false));
-        modules.put("replay", true);
-
-        Map<String, Object> extra = new HashMap<>();
-        extra.put("database_type", configConfig.getString("database.type", "sqlite"));
-        extra.put("redis_enabled", configConfig.getBoolean("redis.enabled", false));
-        extra.put("commands_enabled_count", countEnabledCommands());
-        extra.put("antivpn_geo_mode", configConfig.getString("modules.antivpn.geo-blocking.mode", "NONE"));
-        extra.put("auto_punish_mode", configConfig.getString("modules.auto-punish.mode", "GLOBAL"));
-
-        service.sendConfigSnapshot(modules, extra);
-    }
-
-    private int countEnabledCommands() {
-        int count = 0;
-        for (String key : configConfig.getConfigurationSection("commands.enabled").getKeys(false)) {
-            if (configConfig.getBoolean("commands.enabled." + key, false)) count++;
-        }
-        return count;
-    }
-
     private void registerEvents() {
         PluginManager pm = Bukkit.getPluginManager();
         updateChecker = new UpdateChecker(this, 112381);
@@ -546,9 +516,17 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
+        pm.registerEvents(new ServerListPingListener(vanishService), this);
 
         if (ServiceRegistry.get(ILogService.class) != null) {
-            pm.registerEvents(new LogListener(), this);
+            pm.registerEvents(new LogConnectionListener(), this);
+            pm.registerEvents(new LogChatListener(), this);
+            pm.registerEvents(new LogDeathListener(), this);
+            pm.registerEvents(new LogBlockListener(), this);
+            pm.registerEvents(new LogContainerListener(), this);
+            pm.registerEvents(new LogItemListener(), this);
+            pm.registerEvents(new LogEntityListener(), this);
+            pm.registerEvents(new LogMovementListener(), this);
             pm.registerEvents(new VaultHook(), this);
             pm.registerEvents(new AxTradesHook(), this);
             pm.registerEvents(new QuickShopHook(), this);
@@ -575,22 +553,7 @@ public class LifeMod extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        noClipManager.shutdown();
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            java.util.Map<String, Object> props = new java.util.HashMap<>();
-            props.put("plugin_version", getDescription().getVersion());
-            props.put("platform", "bukkit");
-            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
-            ph.capture("lifemod_shutdown", props);
-            ph.shutdown();
-        }
-        ILogService logSvc = ServiceRegistry.get(ILogService.class);
-        if (logSvc != null) logSvc.shutdown();
-        PacketEvents.getAPI().terminate();
-        IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
-        if (msg != null) msg.close();
-        if (databaseManager != null) databaseManager.closeConnection();
+        shutdown();
     }
 
     public FileConfiguration getLangConfig() { return langConfig; }
@@ -626,42 +589,18 @@ public class LifeMod extends JavaPlugin {
     public void fullReload() {
         getLogger().info("Performing full LifeMod reload...");
 
-        // === CLEANUP (onDisable logic) ===
-        if (noClipManager != null) noClipManager.shutdown();
+        shutdown();
 
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("plugin_version", getDescription().getVersion());
-            props.put("platform", "bukkit");
-            props.put("uptime_seconds", (System.currentTimeMillis() - startupTime) / 1000);
-            ph.capture("lifemod_shutdown", props);
-            ph.shutdown();
-        }
-
-        try { PacketEvents.getAPI().terminate(); } catch (Exception ignored) {}
-
-        ILogService oldLogSvc = ServiceRegistry.get(ILogService.class);
-        if (oldLogSvc != null) oldLogSvc.shutdown();
-
-        IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
-        if (msg != null) msg.close();
-
-        if (databaseManager != null) databaseManager.closeConnection();
-
-        // === UNREGISTER ALL BUKKIT REGISTRATIONS ===
-        org.bukkit.event.HandlerList.unregisterAll(this);
+        HandlerList.unregisterAll(this);
 
         try {
-            java.lang.reflect.Field cmdField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
+            Field cmdField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
             cmdField.setAccessible(true);
-            org.bukkit.command.CommandMap cmdMap = (org.bukkit.command.CommandMap) cmdField.get(Bukkit.getServer());
-            java.lang.reflect.Field knownField = cmdMap.getClass().getDeclaredField("knownCommands");
+            CommandMap cmdMap = (CommandMap) cmdField.get(Bukkit.getServer());
+            Field knownField = cmdMap.getClass().getDeclaredField("knownCommands");
             knownField.setAccessible(true);
             Map<String, org.bukkit.command.Command> known = (Map<String, org.bukkit.command.Command>) knownField.get(cmdMap);
-            known.values().removeIf(cmd ->
-                cmd instanceof fr.lampalon.lifemod.platform.bukkit.commands.engine.BukkitCommandWrapper
-            );
+            known.values().removeIf(cmd -> cmd instanceof BukkitCommandWrapper);
             known.values().removeIf(cmd ->
                 cmd instanceof org.bukkit.command.PluginCommand &&
                 ((org.bukkit.command.PluginCommand) cmd).getPlugin() == this
@@ -670,80 +609,17 @@ public class LifeMod extends JavaPlugin {
             getLogger().warning("Failed to unregister commands: " + e.getMessage());
         }
 
-        // === CLEAR RUNTIME STATE ===
         staffChatToggled.clear();
         moderators.clear();
         cpsMap.clear();
 
-        // === RE-RUN STARTUP ===
         startupTime = System.currentTimeMillis();
         instance = this;
 
-        // onLoad()
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
         PacketEvents.getAPI().load();
 
-        // onEnable()
-        saveDefaultConfig();
-        new ConfigUpdater(this).updateConfigs();
-        loadConfigurations();
-
-        BukkitPlatform bukkitPlatform = new BukkitPlatform(this);
-        ServiceRegistry.register(ILifePlatform.class, bukkitPlatform);
-        ServiceRegistry.register(IConfigurationService.class, new BukkitConfigurationService(configConfig));
-        ServiceRegistry.register(ILangService.class, new BukkitLangService(langConfig));
-        ServiceRegistry.register(IItemsAdderService.class, new BukkitItemsAdderService());
-
-        setupRedis();
-
-        PacketEvents.getAPI().init();
-        bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
-
-        String webhookUrl = configConfig.getString("modules.discord.webhook-url");
-        boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);
-        ServiceRegistry.register(IWebhookService.class, new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
-
-        this.spectateManager = new SpectateManager();
-        this.debugManager = new DebugManager(this);
-        initializeManagers();
-
-        ServiceRegistry.register(IPinService.class, moderatorAuthService);
-
-        PacketEvents.getAPI().getEventManager().registerListener(
-            new fr.lampalon.lifemod.platform.bukkit.listeners.FreezePacketListener(this),
-            com.github.retrooper.packetevents.event.PacketListenerPriority.NORMAL
-        );
-
-        if (ServiceRegistry.get(ILogService.class) != null) {
-            try {
-                PacketEvents.getAPI().getEventManager().registerListener(
-                    new LogCommandInterceptor(),
-                    com.github.retrooper.packetevents.event.PacketListenerPriority.LOW
-                );
-            } catch (Exception e) {
-                getLogger().warning("Failed to register LogCommandInterceptor: " + e.getMessage());
-            }
-        }
-
-        this.commandRegistry = new CommandRegistry(this);
-        registerEvents();
-        registerCommands();
-        setupMetrics();
-        setupPostHog();
-
-        new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder(this).runTaskTimer(this, 2L, 2L);
-
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            if (databaseManager != null && databaseManager.getDatabaseProvider() != null) {
-                databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
-            }
-        }, 20 * 60L, 20 * 60L);
-
-        ServiceRegistry.register(ExecutorService.class, Executors.newCachedThreadPool(r -> {
-            Thread t = new Thread(r, "LifeMod-Async");
-            t.setDaemon(true);
-            return t;
-        }));
+        startup();
 
         getLogger().info("LifeMod fully reloaded successfully.");
     }

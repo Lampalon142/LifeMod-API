@@ -123,7 +123,9 @@ public class HeuristicEngine {
                                 score += config.getInt("modules.antialt.weights.vpn-alone", 15);
                             }
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        java.util.logging.Logger.getLogger(getClass().getName()).warning("Heuristic scoring error for " + playerName + ": " + e.getMessage());
+                    }
 
                     // 8. Réduction NAT automatique
                     if (config.getBoolean("modules.antialt.nat-detection.enabled", true)) {

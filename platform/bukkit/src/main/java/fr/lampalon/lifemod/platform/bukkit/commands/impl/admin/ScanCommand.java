@@ -1,6 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.admin;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
+
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
@@ -16,9 +16,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -98,12 +96,6 @@ public class ScanCommand extends LifeCommand {
             context.getSender().sendMessage(context.getLang().getMessage("commands.scan.progress", "%message%", progress));
         }).thenAccept(result -> {
             Bukkit.getScheduler().runTask(plugin, () -> sendReport(context.getSender(), result, context));
-            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-            if (ph != null) {
-                Map<String, Object> props = new HashMap<>();
-                props.put("results_count", result.getTotalCount());
-                ph.capture("lifemod_scan", props);
-            }
         });
     }
 

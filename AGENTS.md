@@ -8,7 +8,7 @@
 - **3 subprojects** (`common`, `platform:bukkit`, `platform:bungee`) bundled into one fat JAR via ShadowJar
 - **ShadowJar output:** `out/` (not `build/libs/`); regular JARs in `build/libs/`
 - **Post-shadowJar hook** in root `build.gradle` copies the JAR to hardcoded dev-server plugin folders (won't work for other environments)
-- **Modrinth token hardcoded in plaintext** in `gradle.properties:1` — publish via `./gradlew modrinth` (requires `MODRINTH_TOKEN` env var or the file value)
+- **Modrinth token:** Passed via `-PmodrinthToken` in CI from `secrets.MODRINTH_TOKEN` — do NOT put in `gradle.properties`
 
 ## Architecture
 - **DI:** Always `ServiceRegistry.get(Class)` — never `new` services directly downstream
@@ -41,18 +41,12 @@
 
 ## Dependencies
 - `implementation`-scope deps bundled via ShadowJar; add new deps at `implementation` for inclusion
-- Bundled: PacketEvents 2.7.0 (separate spigot + bungeecord coordinates), InvUI, Jedis, HikariCP, jBCrypt, bStats, PostHog SDK
-- PostHog API key **XOR-obfuscated** in source via `PostHogObfuscation` (`OBFUSCATED_KEY_HEX`); not in config files
-
-## PostHog Analytics
-- SDK config: debug=true, flushInterval=5s, flushAt=1 (aggressive flush)
-- **Persistent instance ID:** `server.id` file in plugin data folder (survives restarts, avoids duplicate PostHog server entries)
-- `captureError(String message, String context)` utility on `IPostHogService`
-
-## Standalone CLIs
-- `PostHogSetup.java` — creates all LifeMod PostHog dashboards/insights
-- `PosthogClear.java` — deletes all LifeMod PostHog dashboards/insights (supports `--dry-run`)
+- Bundled: PacketEvents 2.7.0 (separate spigot + bungeecord coordinates), InvUI, Jedis, HikariCP, jBCrypt, bStats
 
 ## CI/CD
 - **Triggers:** Push/PR to `master`, `main`, `v2`, `dev`; release on tag `v*`
-- **Release flow:** Tag `v*` → `shadowJar` → GH Release → `modrinth` publish
+- **CI matrix:** JDK 17 + 21 (Temurin), `build shadowJar test` + Codecov upload
+- **Release flow:** Tag `v*` → `shadowJar` → GH Release (with auto-changelog) → `modrinth` publish
+- **CodeQL security scan** on every push/PR + weekly schedule
+- **Dependabot** opens weekly PRs for Gradle + Actions updates
+- **Modrinth token:** passed via `-PmodrinthToken` from `secrets.MODRINTH_TOKEN` (do NOT put in `gradle.properties`)

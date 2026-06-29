@@ -1,7 +1,6 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.player;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
+
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -14,9 +13,7 @@ import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class GamemodeCommand extends LifeCommand {
@@ -80,12 +77,6 @@ public class GamemodeCommand extends LifeCommand {
         context.getSender().sendMessage(message);
         context.getDebug().log("gm", context.getSender().getName() + " changed gamemode of " + targetPlayer.getName() + " to " + gameMode.name());
 
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("gamemode", gameMode.name().toLowerCase());
-            ph.capture("lifemod_gamemode", props);
-        }
     }
 
     private GameMode parseGameMode(String modeArg) {

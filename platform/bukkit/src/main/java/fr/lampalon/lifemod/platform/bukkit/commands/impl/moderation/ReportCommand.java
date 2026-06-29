@@ -1,21 +1,15 @@
 package fr.lampalon.lifemod.platform.bukkit.commands.impl.moderation;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.model.Report;
 import fr.lampalon.lifemod.common.model.ReportStatus;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
-import fr.lampalon.lifemod.common.model.webhook.WebhookEmbed;
-import fr.lampalon.lifemod.common.model.webhook.WebhookFooter;
-import fr.lampalon.lifemod.common.model.webhook.WebhookMessage;
-import fr.lampalon.lifemod.common.service.IWebhookService;
+import fr.lampalon.lifemod.platform.bukkit.utils.WebhookUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -71,42 +65,9 @@ public class ReportCommand extends LifeCommand {
             "%reason%", reason, 
             "%server%", context.getPlugin().getServer().getName()));
 
-        trackReport(reason != null && !reason.isEmpty());
-
         if (context.getConfig().getBoolean("modules.discord.enabled", false)) {
-            sendDiscordAlert(context);
+            WebhookUtil.sendAlert(context, "report");
         }
-    }
-
-    private void trackReport(boolean hasReason) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            java.util.Map<String, Object> props = new java.util.HashMap<>();
-            props.put("has_reason", hasReason);
-            ph.capture("lifemod_report", props);
-        }
-    }
-
-    private void sendDiscordAlert(CommandContext context) {
-        IWebhookService webhook = ServiceRegistry.get(IWebhookService.class);
-        if (webhook == null || !webhook.isEnabled()) return;
-        String playerName = context.getSender().getName();
-        webhook.send(new WebhookMessage.Builder()
-                .addEmbed(new WebhookEmbed.Builder()
-                        .setTitle(context.getConfig().getString("modules.discord.alerts.report.title", ""))
-                        .setDescription(context.getConfig().getString("modules.discord.alerts.report.description", "")
-                                .replace("%player%", playerName))
-                        .setFooter(new WebhookFooter(
-                                context.getConfig().getString("modules.discord.alerts.footer.text", ""),
-                                context.getConfig().getString("modules.discord.alerts.footer.logo", "")
-                                        .replace("%player%", playerName)))
-                        .setColor(Color.decode(context.getConfig().getString("modules.discord.alerts.report.color", "#FF0000")).getRGB())
-                        .build())
-                .build()).whenComplete((result, error) -> {
-                    if (error != null) {
-                        context.getDebug().log("discord", "Webhook error: " + error.getMessage());
-                    }
-                });
     }
 
     @Override

@@ -1,0 +1,22 @@
+common:
+  - common/**/*
+
+bukkit:
+  - platform/bukkit/**/*
+
+bungee:
+  - platform/bungee/**/*
+
+nms:
+  - nms/**/*
+
+ci:
+  - .github/**/*
+
+dependencies:
+  - gradle.properties
+  - '**/build.gradle'
+  - '**/settings.gradle'
+
+documentation:
+  - '**/*.md'

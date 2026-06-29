@@ -17,8 +17,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class FollowCommand extends LifeCommand {
-    private final Map<UUID, UUID> following = new HashMap<>(); 
-    private final Map<UUID, BukkitRunnable> tasks = new HashMap<>(); 
+    private final Map<UUID, UUID> following = new HashMap<>();
+    private final Map<UUID, BukkitRunnable> tasks = new HashMap<>();
 
     public FollowCommand() {
         super("follow", "lifemod.follow", true);
@@ -64,10 +64,10 @@ public class FollowCommand extends LifeCommand {
                 double distance = context.getPlayer().getLocation().distance(targetPlayer.getLocation());
                 int cps = getCPS(targetPlayer, context);
 
-                String msg = context.getLang().getMessage("commands.follow.actionbar")
-                                .replace("%target%", targetPlayer.getName())
-                                .replace("%distance%", String.format("%.1f", distance))
-                                .replace("%cps%", String.valueOf(cps));
+                String msg = context.getLang().getMessage("commands.follow.actionbar",
+                        "%target%", targetPlayer.getName(),
+                        "%distance%", String.format("%.1f", distance),
+                        "%cps%", String.valueOf(cps));
 
                 ActionBarUtil.sendActionBar(context.getPlayer(), msg);
             }

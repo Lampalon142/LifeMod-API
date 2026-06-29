@@ -42,5 +42,8 @@ discord-bot/.env
 discord-bot/data/
 discord-bot/out/
 
+### Tokscale exports ###
+tokscale-export-*.json
+
 ### Mac OS ###
 .DS_Store

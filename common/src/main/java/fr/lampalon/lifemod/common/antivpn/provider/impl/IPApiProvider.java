@@ -9,8 +9,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 public class IPApiProvider implements IPLookupProvider {
+    private static final Logger LOGGER = Logger.getLogger(IPApiProvider.class.getName());
 
     @Override
     public CompletableFuture<IPInfo> lookup(String ip) {
@@ -35,7 +37,7 @@ public class IPApiProvider implements IPLookupProvider {
                     }
                 }
             } catch (Exception e) {
-                // Fail silently
+                LOGGER.warning("IP-API lookup failed for " + ip + ": " + e.getMessage());
             }
             return null;
         });

@@ -25,12 +25,25 @@ public class VanishPacketListener implements PacketListener {
         Player receiver = (Player) event.getPlayer();
         if (receiver == null || receiver.hasPermission("lifemod.vanish.see")) return;
 
-        // Block Player Info Update (TabList & Spawn)
+        // Always let PLAYER_INFO_REMOVE through — this is how the vanished player
+        // gets removed from the tab list (modern clients).
+        if (event.getPacketType() == PacketType.Play.Server.PLAYER_INFO_REMOVE) {
+            return;
+        }
+
+        // Only filter ADD_PLAYER actions to prevent re-adding vanished players.
+        // Let other actions (UPDATE_LISTED, UPDATE_LATENCY, etc.) through so
+        // hidePlayer() can actually hide the player from the tab list.
         if (event.getPacketType() == PacketType.Play.Server.PLAYER_INFO_UPDATE) {
             WrapperPlayServerPlayerInfoUpdate wrapper = new WrapperPlayServerPlayerInfoUpdate(event);
+
+            if (!wrapper.getActions().contains(WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER)) {
+                return;
+            }
+
             List<WrapperPlayServerPlayerInfoUpdate.PlayerInfo> entries = new ArrayList<>(wrapper.getEntries());
             boolean modified = entries.removeIf(entry -> vanishService.isVanished(entry.getProfileId()));
-            
+
             if (modified) {
                 if (entries.isEmpty()) {
                     event.setCancelled(true);
@@ -39,13 +52,18 @@ public class VanishPacketListener implements PacketListener {
                 }
             }
         }
-        
-        // Legacy support (older versions)
+
+        // Legacy support: only filter ADD_PLAYER, let REMOVE_PLAYER through
         if (event.getPacketType() == PacketType.Play.Server.PLAYER_INFO) {
             WrapperPlayServerPlayerInfo wrapper = new WrapperPlayServerPlayerInfo(event);
+
+            if (wrapper.getAction() != WrapperPlayServerPlayerInfo.Action.ADD_PLAYER) {
+                return;
+            }
+
             List<WrapperPlayServerPlayerInfo.PlayerData> entries = new ArrayList<>(wrapper.getPlayerDataList());
             boolean modified = entries.removeIf(entry -> vanishService.isVanished(entry.getUser().getUUID()));
-            
+
             if (modified) {
                 if (entries.isEmpty()) {
                     event.setCancelled(true);

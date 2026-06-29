@@ -5,8 +5,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 
 public class BukkitItemsAdderService implements IItemsAdderService {
+    private static final Logger LOGGER = Logger.getLogger(BukkitItemsAdderService.class.getName());
+
     private boolean enabled = false;
     private Class<?> customStackClass;
     private Method byItemStackMethod;
@@ -23,8 +26,8 @@ public class BukkitItemsAdderService implements IItemsAdderService {
                 getNamespacedIDMethod = customStackClass.getMethod("getNamespacedID");
                 getItemStackMethod = customStackClass.getMethod("getItemStack");
                 enabled = true;
-            } catch (Exception ignored) {
-                // ItemsAdder not found or incompatible version
+            } catch (Exception e) {
+                LOGGER.fine("ItemsAdder not available: " + e.getMessage());
             }
         }
     }
@@ -49,7 +52,7 @@ public class BukkitItemsAdderService implements IItemsAdderService {
                 return (String) getNamespacedIDMethod.invoke(customStack);
             }
         } catch (Exception e) {
-            // Log if needed
+            LOGGER.fine("Failed to get ItemsAdder id: " + e.getMessage());
         }
         return null;
     }
@@ -63,7 +66,7 @@ public class BukkitItemsAdderService implements IItemsAdderService {
                 return (ItemStack) getItemStackMethod.invoke(customStack);
             }
         } catch (Exception e) {
-            // Log if needed
+            LOGGER.fine("Failed to get ItemsAdder item: " + e.getMessage());
         }
         return null;
     }

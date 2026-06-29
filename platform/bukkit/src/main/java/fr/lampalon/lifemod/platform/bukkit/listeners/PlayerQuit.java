@@ -1,21 +1,19 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishService;
+import fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 public class PlayerQuit implements Listener {
@@ -33,15 +31,6 @@ public class PlayerQuit implements Listener {
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
 
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("player_count", Bukkit.getOnlinePlayers().size() - 1);
-            props.put("server_name", plugin.getServerName());
-            props.put("is_staff", player.hasPermission("lifemod.moderator"));
-            ph.capture("lifemod_player_quit", props);
-        }
-
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
 
@@ -53,6 +42,15 @@ public class PlayerQuit implements Listener {
             }
 
             db.saveCoords(uuid, location.getWorld().getName(), location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+
+            ItemStack[] contents = player.getInventory().getContents();
+            ItemStack[] armor = player.getInventory().getArmorContents();
+            try {
+                byte[] invData = InventoryUtil.serializeInventory(contents, armor);
+                db.saveRawInventory(uuid, plugin.getServerName(), invData);
+            } catch (Exception e) {
+                debug.log("invsee", "Failed to save inventory for " + player.getName() + ": " + e.getMessage());
+            }
         });
 
         plugin.getStaffModeManager().cleanupMemoryOnQuit(uuid);

@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
@@ -13,7 +12,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -80,11 +78,9 @@ public class FreezeManager {
                 target.sendMessage(line);
             }
 
-            int count = frozenPlayers.size();
-            if (count == 1) startEnforcement();
-            trackFreeze("freeze", 0);
+            if (frozenPlayers.size() == 1) startEnforcement();
 
-            debug.log("freeze", moderator.getName() + " froze " + target.getName() + " | frozenPlayers.size=" + count);
+            debug.log("freeze", moderator.getName() + " froze " + target.getName() + " | frozenPlayers.size=" + frozenPlayers.size());
         } catch (Exception e) {
             debug.userError(moderator, "Error while freezing " + target.getName(), e);
         }
@@ -111,7 +107,6 @@ public class FreezeManager {
                 target.sendMessage(lang.getMessage("commands.freeze.messages.unfreeze.target", "%player%", moderator.getName()));
 
                 if (frozenPlayers.isEmpty()) stopEnforcement();
-                trackFreeze("unfreeze", 0);
 
                 debug.log("freeze", moderator.getName() + " unfroze " + target.getName() + " | frozenPlayers.size=" + frozenPlayers.size());
             } else {
@@ -132,18 +127,6 @@ public class FreezeManager {
         playerHelmets.remove(playerId);
         frozenPlayers.remove(playerId);
         if (frozenPlayers.isEmpty()) stopEnforcement();
-    }
-
-    private void trackFreeze(String action, int durationSeconds) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            Map<String, Object> props = new HashMap<>();
-            props.put("action", action);
-            if (action.equals("unfreeze")) {
-                props.put("duration_seconds", durationSeconds);
-            }
-            ph.capture("lifemod_freeze", props);
-        }
     }
 
     public Map<UUID, Location> getFrozenPlayers() {

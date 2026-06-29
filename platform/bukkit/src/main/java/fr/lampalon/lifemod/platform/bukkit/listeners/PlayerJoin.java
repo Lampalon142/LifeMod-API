@@ -1,8 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
+import fr.lampalon.lifemod.platform.bukkit.utils.InventoryUtil;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
@@ -17,9 +17,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class PlayerJoin implements Listener {
@@ -38,7 +36,23 @@ public class PlayerJoin implements Listener {
         Player player = event.getPlayer();
         ILangService lang = ServiceRegistry.get(ILangService.class);
 
-        trackPlayerJoin(player);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            byte[] invData = plugin.getDatabaseManager().getDatabaseProvider()
+                .getRawInventory(player.getUniqueId(), plugin.getServerName());
+            if (invData != null) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    try {
+                        InventoryUtil.deserializeInventory(player, invData);
+                        player.updateInventory();
+                        plugin.getDatabaseManager().getDatabaseProvider()
+                            .deleteRawInventory(player.getUniqueId(), plugin.getServerName());
+                        debug.log("invsee", "Restored offline-edited inventory for " + player.getName());
+                    } catch (Exception e) {
+                        debug.log("invsee", "Failed to restore inventory for " + player.getName() + ": " + e.getMessage());
+                    }
+                });
+            }
+        });
 
         if (player.hasPermission("lifemod.notify") && lang.getBoolean("system.update.enabled")) {
             updateChecker.checkForUpdates(result -> {
@@ -141,14 +155,4 @@ public class PlayerJoin implements Listener {
         });
     }
 
-    private void trackPlayerJoin(Player player) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph == null) return;
-        int playerCount = Bukkit.getOnlinePlayers().size();
-        Map<String, Object> props = new HashMap<>();
-        props.put("player_count", playerCount);
-        ph.capture("lifemod_player_join", props);
-        if (player.hasPlayedBefore()) return;
-        ph.capture("lifemod_player_first_join", props);
-    }
 }

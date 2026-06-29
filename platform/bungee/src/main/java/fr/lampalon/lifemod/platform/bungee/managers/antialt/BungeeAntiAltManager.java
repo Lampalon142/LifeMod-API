@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bungee.managers.antialt;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.antialt.AnalysisResult;
 import fr.lampalon.lifemod.common.antialt.HeuristicEngine;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
@@ -10,8 +9,6 @@ import fr.lampalon.lifemod.platform.bungee.BungeeLifeMod;
 import fr.lampalon.lifemod.platform.bungee.utils.MessageUtil;
 import net.md_5.bungee.api.connection.PendingConnection;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class BungeeAntiAltManager {
@@ -36,13 +33,6 @@ public class BungeeAntiAltManager {
             if (result == null) return;
             // Execute reaction based on score
             plugin.getReactionManager().executeReactions(result, connection);
-            trackAntiAlt(result);
-            if (result.getDangerScore() < 30) {
-                IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-                if (ph != null) {
-                    ph.capture("lifemod_antialt_pass", new HashMap<>());
-                }
-            }
 
             // Translatable Debug Log
             if (plugin.getConfig().getBoolean("modules.antialt.debug", false)) {
@@ -64,18 +54,4 @@ public class BungeeAntiAltManager {
         });
     }
 
-    private void trackAntiAlt(AnalysisResult result) {
-        IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-        if (ph != null) {
-            int score = result.getDangerScore();
-            Map<String, Object> props = new HashMap<>();
-            if (score < 50) props.put("score_range", "30-49");
-            else if (score < 70) props.put("score_range", "50-69");
-            else if (score < 85) props.put("score_range", "70-84");
-            else props.put("score_range", "85-100");
-            props.put("severity", score >= 85 ? "suggest_ban" : score >= 70 ? "priority" : score >= 50 ? "alert" : "silent");
-            props.put("signals_count", result.getTriggeredRules().size());
-            ph.capture("lifemod_antialt", props);
-        }
-    }
 }

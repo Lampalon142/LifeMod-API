@@ -18,7 +18,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +50,9 @@ public class ScanManager {
                 oraxenGetItemById = oraxenItems.getMethod("getItemById", String.class);
                 plugin.getLogger().info("[ScanManager] Oraxen integration enabled");
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            plugin.getLogger().fine("[ScanManager] Oraxen not available: " + e.getMessage());
+        }
         oraxenChecked = true;
     }
 
@@ -288,6 +289,8 @@ public class ScanManager {
     }
 
     private void scanRegionFiles(World world, ItemStack targetItem, ScanResult result, Consumer<String> progressCallback) {
+        NMSProvider nmsProvider = ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
+        if (nmsProvider == null) return;
         ILangService lang = ServiceRegistry.get(ILangService.class);
         File regionDir = new File(world.getWorldFolder(), "region");
         if (!regionDir.exists()) return;
@@ -310,7 +313,7 @@ public class ScanManager {
                 .takeWhile(f -> !cancelled.get())
                 .mapToInt(file -> {
                     try {
-                        return scanRegionFile(file, world, targetMaterial, targetIAId, result);
+                        return scanRegionFile(nmsProvider, file, world, targetMaterial, targetIAId, result);
                     } catch (Exception e) {
                         plugin.getLogger().warning("[ScanManager] Error reading " + file.getName() + ": " + e.getMessage());
                         return 0;
@@ -320,7 +323,8 @@ public class ScanManager {
         progressCallback.accept(lang.getMessage("commands.scan.progress.region-found", "%found%", String.valueOf(found), "%world%", world.getName()));
     }
 
-    private int scanRegionFile(File regionFile, org.bukkit.World world, String targetMaterial, String targetIAId, ScanResult result) throws Exception {
+    private int scanRegionFile(NMSProvider nms, File regionFile, org.bukkit.World world,
+                               String targetMaterial, String targetIAId, ScanResult result) throws Exception {
         int totalFound = 0;
         String[] parts = regionFile.getName().replace(".mca", "").split("\\.");
         int regionX = Integer.parseInt(parts[1]);
@@ -354,149 +358,14 @@ public class ScanManager {
                             ? new java.util.zip.InflaterInputStream(new ByteArrayInputStream(compressed))
                             : new java.util.zip.GZIPInputStream(new ByteArrayInputStream(compressed));
 
-                    totalFound += parseChunkNBT(is, chunkX, chunkZ, world, targetMaterial, targetIAId, result);
+                    List<NMSProvider.ChunkItemHit> hits = nms.scanChunkItems(is, targetMaterial, targetIAId);
+                    for (NMSProvider.ChunkItemHit hit : hits) {
+                        result.addLocation(new Location(world, hit.x, hit.y, hit.z), hit.count);
+                        totalFound += hit.count;
+                    }
                 }
             }
         }
         return totalFound;
-    }
-
-    private int parseChunkNBT(InputStream rawIs, int chunkX, int chunkZ, org.bukkit.World world,
-                              String targetMaterial, String targetIAId, ScanResult result) {
-        int found = 0;
-        try {
-            var dataInput = new java.io.DataInputStream(rawIs);
-
-            Class<?> nbtIoClass = Class.forName("net.minecraft.nbt.NbtIo");
-            Class<?> nbtAccClass;
-            Object chunkNBT;
-
-            try {
-                nbtAccClass = Class.forName("net.minecraft.nbt.NbtAccounter");
-                Object accounter = nbtAccClass.getMethod("unlimitedHeap").invoke(null);
-                chunkNBT = nbtIoClass.getMethod("read", java.io.DataInput.class, nbtAccClass)
-                        .invoke(null, dataInput, accounter);
-            } catch (Exception e) {
-                chunkNBT = nbtIoClass.getMethod("read", java.io.DataInput.class)
-                        .invoke(null, dataInput);
-            }
-
-            if (chunkNBT == null) return 0;
-
-            var getListMethod = chunkNBT.getClass().getMethod("getList", String.class, int.class);
-            var blockEntities = getListMethod.invoke(chunkNBT, "block_entities", 10);
-            if (blockEntities == null) return 0;
-
-            var sizeMethod = blockEntities.getClass().getMethod("size");
-            var getCompoundMethod = blockEntities.getClass().getMethod("getCompound", int.class);
-            int size = (int) sizeMethod.invoke(blockEntities);
-
-            for (int i = 0; i < size; i++) {
-                var be = getCompoundMethod.invoke(blockEntities, i);
-                var getStringMethod = be.getClass().getMethod("getString", String.class);
-                String beId = (String) getStringMethod.invoke(be, "id");
-                if (!isContainerType(beId)) continue;
-
-                var getIntMethod = be.getClass().getMethod("getInt", String.class);
-                int beX = (int) getIntMethod.invoke(be, "x");
-                int beY = (int) getIntMethod.invoke(be, "y");
-                int beZ = (int) getIntMethod.invoke(be, "z");
-
-                var containsMethod = be.getClass().getMethod("contains", String.class);
-                if (!(boolean) containsMethod.invoke(be, "Items")) continue;
-
-                var items = getListMethod.invoke(be, "Items", 10);
-                int count = countNBTItemsReflect(items, targetMaterial, targetIAId);
-                if (count > 0) {
-                    result.addLocation(new Location(world, beX, beY, beZ), count);
-                    found += count;
-                }
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("[ScanManager] Erreur NBT chunk " + chunkX + "," + chunkZ + " : " + e.getClass().getSimpleName() + " " + e.getMessage());
-        }
-        return found;
-    }
-
-    private int countNBTItemsReflect(Object items, String targetMaterial, String targetIAId) {
-        int count = 0;
-        try {
-            var sizeMethod = items.getClass().getMethod("size");
-            var getCompoundMethod = items.getClass().getMethod("getCompound", int.class);
-            int size = (int) sizeMethod.invoke(items);
-
-            for (int i = 0; i < size; i++) {
-                var item = getCompoundMethod.invoke(items, i);
-                var getStringMethod = item.getClass().getMethod("getString", String.class);
-                var containsMethod = item.getClass().getMethod("contains", String.class);
-
-                String id = ((String) getStringMethod.invoke(item, "id"))
-                        .replace("minecraft:", "").toUpperCase();
-
-                int amount = 1;
-                var getByteMethod = item.getClass().getMethod("getByte", String.class);
-                var getIntMethod = item.getClass().getMethod("getInt", String.class);
-                if ((boolean) containsMethod.invoke(item, "count")) {
-                    amount = (int) getIntMethod.invoke(item, "count");
-                } else if ((boolean) containsMethod.invoke(item, "Count")) {
-                    amount = (byte) getByteMethod.invoke(item, "Count");
-                }
-
-                if (targetIAId != null) {
-                    String iaId = extractItemsAdderIdReflect(item, containsMethod, getStringMethod);
-                    if (targetIAId.equals(iaId)) count += amount;
-                } else {
-                    if (id.equals(targetMaterial)) count += amount;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return count;
-    }
-
-    private String extractItemsAdderIdReflect(Object item, java.lang.reflect.Method containsMethod, java.lang.reflect.Method getStringMethod) {
-        try {
-            var getCompoundMethod = item.getClass().getMethod("getCompound", String.class);
-
-            if ((boolean) containsMethod.invoke(item, "components")) {
-                var components = getCompoundMethod.invoke(item, "components");
-                var compContains = components.getClass().getMethod("contains", String.class);
-                var compGetCompound = components.getClass().getMethod("getCompound", String.class);
-                if ((boolean) compContains.invoke(components, "minecraft:custom_data")) {
-                    var customData = compGetCompound.invoke(components, "minecraft:custom_data");
-                    var cdContains = customData.getClass().getMethod("contains", String.class);
-                    var cdGetCompound = customData.getClass().getMethod("getCompound", String.class);
-                    if ((boolean) cdContains.invoke(customData, "itemsadder")) {
-                        var iaTag = cdGetCompound.invoke(customData, "itemsadder");
-                        return (String) iaTag.getClass().getMethod("getString", String.class).invoke(iaTag, "id");
-                    }
-                }
-            }
-            if ((boolean) containsMethod.invoke(item, "tag")) {
-                var tag = getCompoundMethod.invoke(item, "tag");
-                var tagContains = tag.getClass().getMethod("contains", String.class);
-                var tagGetCompound = tag.getClass().getMethod("getCompound", String.class);
-                if ((boolean) tagContains.invoke(tag, "itemsadder")) {
-                    var iaTag = tagGetCompound.invoke(tag, "itemsadder");
-                    return (String) iaTag.getClass().getMethod("getString", String.class).invoke(iaTag, "id");
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private static final Set<String> CONTAINER_IDS = Set.of(
-            "minecraft:chest", "minecraft:trapped_chest",
-            "minecraft:barrel", "minecraft:hopper",
-            "minecraft:dispenser", "minecraft:dropper",
-            "minecraft:furnace", "minecraft:blast_furnace", "minecraft:smoker",
-            "minecraft:shulker_box"
-    );
-
-    private boolean isContainerType(String id) {
-        return CONTAINER_IDS.contains(id);
     }
 }

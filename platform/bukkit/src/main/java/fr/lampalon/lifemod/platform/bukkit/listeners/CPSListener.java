@@ -3,8 +3,6 @@ package fr.lampalon.lifemod.platform.bukkit.listeners;
 import com.github.retrooper.packetevents.event.PacketListener;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
-import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.EventHandler;
@@ -12,7 +10,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -70,14 +67,6 @@ public class CPSListener implements Listener, PacketListener {
         }
 
         int cps = computeCPS(deque, now);
-        if (cps >= CPS_HIGH_THRESHOLD) {
-            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-            if (ph != null) {
-                Map<String, Object> props = new HashMap<>();
-                props.put("cps_value", cps);
-                ph.capture("lifemod_cps_high", props);
-            }
-        }
     }
 
     public static int computeCPS(Deque<Long> deque, long now) {

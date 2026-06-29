@@ -1,55 +1,66 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
-    branches: [ "master", "main", "v2", "dev" ]
+    branches: [master, main, v2, dev]
     paths-ignore:
       - '**.md'
       - 'LICENSE.txt'
       - '.gitignore'
   pull_request:
-    branches: [ "master", "main", "v2", "dev" ]
+    branches: [master, main, v2, dev]
 
 permissions:
   contents: read
 
 jobs:
   build:
+    strategy:
+      matrix:
+        java: [17, 21]
+      fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up JDK 17
+      - name: Generate changelog
+        id: changelog
+        run: |
+          chmod +x scripts/generate-changelog.sh
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            FROM="${{ github.event.pull_request.base.sha }}"
+          else
+            FROM="${{ github.event.before }}"
+          fi
+
+          ./scripts/generate-changelog.sh "$FROM" "${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          distribution: temurin
           cache: gradle
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v4
+      - uses: gradle/actions/wrapper-validation@v4
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - run: chmod +x gradlew
 
-      - name: Build with Gradle
-        run: ./gradlew build shadowJar
+      - name: Build & shadowJar & test
+        run: ./gradlew build shadowJar test
 
-      - name: Run Tests
-        run: ./gradlew test
-        if: success()
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: LifeMod-${{ github.ref_name }}
-          path: build/libs/*.jar
+      - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
+        with:
+          name: LifeMod-JDK${{ matrix.java }}-${{ github.sha_short }}
+          path: out/*.jar
 
-      - name: Upload coverage reports to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/jacoco/test/jacocoTestReport.xml
-        continue-on-error: true

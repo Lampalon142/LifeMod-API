@@ -88,7 +88,9 @@ public class LogService implements ILogService {
                         int typeOrdinal = Integer.parseInt(parts[0].trim());
                         long ms = parseDuration(parts[1].trim());
                         perType.put(typeOrdinal, ms);
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException e) {
+                        java.util.logging.Logger.getLogger(getClass().getName()).warning("Invalid log retention config: " + key);
+                    }
                 }
             }
             long defaultRetention = parseDuration(config.getString("logs.retention.default", "30d"));

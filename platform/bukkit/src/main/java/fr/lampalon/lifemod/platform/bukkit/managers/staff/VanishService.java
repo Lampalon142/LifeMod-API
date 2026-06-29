@@ -1,5 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
@@ -64,6 +66,8 @@ public class VanishService implements IVanishService {
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (!online.hasPermission("lifemod.vanish.see") && !online.equals(player)) {
                 online.hidePlayer(plugin, player);
+                PacketEvents.getAPI().getPlayerManager().sendPacket(online,
+                        new WrapperPlayServerPlayerInfoRemove(player.getUniqueId()));
             }
         }
 
@@ -105,11 +109,12 @@ public class VanishService implements IVanishService {
 
     @Override
     public void updateAllForPlayer(Player joiningPlayer) {
-        // Hide existing vanished players from the new joiner
         for (UUID uuid : vanishedPlayers) {
             Player vanished = Bukkit.getPlayer(uuid);
             if (vanished != null && !joiningPlayer.hasPermission("lifemod.vanish.see")) {
                 joiningPlayer.hidePlayer(plugin, vanished);
+                PacketEvents.getAPI().getPlayerManager().sendPacket(joiningPlayer,
+                        new WrapperPlayServerPlayerInfoRemove(vanished.getUniqueId()));
             }
         }
     }

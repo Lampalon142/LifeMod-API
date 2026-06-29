@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class CpsAction implements IStaffAction {
+public class CPSAction implements IStaffAction {
 
     private final Map<UUID, UUID> activeTests = new HashMap<>();
 

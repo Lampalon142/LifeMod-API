@@ -305,10 +305,6 @@ modules:
         text: "Powered By LifeMod"
         logo: "https://mc-heads.net/avatar/%player%/"
 
-  # PostHog Analytics
-  posthog:
-    enabled: true
-
   # Replay System
   replay:
     recording-tick-rate: 2

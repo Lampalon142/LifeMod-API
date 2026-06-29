@@ -60,7 +60,6 @@ shadowJar {
     relocate 'redis.clients.jedis', 'fr.lampalon.lifemod.libs.jedis'
     relocate 'com.zaxxer.hikari', 'fr.lampalon.lifemod.libs.hikari'
     relocate 'org.bstats', 'fr.lampalon.lifemod.libs.bstats'
-    relocate 'com.posthog', 'fr.lampalon.lifemod.libs.posthog'
     relocate 'okhttp3', 'fr.lampalon.lifemod.libs.okhttp3'
     relocate 'okio', 'fr.lampalon.lifemod.libs.okio'
     relocate 'kotlin', 'fr.lampalon.lifemod.libs.kotlin'
@@ -74,7 +73,8 @@ shadowJar {
         def targets = [
             'C:/Users/Lampalon/Desktop/serveurs/Lobby/plugins',
             'C:/Users/Lampalon/Desktop/serveurs/Proxy/plugins',
-            'C:/Users/Lampalon/Desktop/serveurs/Skyblock/plugins'
+            'C:/Users/Lampalon/Desktop/serveurs/Skyblock/plugins',
+            'C:/Users/Lampalon/Desktop/serveurs/1.21.11/plugins'
         ]
         targets.each { dir ->
             copy {

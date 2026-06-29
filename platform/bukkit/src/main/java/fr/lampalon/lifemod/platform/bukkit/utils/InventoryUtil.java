@@ -5,7 +5,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -73,6 +72,25 @@ public class InventoryUtil {
                 armor[i] = (ItemStack) dataStream.readObject();
             }
             return armor;
+        }
+    }
+
+    public record FullInventory(ItemStack[] contents, ItemStack[] armor) {}
+
+    public static FullInventory deserializeFullInventory(byte[] data) throws IOException, ClassNotFoundException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+             BukkitObjectInputStream dataStream = new BukkitObjectInputStream(inputStream)) {
+            int contentSize = dataStream.readInt();
+            ItemStack[] contents = new ItemStack[contentSize];
+            for (int i = 0; i < contentSize; i++) {
+                contents[i] = (ItemStack) dataStream.readObject();
+            }
+            int armorSize = dataStream.readInt();
+            ItemStack[] armor = new ItemStack[armorSize];
+            for (int i = 0; i < armorSize; i++) {
+                armor[i] = (ItemStack) dataStream.readObject();
+            }
+            return new FullInventory(contents, armor);
         }
     }
 }

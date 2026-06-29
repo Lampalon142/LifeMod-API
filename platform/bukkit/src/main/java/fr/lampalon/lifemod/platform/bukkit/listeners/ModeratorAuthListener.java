@@ -1,6 +1,5 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
-import fr.lampalon.lifemod.common.analytics.IPostHogService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
@@ -69,14 +68,6 @@ public class ModeratorAuthListener implements Listener {
 
         if (currentIp != null && currentIp.equals(lastIp) && lastTime > 0 && (System.currentTimeMillis() - lastTime) < timeoutMs) {
             sessionManager.authenticate(player.getUniqueId());
-            IPostHogService ph = ServiceRegistry.get(IPostHogService.class);
-            if (ph != null) {
-                Map<String, Object> props = new HashMap<>();
-                props.put("action", "session_restore");
-                props.put("success", true);
-                props.put("session_restored", true);
-                ph.capture("lifemod_mod_auth", props);
-            }
             return;
         }
 
