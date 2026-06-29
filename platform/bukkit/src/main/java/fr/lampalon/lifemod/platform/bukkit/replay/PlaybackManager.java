@@ -7,7 +7,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
-import fr.lampalon.lifemod.common.nms.api.NMSReplayHandler;
+import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
@@ -111,8 +111,7 @@ public class PlaybackManager {
                 LOGGER.info("[DEBUG] Spawning NPC | skin: "
                         + (skin == null || skin.length == 0 ? "NULL" : "OK"));
 
-                NMSReplayHandler nms = (NMSReplayHandler)
-                        ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
+                NMSProvider nms = ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
                 nms.spawnNPC(spectator, virtualEntityId, npcUUID, targetName, skin, startLoc);
 
                 restoreBlocks(spectator);
@@ -402,8 +401,7 @@ public class PlaybackManager {
     // -------------------------------------------------------------------------
 
     private void cleanup(Player spectator, Player realPlayer) {
-        NMSReplayHandler nms = (NMSReplayHandler)
-                ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
+        NMSProvider nms = ServiceRegistry.get(ILifePlatform.class).getNmsProvider();
         nms.removeNPC(spectator, virtualEntityId, npcUUID);
         if (realPlayer != null && realPlayer.isOnline()) spectator.showPlayer(plugin, realPlayer);
     }

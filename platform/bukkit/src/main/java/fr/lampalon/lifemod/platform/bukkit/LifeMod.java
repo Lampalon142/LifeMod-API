@@ -57,7 +57,7 @@ import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
 import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
-import fr.lampalon.lifemod.platform.bukkit.nms.NMSLoader;
+import fr.lampalon.lifemod.nms.NmsFactory;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPositionRecorder;
 import fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener;
@@ -170,7 +170,7 @@ public class LifeMod extends JavaPlugin {
         setupRedis();
 
         PacketEvents.getAPI().init();
-        bukkitPlatform.setNmsProvider(NMSLoader.load(getLogger()));
+        bukkitPlatform.setNmsProvider(NmsFactory.load(getLogger(), this));
 
         String webhookUrl = configConfig.getString("modules.discord.webhook-url");
         boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);

@@ -1,0 +1,10 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    compileOnly project(':nms:abstraction')
+    compileOnly project(':common')
+    compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly 'com.github.retrooper:packetevents-spigot:2.7.0'
+}

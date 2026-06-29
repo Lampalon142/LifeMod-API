@@ -10,6 +10,15 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/common" />
+            <option value="$PROJECT_DIR$/nms" />
+            <option value="$PROJECT_DIR$/nms/abstraction" />
+            <option value="$PROJECT_DIR$/nms/v1_12_R1" />
+            <option value="$PROJECT_DIR$/nms/v1_16_R3" />
+            <option value="$PROJECT_DIR$/nms/v1_18_R2" />
+            <option value="$PROJECT_DIR$/nms/v1_20_R3" />
+            <option value="$PROJECT_DIR$/nms/v1_20_R4" />
+            <option value="$PROJECT_DIR$/nms/v1_21_R1" />
+            <option value="$PROJECT_DIR$/nms/v1_8_R3" />
             <option value="$PROJECT_DIR$/platform" />
             <option value="$PROJECT_DIR$/platform/bukkit" />
             <option value="$PROJECT_DIR$/platform/bungee" />

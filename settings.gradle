@@ -3,3 +3,12 @@ rootProject.name = "LifeMod"
 include 'common'
 include 'platform:bukkit'
 include 'platform:bungee'
+
+include 'nms:abstraction'
+include 'nms:v1_8_R3'
+include 'nms:v1_12_R1'
+include 'nms:v1_16_R3'
+include 'nms:v1_18_R2'
+include 'nms:v1_20_R3'
+include 'nms:v1_20_R4'
+include 'nms:v1_21_R1'
