@@ -6,12 +6,15 @@ import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.context.StaffActionContext;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.model.StaffItem;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -19,6 +22,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,16 @@ public class StaffListener implements Listener {
         lastEntityInteract.remove(playerId);
     }
 
+    // ─── PROJECTILE LAUNCH (prevent ender pearl throw from staff items) ────
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        ProjectileSource shooter = event.getEntity().getShooter();
+        if (!(shooter instanceof Player)) return;
+        if (!staffModeManager.isMod((Player) shooter)) return;
+        event.setCancelled(true);
+    }
+
     // ─── INTERACT (block/air) ───────────────────────────────────────────────
 
     @EventHandler(priority = EventPriority.LOW)
@@ -56,6 +70,14 @@ public class StaffListener implements Listener {
 
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_AIR) {
             Long last = lastEntityInteract.get(player.getUniqueId());
+            if (last == null || System.currentTimeMillis() - last >= 100) {
+                Player target = resolvePlayerLookTarget(player);
+                if (target != null) {
+                    handleEntityInteract(player, target);
+                    event.setCancelled(true);
+                    return;
+                }
+            }
             if (last != null && System.currentTimeMillis() - last < 100) return;
         }
 
@@ -95,6 +117,26 @@ public class StaffListener implements Listener {
         lastEntityInteract.put(player.getUniqueId(), System.currentTimeMillis());
         StaffActionContext context = new StaffActionContext(player, staffItem, "RIGHT_CLICK", null, event, event.getRightClicked());
         scriptExecutor.execute(context, scripts);
+    }
+
+    private void handleEntityInteract(Player player, Entity target) {
+        StaffItem staffItem = getStaffItemFromHand(player);
+        if (staffItem == null) return;
+
+        List<String> scripts = staffItem.getScripts("RIGHT_CLICK");
+        if (scripts == null || scripts.isEmpty()) return;
+
+        lastEntityInteract.put(player.getUniqueId(), System.currentTimeMillis());
+        StaffActionContext context = new StaffActionContext(player, staffItem, "RIGHT_CLICK", null, null, target);
+        scriptExecutor.execute(context, scripts);
+    }
+
+    private Player resolvePlayerLookTarget(Player player) {
+        try {
+            Entity target = player.getTargetEntity(6);
+            if (target instanceof Player) return (Player) target;
+        } catch (Exception | NoSuchMethodError ignored) {}
+        return null;
     }
 
     // ─── ENTITY DAMAGE (left-click attack) ──────────────────────────────────
