@@ -70,15 +70,19 @@ public abstract class BaseSanctionCommand extends LifeCommand {
         }
 
         String category = "Other";
+        String reasonLower = reason.toLowerCase();
         ConfigurationSection categoriesSec = context.getPlugin().getConfigConfig().getConfigurationSection("auto-punish.categories");
         if (categoriesSec != null) {
             for (String cat : categoriesSec.getKeys(false)) {
                 List<String> keywords = context.getLang().getStringList("report.detail.categories." + cat);
                 for (String kw : keywords) {
-                    if (reason.toLowerCase().contains(kw.toLowerCase())) {
+                    if (reasonLower.contains(kw.toLowerCase())) {
                         category = cat;
                         break;
                     }
+                }
+                if (category.equals("Other") && reasonLower.equals(cat.toLowerCase())) {
+                    category = cat;
                 }
             }
         }
