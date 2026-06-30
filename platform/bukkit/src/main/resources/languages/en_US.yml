@@ -661,13 +661,13 @@ commands:
       play: "&aPlay/Speed x1"
       speed: "&aSpeed x4"
       title: "Replay Controls"
-    inventory:
-      title: "&8Replay Controls"
-      timeline: "&7Timeline"
-      play-pause: "&aPlay / Pause"
-      speed: "&eSpeed x1.0"
-      pov-switch: "&bPov Switch"
-      exit: "&cExit Replay"
+      inventory:
+        title: "&8Replay Controls"
+        timeline: "&7Timeline"
+        play-pause: "&aPlay / Pause"
+        speed: "&eSpeed x1.0"
+        pov-switch: "&bPov Switch"
+        exit: "&cExit Replay"
 
   scan:
     usage: "&cUsage: /scan <map|inventories|enderchest|all> <player|all> <item|hand>"
