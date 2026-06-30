@@ -96,7 +96,7 @@ public class NoClipPacketListener extends PacketListenerAbstract {
             List<WrapperPlayServerPlayerInfoUpdate.PlayerInfo> entries = new ArrayList<>(wrapper.getEntries());
             boolean changed = false;
             for (WrapperPlayServerPlayerInfoUpdate.PlayerInfo entry : entries) {
-                if (entry.getGameMode() != peGameMode.ordinal()) {
+                if (entry.getGameMode() != peGameMode) {
                     entry.setGameMode(peGameMode);
                     changed = true;
                 }
