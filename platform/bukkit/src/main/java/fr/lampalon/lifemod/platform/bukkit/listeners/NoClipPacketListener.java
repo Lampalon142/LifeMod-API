@@ -11,7 +11,10 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
 import fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -56,24 +59,52 @@ public class NoClipPacketListener extends PacketListenerAbstract {
     public void onPacketSend(PacketSendEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
         if (!noClipManager.isNoClip(player.getUniqueId())) return;
-        if (event.getPacketType() != PacketType.Play.Server.CHANGE_GAME_STATE) return;
 
-        WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(event);
-        if (packet.getReason() != WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE) return;
+        if (event.getPacketType() == PacketType.Play.Server.CHANGE_GAME_STATE) {
+            WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(event);
+            if (packet.getReason() != WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE) return;
 
-        float originalValue = switch (noClipManager.getOriginalGameMode(player.getUniqueId())) {
-            case SURVIVAL  -> 0.0f;
-            case CREATIVE  -> 1.0f;
-            case ADVENTURE -> 2.0f;
-            case SPECTATOR -> 3.0f;
-        };
+            float originalValue = switch (noClipManager.getOriginalGameMode(player.getUniqueId())) {
+                case SURVIVAL  -> 0.0f;
+                case CREATIVE  -> 1.0f;
+                case ADVENTURE -> 2.0f;
+                case SPECTATOR -> 3.0f;
+            };
 
-        if (Math.abs(packet.getValue() - originalValue) > 0.01f) {
-            event.setCancelled(true);
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player,
-                new WrapperPlayServerChangeGameState(
-                    WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE,
-                    originalValue));
+            if (Math.abs(packet.getValue() - originalValue) > 0.01f) {
+                event.setCancelled(true);
+                PacketEvents.getAPI().getPlayerManager().sendPacket(player,
+                    new WrapperPlayServerChangeGameState(
+                        WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE,
+                        originalValue));
+            }
+            return;
+        }
+
+        if (event.getPacketType() == PacketType.Play.Server.PLAYER_INFO_UPDATE) {
+            WrapperPlayServerPlayerInfoUpdate wrapper = new WrapperPlayServerPlayerInfoUpdate(event);
+            if (!wrapper.getActions().contains(WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE)) return;
+
+            GameMode original = noClipManager.getOriginalGameMode(player.getUniqueId());
+            com.github.retrooper.packetevents.protocol.player.GameMode peGameMode = switch (original) {
+                case SURVIVAL -> com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL;
+                case CREATIVE -> com.github.retrooper.packetevents.protocol.player.GameMode.CREATIVE;
+                case ADVENTURE -> com.github.retrooper.packetevents.protocol.player.GameMode.ADVENTURE;
+                case SPECTATOR -> com.github.retrooper.packetevents.protocol.player.GameMode.SPECTATOR;
+            };
+
+            List<WrapperPlayServerPlayerInfoUpdate.PlayerInfo> entries = new ArrayList<>(wrapper.getEntries());
+            boolean changed = false;
+            for (WrapperPlayServerPlayerInfoUpdate.PlayerInfo entry : entries) {
+                if (entry.getGameMode() != peGameMode.ordinal()) {
+                    entry.setGameMode(peGameMode);
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                wrapper.setEntries(entries);
+            }
         }
     }
 
