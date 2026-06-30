@@ -60,7 +60,7 @@ public class AltCommand extends LifeCommand {
 
             context.getSender().sendMessage(context.getLang().getMessage("antialt.header"));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.title", "%player%", result.getPlayerName()));
-            context.getSender().sendMessage(context.getLang().getMessage("antialt.score", 
+            context.getSender().sendMessage(context.getLang().getMessage("antialt.score-format", 
                 "%color%", getScoreColor(result.getDangerScore(), context),
                 "%score%", String.valueOf(result.getDangerScore())));
             context.getSender().sendMessage(context.getLang().getMessage("antialt.rules-triggered", "%rules%", rules));

@@ -436,7 +436,7 @@ antialt:
   analyzing: "&6[AntiAlt] &eAnalyzing &b%player%&e..."
   header: "&8&m----------------------------------------"
   title: "&6&lAntiAlt Analysis: &b%player%"
-  score: "&e• &fDanger Score: %color%%score%/100"
+  score-format: "&e• &fDanger Score: %color%%score%/100"
   rules-triggered: "&e• &fTriggered Rules: &7%rules%"
   fingerprint: "&e• &fFingerprint: &7%fingerprint%"
   footer: "&8&m----------------------------------------"

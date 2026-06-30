@@ -390,7 +390,7 @@ antialt:
   analyzing: "&6[AntiAlt] &eAnalyse de &b%player%&e..."
   header: "&8&m----------------------------------------"
   title: "&6&lAnalyse AntiAlt : &b%player%"
-  score: "&e• &fDanger Score : %color%%score%/100"
+  score-format: "&e• &fDanger Score : %color%%score%/100"
   rules-triggered: "&e• &fRègles déclenchées : &7%rules%"
   fingerprint: "&e• &fFingerprint : &7%fingerprint%"
   footer: "&8&m----------------------------------------"
@@ -600,7 +600,6 @@ commands:
   clearinv:
     usage: "%prefix%&cUtilisation : /clearinv [joueur]"
     self: "%prefix%&aVotre inventaire a été vidé."
-    message: "%prefix%&aInventaire vidé pour &e%target%&a."
     message: "%prefix%&aInventaire vidé pour &e%target%&a."
 
   ec:
