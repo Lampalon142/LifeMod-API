@@ -93,7 +93,7 @@ public class ScanCommand extends LifeCommand {
         context.getSender().sendMessage(context.getLang().getMessage("commands.scan.starting", "%item%", itemName));
 
         plugin.getScanManager().scan(type, targetStr, targetItem, progress -> {
-            context.getSender().sendMessage(context.getLang().getMessage("commands.scan.progress", "%message%", progress));
+            context.getSender().sendMessage(context.getLang().getMessage("commands.scan.progress-format", "%message%", progress));
         }).thenAccept(result -> {
             Bukkit.getScheduler().runTask(plugin, () -> sendReport(context.getSender(), result, context));
         });

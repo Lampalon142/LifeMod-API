@@ -685,7 +685,7 @@ commands:
     hand-empty: "&cVous devez tenir un item en main."
     invalid-item: "&cItem invalide : %item%"
     starting: "&6&lLifeMod &8» &7Lancement du scan pour &e%item%&7..."
-    progress: "&6&lScan &8» %message%"
+    progress-format: "&6&lScan &8» %message%"
     report-header: "&8&m----------------------------------------"
     report-title: "&6&lRapport de Scan"
     report-total: "&e• &fTotal trouvé : &b%count%"
