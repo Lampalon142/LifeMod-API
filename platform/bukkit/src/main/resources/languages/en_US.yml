@@ -153,6 +153,57 @@ sanctions:
       public: "&a%target% has been unmuted by %issuer%. Reason: %reason%"
       silent: "&7[SILENT] &a%target% has been unmuted by %issuer%. Reason: %reason%"
 
+# --- REPORTS ---
+reports:
+  usage: "&cUsage: /report <player> <reason>"
+  yourself: "&cYou cannot report yourself!"
+  not-found: "&cPlayer not found."
+  submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
+  staff-notify: "&c[Report] &e%player% &7reported &e%target% &7for: &f%reason% &7(&e%server%&7) &7- &aClick here"
+
+  gui:
+    main-title: "&d&lReports &7(Page %page%/%total%)"
+    item-name: "&eReport #%id% - &c%target%"
+    item-lore:
+      - "&7Target: &c%target%"
+      - "&7Reporter: &b%reporter%"
+      - "&7Reason: &6%reason%"
+      - "&7Status: &b%status%"
+      - "&7Server: &a%server%"
+      - "&7Date: &f%date%"
+      - ""
+      - "&eLeft-click to view details"
+    refresh: "&aRefresh"
+
+    detail-title: "&d&lReport &7#%id%"
+    detail-reporter: "&bReporter: &f%reporter%"
+    detail-target: "&cTarget: &f%target%"
+    detail-reason: "&7Reason: &f%reason%"
+    detail-server: "&7Server: &a%server%"
+    detail-status: "&7Status: &e%status%"
+    detail-date: "&7Date: &f%date%"
+    detail-location: "&7Location: &f%location%"
+    detail-assigned: "&7Assigned to: &e%assigned%"
+    detail-unassigned: "&7Unassigned"
+    back: "&7« Back"
+    assign: "&aAssign to me"
+    close: "&aClose report"
+    reject: "&cReject report"
+    add-evidence: "&eAdd evidence"
+    evidence-prompt: "&aType your evidence in chat (or 'cancel' to abort)"
+    evidence-added: "&aEvidence added to report #%id%!"
+    evidence-cancelled: "&eEvidence cancelled."
+    evidence-item-name: "&7%author% &8(%type%)"
+    evidence-item-data: "&f%data%"
+    evidence-item-date: "&7%date%"
+    status-updated: "&aStatus updated to %status%"
+
+  status:
+    OPEN: "&aOpen"
+    ASSIGNED: "&eAssigned"
+    CLOSED: "&aClosed"
+    REJECTED: "&cRejected"
+
 # --- LOGS ---
 logs:
   usage: "&cUsage: /log lookup <player> [type] [page]"

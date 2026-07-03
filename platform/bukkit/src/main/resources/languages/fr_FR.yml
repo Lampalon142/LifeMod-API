@@ -198,6 +198,57 @@ gui:
     time-since: "Depuis Date"
     type-all: "Toutes"
 
+# --- SIGNALEMENTS ---
+reports:
+  usage: "&cUtilisation : /report <joueur> <raison>"
+  yourself: "&cVous ne pouvez pas vous signaler vous-même !"
+  not-found: "&cJoueur introuvable."
+  submitted: "&aSignalement envoyé contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
+  staff-notify: "&c[Signalement] &e%player% &7a signalé &e%target% &7pour : &f%reason% &7(&e%server%&7) &7- &aCliquez ici"
+
+  gui:
+    main-title: "&d&lSignalements &7(Page %page%/%total%)"
+    item-name: "&eSignalement #%id% - &c%target%"
+    item-lore:
+      - "&7Cible : &c%target%"
+      - "&7Auteur : &b%reporter%"
+      - "&7Raison : &6%reason%"
+      - "&7Statut : &b%status%"
+      - "&7Serveur : &a%server%"
+      - "&7Date : &f%date%"
+      - ""
+      - "&eClic-gauche pour voir les détails"
+    refresh: "&aRafraîchir"
+
+    detail-title: "&d&lSignalement &7#%id%"
+    detail-reporter: "&bAuteur : &f%reporter%"
+    detail-target: "&cCible : &f%target%"
+    detail-reason: "&7Raison : &f%reason%"
+    detail-server: "&7Serveur : &a%server%"
+    detail-status: "&7Statut : &e%status%"
+    detail-date: "&7Date : &f%date%"
+    detail-location: "&7Position : &f%location%"
+    detail-assigned: "&7Assigné à : &e%assigned%"
+    detail-unassigned: "&7Non assigné"
+    back: "&7« Retour"
+    assign: "&aS'assigner"
+    close: "&aFermer le signalement"
+    reject: "&cRejeter le signalement"
+    add-evidence: "&eAjouter une preuve"
+    evidence-prompt: "&aTapez votre preuve dans le chat (ou 'cancel' pour annuler)"
+    evidence-added: "&aPreuve ajoutée au signalement #%id% !"
+    evidence-cancelled: "&eAjout de preuve annulé."
+    evidence-item-name: "&7%author% &8(%type%)"
+    evidence-item-data: "&f%data%"
+    evidence-item-date: "&7%date%"
+    status-updated: "&aStatut mis à jour : %status%"
+
+  status:
+    OPEN: "&aOuvert"
+    ASSIGNED: "&eAssigné"
+    CLOSED: "&aFermé"
+    REJECTED: "&cRejeté"
+
 # --- LOGS ---
 logs:
   usage: "&cUtilisation : /log lookup <joueur> [type] [page]"

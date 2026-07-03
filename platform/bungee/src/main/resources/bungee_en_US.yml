@@ -10,6 +10,10 @@ system:
   config-reloaded: "%prefix%&aProxy configuration reloaded successfully!"
   date-format: "dd/MM/yyyy HH:mm:ss"
 
+# --- REPORTS ---
+reports:
+  staff-notify: "&c[Nouveau report] &e%player% &7a reporté &e%target% &7pour: &f%reason% &7(&e%server%&7)"
+
 # --- SANCTIONS ---
 sanctions:
   # Command logic

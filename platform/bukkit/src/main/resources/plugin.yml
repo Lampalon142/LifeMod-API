@@ -54,6 +54,10 @@ commands:
     description: "Manage player hearts: set or add a specific amount of hearts to any player."
   settime:
     description: Quickly set the world time to day, night, noon, or midnight.
+  report:
+    description: Report a player
+  reports:
+    description: Manage reports
   ban:
     description: Ban a player from the server.
     usage: /ban <player> <reason> [duration] [-s]
@@ -130,6 +134,7 @@ permissions:
       - lifemod.togglechat.bypass
       - lifemod.togglechat
       - lifemod.staff
+      - lifemod.report
       - lifemod.stafflist
       - lifemod.moderator
       - lifemod.admin
@@ -146,3 +151,21 @@ permissions:
       - lifemod.antialt.check
       - lifemod.antialt.notify
       - lifemod.admin.ac
+
+  lifemod.report:
+    description: Report a player
+    default: true
+
+  lifemod.report.staff:
+    description: Manage reports
+    default: op
+    children:
+      lifemod.report: true
+
+  lifemod.report.notify:
+    description: Receive report notifications
+    default: op
+
+  lifemod.report.evidence:
+    description: Add evidence to reports
+    default: true

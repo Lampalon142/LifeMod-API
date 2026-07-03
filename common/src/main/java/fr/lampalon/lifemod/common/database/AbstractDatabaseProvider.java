@@ -61,6 +61,112 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
                 .build();
     }
 
+    // --- Reports ---
+
+    @Override
+    public int saveReport(Report report) {
+        // Per-subclass impl via abstract method
+        throw new UnsupportedOperationException("Override in subclass");
+    }
+
+    @Override
+    public Report getReportById(int id) {
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports WHERE id = ?")) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapReport(rs);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @Override
+    public List<Report> getAllReports(int limit, int offset) {
+        List<Report> reports = new ArrayList<>();
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports ORDER BY CASE status WHEN 'OPEN' THEN 0 WHEN 'ASSIGNED' THEN 1 WHEN 'CLOSED' THEN 2 WHEN 'REJECTED' THEN 3 ELSE 4 END, created_at DESC LIMIT ? OFFSET ?")) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) reports.add(mapReport(rs));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reports;
+    }
+
+    @Override
+    public List<Report> getReportsByStatus(String status, int limit, int offset) {
+        List<Report> reports = new ArrayList<>();
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?")) {
+            ps.setString(1, status);
+            ps.setInt(2, limit);
+            ps.setInt(3, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) reports.add(mapReport(rs));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reports;
+    }
+
+    @Override
+    public void updateReportStatus(int id, String status, UUID assignedTo) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "UPDATE reports SET status = ?, assigned_to = ?, updated_at = ? WHERE id = ?")) {
+            ps.setString(1, status);
+            ps.setString(2, assignedTo != null ? assignedTo.toString() : null);
+            ps.setLong(3, System.currentTimeMillis());
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void addEvidence(ReportEvidence evidence) {
+        // Per-subclass impl
+        throw new UnsupportedOperationException("Override in subclass");
+    }
+
+    @Override
+    public List<ReportEvidence> getEvidence(int reportId) {
+        List<ReportEvidence> list = new ArrayList<>();
+        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM report_evidence WHERE report_id = ? ORDER BY created_at ASC")) {
+            ps.setInt(1, reportId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new ReportEvidence(
+                            rs.getInt("id"),
+                            rs.getInt("report_id"),
+                            rs.getString("type"),
+                            rs.getString("data"),
+                            rs.getString("author_uuid") != null ? UUID.fromString(rs.getString("author_uuid")) : null,
+                            rs.getString("author_name"),
+                            rs.getLong("created_at")
+                    ));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    protected Report mapReport(ResultSet rs) throws SQLException {
+        Report r = new Report(
+                rs.getInt("id"),
+                UUID.fromString(rs.getString("reporter_uuid")),
+                rs.getString("reporter_name"),
+                UUID.fromString(rs.getString("target_uuid")),
+                rs.getString("target_name"),
+                rs.getString("reason"),
+                rs.getString("server_name"),
+                ReportStatus.valueOf(rs.getString("status")),
+                rs.getString("assigned_to") != null ? UUID.fromString(rs.getString("assigned_to")) : null,
+                rs.getLong("created_at"),
+                rs.getLong("updated_at"),
+                rs.getLong("closed_at"),
+                rs.getString("replay_id"));
+        r.setLocation(rs.getString("location_world"), rs.getDouble("location_x"),
+                rs.getDouble("location_y"), rs.getDouble("location_z"));
+        return r;
+    }
+
     // --- Inventories ---
 
     @Override
@@ -315,7 +421,7 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
 
     protected void setLogParameters(PreparedStatement ps, LogEntry e) throws SQLException {
         ps.setInt(1, e.getType());
-        ps.setString(2, e.getPlayerUuid() != null ? e.getPlayerUuid().toString() : null);
+        ps.setString(2, e.getPlayerUuid() != null ? e.getPlayerUuid().toString() : "00000000-0000-0000-0000-000000000000");
         ps.setString(3, e.getPlayerName());
         ps.setString(4, e.getTargetUuid() != null ? e.getTargetUuid().toString() : null);
         ps.setString(5, e.getTargetName());

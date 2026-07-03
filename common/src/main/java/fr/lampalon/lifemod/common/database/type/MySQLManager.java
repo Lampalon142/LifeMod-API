@@ -57,6 +57,19 @@ public class MySQLManager extends AbstractDatabaseProvider {
                 stmt.executeUpdate("ALTER TABLE player_inventories ADD PRIMARY KEY (uuid, server_name);");
             } catch (SQLException ignored) {}
 
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reports (id INT AUTO_INCREMENT PRIMARY KEY, reporter_uuid VARCHAR(36) NOT NULL, reporter_name VARCHAR(32), target_uuid VARCHAR(36) NOT NULL, target_name VARCHAR(32), reason TEXT NOT NULL, server_name VARCHAR(64), location_world VARCHAR(64), location_x DOUBLE, location_y DOUBLE, location_z DOUBLE, status VARCHAR(16) DEFAULT 'OPEN', assigned_to VARCHAR(36), created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, closed_at BIGINT DEFAULT 0, replay_id VARCHAR(36));");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS report_evidence (id INT AUTO_INCREMENT PRIMARY KEY, report_id INT NOT NULL, type VARCHAR(16) NOT NULL, data TEXT NOT NULL, author_uuid VARCHAR(36), author_name VARCHAR(32), created_at BIGINT NOT NULL, FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE);");
+
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN reporter_name VARCHAR(32);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN target_name VARCHAR(32);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN server_name VARCHAR(64);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN location_world VARCHAR(64);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN location_x DOUBLE;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN location_y DOUBLE;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN location_z DOUBLE;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN assigned_to VARCHAR(36);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN closed_at BIGINT DEFAULT 0;"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN replay_id VARCHAR(36);"); } catch (SQLException ignored) {}
             createLogTableIfNeeded();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -71,6 +84,49 @@ public class MySQLManager extends AbstractDatabaseProvider {
     @Override
     public void closeConnection() {
         if (dataSource != null) dataSource.close();
+    }
+
+    @Override
+    public int saveReport(Report report) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO reports (reporter_uuid, reporter_name, target_uuid, target_name, reason, server_name, location_world, location_x, location_y, location_z, status, assigned_to, created_at, updated_at, closed_at, replay_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, report.getReporterUuid().toString());
+            ps.setString(2, report.getReporterName());
+            ps.setString(3, report.getTargetUuid().toString());
+            ps.setString(4, report.getTargetName());
+            ps.setString(5, report.getReason());
+            ps.setString(6, report.getServerName());
+            ps.setString(7, report.getLocationWorld());
+            ps.setDouble(8, report.getLocationX());
+            ps.setDouble(9, report.getLocationY());
+            ps.setDouble(10, report.getLocationZ());
+            ps.setString(11, report.getStatus().name());
+            ps.setString(12, report.getAssignedTo() != null ? report.getAssignedTo().toString() : null);
+            ps.setLong(13, report.getCreatedAt());
+            ps.setLong(14, report.getUpdatedAt());
+            ps.setLong(15, report.getClosedAt());
+            ps.setString(16, report.getReplayId());
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (keys.next()) return keys.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return -1;
+    }
+
+    @Override
+    public void addEvidence(ReportEvidence evidence) {
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO report_evidence (report_id, type, data, author_uuid, author_name, created_at) VALUES (?, ?, ?, ?, ?, ?)")) {
+            ps.setInt(1, evidence.getReportId());
+            ps.setString(2, evidence.getType());
+            ps.setString(3, evidence.getData());
+            ps.setString(4, evidence.getAuthorUuid() != null ? evidence.getAuthorUuid().toString() : null);
+            ps.setString(5, evidence.getAuthorName());
+            ps.setLong(6, evidence.getCreatedAt());
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override

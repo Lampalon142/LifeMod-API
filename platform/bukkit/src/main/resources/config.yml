@@ -30,6 +30,9 @@ redis:
 
 # --- MODULES ---
 modules:
+  # Reports System
+  reports:
+    enabled: true
   # Hybrid Auto-Punish System
   auto-punish:
     enabled: true
@@ -297,6 +300,10 @@ modules:
         title: "Staff Alert"
         description: "> %player% executed command: %message%"
         color: "#FF0000"
+      report:
+        title: "New Report"
+        description: "> %player% has reported someone!"
+        color: "#FF0000"
       footer:
         text: "Powered By LifeMod"
         logo: "https://mc-heads.net/avatar/%player%/"
@@ -372,6 +379,7 @@ commands:
     warn: true
     history: true
     case: true
+    report: true
     staffchat: true
     vanish: true
     freeze: true
@@ -437,6 +445,19 @@ gui:
         millis: 86400000
       - label: "1 week"
         millis: 604800000
+  reports:
+    item-material: PAPER
+    detail:
+      reporter-material: PLAYER_HEAD
+      target-material: PLAYER_HEAD
+      info-material: BOOK
+      teleport-material: COMPASS
+      assign-material: LIME_DYE
+      close-material: GREEN_DYE
+      reject-material: RED_DYE
+      evidence-material: WRITABLE_BOOK
+      back-material: ARROW
+    refresh-material: SUNFLOWER
 
 # --- AUTH GUI ---
 auth:

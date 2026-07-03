@@ -515,6 +515,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         pm.registerEvents(new ServerListPingListener(vanishService), this);
+        pm.registerEvents(new ReportListener(this), this);
 
         if (ServiceRegistry.get(ILogService.class) != null) {
             pm.registerEvents(new LogConnectionListener(), this);

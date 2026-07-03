@@ -1,0 +1,99 @@
+package fr.lampalon.lifemod.platform.bukkit.commands.impl.report;
+
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.database.DatabaseProvider;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
+import fr.lampalon.lifemod.common.model.Report;
+import fr.lampalon.lifemod.common.model.ReportStatus;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
+import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
+import fr.lampalon.lifemod.platform.bukkit.utils.WebhookUtil;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+
+public class ReportCommand extends LifeCommand {
+
+    public ReportCommand() {
+        super("report", "lifemod.report", true);
+        setDescription("Report a player for rule breaking");
+        setUsage("/report <player> <reason>");
+    }
+
+    @Override
+    public void execute(CommandContext context) {
+        String[] args = context.getArgs();
+
+        if (args.length < 2) {
+            context.getSender().sendMessage(context.getLang().getMessage("reports.usage"));
+            return;
+        }
+
+        Player reporter = context.getPlayer();
+        Player target = Bukkit.getPlayer(args[0]);
+
+        if (target == null) {
+            context.getSender().sendMessage(context.getLang().getMessage("reports.not-found"));
+            return;
+        }
+
+        if (target.equals(reporter)) {
+            context.getSender().sendMessage(context.getLang().getMessage("reports.yourself"));
+            return;
+        }
+
+        String reason = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length));
+
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        String serverName = config.getString("server.name", "unknown");
+
+        Report report = new Report();
+        report.setReporterUuid(reporter.getUniqueId());
+        report.setReporterName(reporter.getName());
+        report.setTargetUuid(target.getUniqueId());
+        report.setTargetName(target.getName());
+        report.setReason(reason);
+        report.setServerName(serverName);
+        report.setLocation(reporter.getLocation().getWorld().getName(),
+                reporter.getLocation().getX(),
+                reporter.getLocation().getY(),
+                reporter.getLocation().getZ());
+        report.setStatus(ReportStatus.OPEN);
+
+        LifeMod plugin = context.getPlugin();
+        DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
+        int reportId = db.saveReport(report);
+
+        String success = context.getLang().getMessage("reports.submitted",
+                "%target%", target.getName(),
+                "%reason%", reason,
+                "%server%", serverName);
+        reporter.sendMessage(success);
+
+        String notifyMsg = context.getLang().getMessage("reports.staff-notify",
+                "%player%", reporter.getName(),
+                "%target%", target.getName(),
+                "%reason%", reason,
+                "%server%", serverName);
+
+        TextComponent clickable = new TextComponent(notifyMsg);
+        clickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/reports"));
+
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.hasPermission("lifemod.report.notify")) {
+                online.spigot().sendMessage(clickable);
+            }
+        }
+
+        IMessagingService msgService = ServiceRegistry.get(IMessagingService.class);
+        if (msgService != null) {
+            String json = "{\"action\":\"CREATE\",\"id\":" + reportId + ",\"reporter\":\"" + reporter.getName() + "\",\"target\":\"" + target.getName() + "\",\"reason\":\"" + reason + "\",\"server\":\"" + serverName + "\"}";
+            msgService.publish("lifemod:reports", json);
+        }
+
+        WebhookUtil.sendAlert(context, "report");
+    }
+}

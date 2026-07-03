@@ -5,6 +5,8 @@ import fr.lampalon.lifemod.common.model.LogQuery;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
+import fr.lampalon.lifemod.common.model.Report;
+import fr.lampalon.lifemod.common.model.ReportEvidence;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,6 +19,15 @@ public interface DatabaseProvider {
     void setupDatabase();
     Connection getConnection() throws SQLException;
     void closeConnection();
+
+    // Reports
+    int saveReport(Report report);
+    Report getReportById(int id);
+    List<Report> getAllReports(int limit, int offset);
+    List<Report> getReportsByStatus(String status, int limit, int offset);
+    void updateReportStatus(int id, String status, UUID assignedTo);
+    void addEvidence(ReportEvidence evidence);
+    List<ReportEvidence> getEvidence(int reportId);
 
     void saveRawInventory(UUID uuid, String serverName, byte[] data);
     byte[] getRawInventory(UUID uuid, String serverName);
