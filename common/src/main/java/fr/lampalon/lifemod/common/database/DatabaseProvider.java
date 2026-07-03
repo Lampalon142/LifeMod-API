@@ -3,8 +3,6 @@ package fr.lampalon.lifemod.common.database;
 import fr.lampalon.lifemod.common.model.LogEntry;
 import fr.lampalon.lifemod.common.model.LogQuery;
 import fr.lampalon.lifemod.common.model.PlayerData;
-import fr.lampalon.lifemod.common.model.Report;
-import fr.lampalon.lifemod.common.model.StaffNote;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
 
@@ -19,18 +17,6 @@ public interface DatabaseProvider {
     void setupDatabase();
     Connection getConnection() throws SQLException;
     void closeConnection();
-
-    Report getReportByUuid(UUID uuid);
-    void saveReport(Report report);
-    void updateReport(Report report);
-    List<Report> getAllReports(int limit, int offset);
-    List<Report> getReportsByTarget(UUID targetUuid);
-    void deleteReport(UUID uuid);
-
-    List<StaffNote> getStaffNotesForReport(UUID reportId);
-    void addStaffNote(UUID reportId, StaffNote note);
-    void deleteStaffNote(UUID noteId);
-    void updateStaffNote(StaffNote note);
 
     void saveRawInventory(UUID uuid, String serverName, byte[] data);
     byte[] getRawInventory(UUID uuid, String serverName);

@@ -55,10 +55,14 @@ public class LogService implements ILogService {
     @Override
     public void flush() {
         if (!running) return;
-        List<LogEntry> batch = new ArrayList<>(MAX_BATCH);
-        queue.drainTo(batch, MAX_BATCH);
-        if (!batch.isEmpty()) {
-            db.saveLogBatch(batch);
+        try {
+            List<LogEntry> batch = new ArrayList<>(MAX_BATCH);
+            queue.drainTo(batch, MAX_BATCH);
+            if (!batch.isEmpty()) {
+                db.saveLogBatch(batch);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

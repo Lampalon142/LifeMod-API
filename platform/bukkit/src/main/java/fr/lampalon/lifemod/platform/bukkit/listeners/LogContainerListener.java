@@ -11,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
@@ -24,6 +25,8 @@ public class LogContainerListener extends LogBaseListener {
 
     private final Map<UUID, Long> containerOpenSince = new HashMap<>();
     private final Map<UUID, Inventory> openContainers = new HashMap<>();
+    private final Map<UUID, Location> containerLocations = new HashMap<>();
+    private final Map<UUID, String> containerBlockTypes = new HashMap<>();
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onContainerOpen(PlayerInteractEvent event) {
@@ -33,6 +36,8 @@ public class LogContainerListener extends LogBaseListener {
         if (state instanceof Container) {
             Player p = event.getPlayer();
             Location loc = event.getClickedBlock().getLocation();
+            containerLocations.put(p.getUniqueId(), loc);
+            containerBlockTypes.put(p.getUniqueId(), state.getType().name());
             logAsync(LogEntry.builder()
                 .type(LogType.CONTAINER_OPEN).playerUuid(p.getUniqueId()).playerName(p.getName())
                 .actionData("{\"c\":\"" + state.getType().name() + "\"}")
@@ -90,11 +95,27 @@ public class LogContainerListener extends LogBaseListener {
         }
 
         if (logType != null) {
+            String blockType = containerBlockTypes.getOrDefault(p.getUniqueId(), top.getType().name());
+            Location containerLoc = containerLocations.get(p.getUniqueId());
+            String world = containerLoc != null ? locData(containerLoc) : locData(p.getLocation());
+            int x = containerLoc != null ? containerLoc.getBlockX() : p.getLocation().getBlockX();
+            int y = containerLoc != null ? containerLoc.getBlockY() : p.getLocation().getBlockY();
+            int z = containerLoc != null ? containerLoc.getBlockZ() : p.getLocation().getBlockZ();
             logAsync(LogEntry.builder()
                 .type(logType).playerUuid(p.getUniqueId()).playerName(p.getName())
-                .actionData("{\"i\":\"" + itemName + "\",\"a\":" + amount + ",\"c\":\"" + top.getType().name() + "\"}")
-                .world(locData(p.getLocation())).x(p.getLocation().getBlockX()).y(p.getLocation().getBlockY()).z(p.getLocation().getBlockZ())
+                .actionData("{\"i\":\"" + itemName + "\",\"a\":" + amount + ",\"c\":\"" + blockType + "\"}")
+                .world(world).x(x).y(y).z(z)
                 .serverName(serverName()).now().build());
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player)) return;
+        UUID uuid = event.getPlayer().getUniqueId();
+        containerLocations.remove(uuid);
+        containerBlockTypes.remove(uuid);
+        containerOpenSince.remove(uuid);
+        openContainers.remove(uuid);
     }
 }

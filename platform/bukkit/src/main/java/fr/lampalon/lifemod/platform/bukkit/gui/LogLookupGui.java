@@ -2,10 +2,13 @@ package fr.lampalon.lifemod.platform.bukkit.gui;
 
 import fr.lampalon.lifemod.common.model.LogEntry;
 import fr.lampalon.lifemod.common.model.LogType;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.plugin.Plugin;
 import xyz.xenondevs.invui.gui.Gui;
 import xyz.xenondevs.invui.gui.PagedGui;
 import xyz.xenondevs.invui.gui.structure.Markers;
@@ -17,9 +20,13 @@ import xyz.xenondevs.invui.item.impl.controlitem.PageItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class LogLookupGui extends AbstractGui {
 
@@ -29,11 +36,82 @@ public class LogLookupGui extends AbstractGui {
     private final UUID targetUuid;
     private final LogType filterType;
     private final int page;
+    private final long fromTime;
+    private final TimeRange timeRange;
+    private final ReopenCallback reopenCallback;
+
+    private static final Map<UUID, Consumer<String>> PENDING_INPUTS = new ConcurrentHashMap<>();
+    private static boolean listenerRegistered = false;
+
+    private static final class ChatInputListener implements Listener {
+        @EventHandler
+        public void onChat(AsyncPlayerChatEvent event) {
+            Consumer<String> callback = PENDING_INPUTS.remove(event.getPlayer().getUniqueId());
+            if (callback == null) return;
+            event.setCancelled(true);
+            Plugin plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("LifeMod");
+            if (plugin != null) {
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> callback.accept(event.getMessage()));
+            }
+        }
+    }
+
+    private static void ensureListenerRegistered() {
+        if (listenerRegistered) return;
+        listenerRegistered = true;
+        Plugin plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("LifeMod");
+        if (plugin != null) {
+            org.bukkit.Bukkit.getPluginManager().registerEvents(new ChatInputListener(), plugin);
+        }
+    }
+
+    @FunctionalInterface
+    public interface ReopenCallback {
+        void reopen(LogType filterType, TimeRange timeRange, int page);
+    }
+
+    public static final class TimeRange {
+        public static final TimeRange HOUR_1 = new TimeRange("HOUR_1", 1L * 60 * 60 * 1000, "§e1h");
+        public static final TimeRange HOUR_6 = new TimeRange("HOUR_6", 6L * 60 * 60 * 1000, "§66h");
+        public static final TimeRange DAY_1  = new TimeRange("DAY_1", 24L * 60 * 60 * 1000, "§b24h");
+        public static final TimeRange DAY_7  = new TimeRange("DAY_7", 7L * 24 * 60 * 60 * 1000, "§a7d");
+        public static final TimeRange DAY_30 = new TimeRange("DAY_30", 30L * 24 * 60 * 60 * 1000, "§c30d");
+        public static final TimeRange ALL    = new TimeRange("ALL", Long.MAX_VALUE, "§5All");
+
+        public static final List<TimeRange> PREDEFINED = Arrays.asList(HOUR_1, HOUR_6, DAY_1, DAY_7, DAY_30, ALL);
+
+        final String enumName;
+        public final long millis;
+        public final String label;
+        public final boolean isCustom;
+
+        private TimeRange(String enumName, long millis, String label) {
+            this.enumName = enumName;
+            this.millis = millis;
+            this.label = label;
+            this.isCustom = false;
+        }
+
+        public TimeRange(long millis, String label) {
+            this.enumName = null;
+            this.millis = millis;
+            this.label = label;
+            this.isCustom = true;
+        }
+
+        public static TimeRange byName(String name) {
+            for (TimeRange tr : PREDEFINED) {
+                if (tr.enumName.equals(name)) return tr;
+            }
+            return DAY_7;
+        }
+    }
 
     private static final SimpleDateFormat DATE_FMT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public LogLookupGui(Player player, List<LogEntry> entries, long totalCount,
-                        String targetName, UUID targetUuid, LogType filterType, int page) {
+                        String targetName, UUID targetUuid, LogType filterType, int page,
+                        long fromTime, TimeRange timeRange, ReopenCallback reopenCallback) {
         super(player);
         this.entries = entries;
         this.totalCount = totalCount;
@@ -41,6 +119,9 @@ public class LogLookupGui extends AbstractGui {
         this.targetUuid = targetUuid;
         this.filterType = filterType;
         this.page = page;
+        this.fromTime = fromTime;
+        this.timeRange = timeRange;
+        this.reopenCallback = reopenCallback;
     }
 
     @Override
@@ -52,9 +133,10 @@ public class LogLookupGui extends AbstractGui {
                         "# . . . . . . . #",
                         "# . . . . . . . #",
                         "# . . . . . . . #",
-                        "# # # < # > # # #")
+                        "@ # # < > F T # #")
                 .addIngredient('.', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
                 .addIngredient('#', createBorder())
+                .addIngredient('@', createInfoItem())
                 .addIngredient('<', new PageItem(false) {
                     @Override
                     public ItemProvider getItemProvider(PagedGui<?> gui) {
@@ -77,6 +159,8 @@ public class LogLookupGui extends AbstractGui {
                         return builder;
                     }
                 })
+                .addIngredient('F', createTypeFilterItem())
+                .addIngredient('T', createTimeFilterItem())
                 .setContent(buildItems())
                 .build();
     }
@@ -89,6 +173,130 @@ public class LogLookupGui extends AbstractGui {
     @Override
     protected String getTitle() {
         return lang.getMessage(getTitleKey(), "%target%", targetName != null ? targetName : "?");
+    }
+
+    private void addLoreFromConfig(ItemBuilder builder, String path, String... placeholders) {
+        List<String> lines = config.getStringList(path);
+        if (lines == null || lines.isEmpty()) return;
+        for (String line : lines) {
+            if (placeholders.length > 0) {
+                for (int i = 0; i < placeholders.length; i += 2) {
+                    line = line.replace(placeholders[i], placeholders[i + 1]);
+                }
+            }
+            builder.addLoreLines(ChatColor.translateAlternateColorCodes('&', line));
+        }
+    }
+
+    private Item createInfoItem() {
+        String typeLabel = filterType != null ? filterType.name() : "ALL";
+        String timeLabel = timeRange != null ? timeRange.label : "7d";
+        ItemBuilder builder = new ItemBuilder(Material.valueOf(
+                config.getString("gui.logs.info-material", "BOOK")));
+        builder.setDisplayName("§6" + targetName);
+        addLoreFromConfig(builder, "gui.logs.info-lore",
+                "%type%", typeLabel,
+                "%range%", timeLabel,
+                "%count%", String.valueOf(totalCount));
+        return new SimpleItem(builder);
+    }
+
+    private Item createTypeFilterItem() {
+        ItemBuilder builder = new ItemBuilder(Material.valueOf(
+                config.getString("gui.logs.filter-type-material", "HOPPER")));
+        builder.setDisplayName(lang.getMessage("logs.gui.filter-type-name"));
+        addLoreFromConfig(builder, "gui.logs.filter-type-lore",
+                "%type%", filterType != null ? filterType.name() : "ALL");
+        return new SimpleItem(builder, click -> {
+            if (click.getEvent().isShiftClick()) {
+                if (reopenCallback != null) reopenCallback.reopen(null, timeRange, 1);
+            } else {
+                LogType next = nextType(filterType);
+                if (reopenCallback != null) reopenCallback.reopen(next, timeRange, 1);
+            }
+        });
+    }
+
+    private Item createTimeFilterItem() {
+        ItemBuilder builder = new ItemBuilder(Material.valueOf(
+                config.getString("gui.logs.filter-time-material", "CLOCK")));
+        builder.setDisplayName(lang.getMessage("logs.gui.filter-time-name"));
+        for (TimeRange tr : TimeRange.PREDEFINED) {
+            String prefix = tr == timeRange ? "§a▶ " : "  ";
+            builder.addLoreLines(prefix + tr.label);
+        }
+        if (timeRange != null && timeRange.isCustom) {
+            builder.addLoreLines("§a▶ " + timeRange.label);
+        }
+        addLoreFromConfig(builder, "gui.logs.filter-time-lore");
+        return new SimpleItem(builder, click -> {
+            if (click.getEvent().isShiftClick()) {
+                if (reopenCallback != null) reopenCallback.reopen(filterType, TimeRange.DAY_7, 1);
+            } else if (click.getEvent().isRightClick()) {
+                player.closeInventory();
+                player.sendMessage(lang.getMessage("logs.gui.custom-time-name"));
+                ensureListenerRegistered();
+                PENDING_INPUTS.put(player.getUniqueId(), new Consumer<String>() {
+                    @Override
+                    public void accept(String input) {
+                        String trimmed = input.trim();
+                        if (trimmed.equalsIgnoreCase("cancel")) {
+                            if (reopenCallback != null) reopenCallback.reopen(filterType, timeRange, 1);
+                            return;
+                        }
+                        long millis = parseTimeString(trimmed);
+                        if (millis > 0) {
+                            player.sendMessage(lang.getMessage("logs.gui.custom-time-success", "%time%", trimmed));
+                            if (reopenCallback != null)
+                                reopenCallback.reopen(filterType, new TimeRange(millis, "§6" + trimmed), 1);
+                        } else {
+                            player.sendMessage(lang.getMessage("logs.gui.custom-time-invalid"));
+                            PENDING_INPUTS.put(player.getUniqueId(), this);
+                        }
+                    }
+                });
+            } else {
+                TimeRange next = nextTimeRange(timeRange);
+                if (reopenCallback != null) reopenCallback.reopen(filterType, next, 1);
+            }
+        });
+    }
+
+    private static long parseTimeString(String input) {
+        if (input == null || input.isEmpty()) return -1;
+        input = input.trim().toLowerCase();
+        long total = 0;
+        StringBuilder num = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            if (c >= '0' && c <= '9') {
+                num.append(c);
+            } else {
+                if (num.length() == 0) continue;
+                long val = Long.parseLong(num.toString());
+                num.setLength(0);
+                switch (c) {
+                    case 's': total += val * 1000; break;
+                    case 'm': total += val * 60000; break;
+                    case 'h': total += val * 3600000; break;
+                    case 'd': total += val * 86400000; break;
+                    default: return -1;
+                }
+            }
+        }
+        return total > 0 ? total : -1;
+    }
+
+    private static LogType nextType(LogType current) {
+        LogType[] values = LogType.values();
+        if (current == null) return values[0];
+        int idx = current.ordinal() + 1;
+        return idx < values.length ? values[idx] : null;
+    }
+
+    private static TimeRange nextTimeRange(TimeRange current) {
+        int idx = TimeRange.PREDEFINED.indexOf(current);
+        if (idx == -1) return TimeRange.PREDEFINED.get(0); // custom → first predefined
+        return TimeRange.PREDEFINED.get((idx + 1) % TimeRange.PREDEFINED.size());
     }
 
     private List<Item> buildItems() {
@@ -200,6 +408,8 @@ public class LogLookupGui extends AbstractGui {
                 return "§7Entity: §f" + map.getOrDefault("e", "?");
             case DEATH_PLAYER:
                 return "§7Killed by: §f" + map.getOrDefault("k", "?") + " §7with §f" + map.getOrDefault("w", "?");
+            case KILL_PLAYER:
+                return "§7Killed §f" + (map.containsKey("t") ? map.get("t") : "?") + " §7with §f" + map.getOrDefault("w", "?");
             case DEATH_MOB:
                 return "§7Killed by: §f" + map.getOrDefault("m", "?");
             case DEATH_ENVIRONMENT:

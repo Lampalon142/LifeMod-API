@@ -93,14 +93,6 @@ sanctions:
       public: "&6&lNetwork &8» &a%target% has been unmuted by %issuer%. Reason: %reason%"
       silent: "&7[SILENT-NETWORK] &a%target% has been unmuted by %issuer%. Reason: %reason%"
 
-# --- REPORTS ---
-reports:
-  submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
-  usage: "&eUsage: /report <player> <reason>"
-  yourself: "&cYou cannot report yourself!"
-  join-alert: "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports across the network."
-  not-found: "&cReport not found."
-
 # --- OTHER COMMANDS ---
 commands:
   staffchat:

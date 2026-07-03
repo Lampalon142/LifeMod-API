@@ -55,7 +55,6 @@ import fr.lampalon.lifemod.platform.bukkit.listeners.hooks.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
 import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
-import fr.lampalon.lifemod.platform.bukkit.managers.gui.GuiManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.api.LifeModAPI;
 import fr.lampalon.lifemod.nms.NmsFactory;
@@ -99,8 +98,6 @@ public class LifeMod extends JavaPlugin {
     private DebugManager debugManager;
     private IPinService pinService;
     private ChatManager chatManager;
-    private GuiManager guiManager;
-    private NoteInputManager noteInputManager;
     private ModeratorSessionManager moderatorSessionManager;
     private ModeratorAuthService moderatorAuthService;
     private ReactionManager reactionManager;
@@ -185,6 +182,11 @@ public class LifeMod extends JavaPlugin {
                 new BukkitWebhookService(webhookUrl, discordEnabled, getLogger()));
 
         this.debugManager = new DebugManager(this);
+        ServiceRegistry.register(ExecutorService.class, Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "LifeMod-Async");
+            t.setDaemon(true);
+            return t;
+        }));
         initializeManagers();
 
         ServiceRegistry.register(IPinService.class, moderatorAuthService);
@@ -210,12 +212,6 @@ public class LifeMod extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
             databaseManager.getDatabaseProvider().cleanupExpiredSanctions();
         }, 20 * 60L, 20 * 60L);
-
-        ServiceRegistry.register(ExecutorService.class, Executors.newCachedThreadPool(r -> {
-            Thread t = new Thread(r, "LifeMod-Async");
-            t.setDaemon(true);
-            return t;
-        }));
     }
 
     private void setupRedis() {
@@ -447,9 +443,7 @@ public class LifeMod extends JavaPlugin {
                 getLogger().severe("Failed to initialize LogService: " + e.getMessage());
             }
         }
-        
-        guiManager = new GuiManager(this);
-        noteInputManager = new NoteInputManager(this);
+
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
         reactionManager = new ReactionManager(this);
@@ -510,9 +504,6 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(cpsListener, this);
         PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
 
-        pm.registerEvents(new GuiDetailListener(this), this);
-        pm.registerEvents(new ChatAsyncListener(this), this);
-        //pm.registerEvents(new TicketJoinListener(this, updateChecker), this);
         pm.registerEvents(new ChatListener(), this);
         pm.registerEvents(new ModeratorAuthListener(), this);
         pm.registerEvents(new SanctionListener(), this);
@@ -534,6 +525,7 @@ public class LifeMod extends JavaPlugin {
             pm.registerEvents(new LogItemListener(), this);
             pm.registerEvents(new LogEntityListener(), this);
             pm.registerEvents(new LogMovementListener(), this);
+            pm.registerEvents(new TraceItemListener(), this);
             pm.registerEvents(new VaultHook(), this);
             pm.registerEvents(new AxTradesHook(), this);
             pm.registerEvents(new QuickShopHook(), this);
@@ -567,8 +559,6 @@ public class LifeMod extends JavaPlugin {
     public FileConfiguration getConfigConfig() { return configConfig; }
     public DatabaseManager getDatabaseManager() { return databaseManager; }
     public ChatManager getChatManager() { return chatManager; }
-    public GuiManager getGuiManager() { return guiManager; }
-    public NoteInputManager getNoteInputManager() { return noteInputManager; }
     public FreezeManager getFreezeManager() { return freezeManager; }
     public IVanishService getVanishService() { return vanishService; }
     public DebugManager getDebugManager() { return debugManager; }

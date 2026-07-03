@@ -95,14 +95,6 @@ sanctions:
       public: "&6&lReseau &8» &a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
       silent: "&7[SILENCIEUX-RESEAU] &a%target% n'est plus muet grâce à %issuer%. Raison : %reason%"
 
-# --- REPORTS ---
-reports:
-  submitted: "&aSignalement soumis contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
-  usage: "&eUtilisation : /report <joueur> <raison>"
-  yourself: "&cVous ne pouvez pas vous signaler vous-même !"
-  join-alert: "&aIl y a actuellement &e%open%&a signalements ouverts et &e%pending%&a signalements en attente sur le réseau."
-  not-found: "&cSignalement non trouvé."
-
 # --- OTHER COMMANDS ---
 commands:
   staffchat:

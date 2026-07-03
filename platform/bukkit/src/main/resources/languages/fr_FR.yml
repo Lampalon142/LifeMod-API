@@ -115,123 +115,6 @@ sanctions:
       public: "&a%target% a été redonné la parole par %issuer%. Raison : %reason%"
       silent: "&7[SILENCIEUX] &a%target% a été redonné la parole par %issuer%. Raison : %reason%"
 
-# --- SIGNALEMENTS ---
-reports:
-  submitted: "&aSignalement envoyé contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
-  usage: "&eUtilisation : /report <joueur> <raison>"
-  yourself: "&cVous ne pouvez pas vous signaler vous-même !"
-  join-alert: "&aIl y a actuellement &e%open%&a signalements ouverts et &e%pending%&a en attente."
-  not-found: "&cSignalement non trouvé."
-  no-reports: "&cAucun signalement trouvé correspondant à vos critères."
-  
-  status:
-    open: "&aOuvert"
-    pending: "&eEn attente"
-    in_progress: "&6En cours"
-    closed: "&cFermé"
-    rejected: "&8Rejeté"
-    archived: "&7Archivé"
-    online: "&aEn ligne"
-    offline: "&7Hors-ligne"
-
-  gui:
-    main-title: "&d&lSignalements &7(Page %page%/%total%)"
-    item-name: "&eSignalement : %uuid%"
-    item-lore:
-      - "&7Cible : &c%target% &7(%target_status%)"
-      - "&7Auteur : &b%reporter% &7(%reporter_status%)"
-      - "&7Raison : &6%reason%"
-      - "&7Statut : &b%status%"
-      - "&7Serveur : &a%server%"
-      - "&7Date : &f%date%"
-      - "&8ID Signalement : %uuid%"
-      - ""
-      - "&7[!] Clic-droit pour les détails"
-      - "&7[!] Clic-gauche pour vous assigner"
-      - "&7[!] Shift-clic pour fermer le ticket"
-    
-    detail:
-      title: "&d&lDétails Signalement &7- &e#%id%"
-      reporter: "&bAuteur : &f%player%"
-      target: "&cCible : &f%player%"
-      info-title: "&bInformations du Signalement"
-      info-reason: "&7Raison : &f%reason%"
-      info-server: "&7Serveur : &a%server%"
-      info-status: "&7Statut : &e%status%"
-      info-date: "&7Date : &f%date%"
-      status-prefix: "&7Statut : "
-      title-prefix: "&dSignalement : &e#"
-      teleport: "&dTéléportation"
-      teleport-lore: [ "&7Cliquez pour vous téléporter", "&7au lieu du signalement." ]
-      assign: "&aM'assigner"
-      assign-lore: [ "&7Cliquez pour prendre la", "&7responsabilité de ce rapport." ]
-      close: "&cFermer le rapport"
-      close-lore: [ "&7Cliquez pour résoudre et", "&7fermer ce rapport." ]
-      back: "&7« Retour"
-      teleport-success: "&aTéléporté au lieu du signalement."
-
-    notes:
-      title: "&6Notes : &e#%id%"
-      add: "&a✚ Ajouter une note"
-      prompt: "&aTapez votre note dans le chat (ou 'cancel' pour annuler)"
-      content-format: "&f%content%"
-      item-title: "&eNote par &f%author%"
-      item-date: "&7Date : &f%date%"
-      item-edit: "&eClic-gauche pour éditer"
-      item-delete: "&cClic-droit pour supprimer"
-      delete-success: "&aNote supprimée !"
-      chat-cancelled: "&eAction annulée."
-      chat-saved: "&aNote sauvegardée avec succès !"
-      errors:
-        empty: "&cVotre note ne peut pas être vide."
-      menu:
-        edit:
-          cancelled: "&eÉdition annulée."
-          saved: "&aNote mise à jour !"
-        chat:
-          cancelled: "&eCréation annulée."
-          saved: "&aNote ajoutée !"
-
-# Legacy/Code Compatibility
-report:
-  status:
-    online: "&aEn ligne"
-    offline: "&7Hors-ligne"
-  detail:
-    title: "&d&lDétails Signalement &7- &e#%id%"
-    reporter: "&bAuteur : &f%player%"
-    target: "&cCible : &f%player%"
-    info: "&bInformations"
-    reason: "&7Raison : &f%reason%"
-    server: "&7Serveur : &a%server%"
-    status: "&7Statut : &e%status%"
-    date: "&7Date : &f%date%"
-    teleport: "&dTéléportation"
-    teleport-lore: [ "&7Cliquez pour vous téléporter", "&7au lieu du signalement." ]
-    assign: "&aM'assigner"
-    assign-lore: [ "&7Cliquez pour prendre la", "&7responsabilité de ce rapport." ]
-    close: "&cFermer le rapport"
-    close-lore: [ "&7Cliquez pour résoudre et", "&7fermer ce rapport." ]
-    notes:
-      title: "&6Notes : &e"
-      item:
-        date: "&7Date : &f%date%"
-        edit: "&eClic-gauche pour éditer"
-        delete: "&cClic-droit pour supprimer"
-  gui:
-    lore:
-      - "&7Cible : &c%target% &7(%target_status%)"
-      - "&7Auteur : &b%reporter% &7(%reporter_status%)"
-      - "&7Raison : &6%reason%"
-      - "&7Statut : &b%status%"
-      - "&7Serveur : &a%server%"
-      - "&7Date : &f%date%"
-      - "&8ID Signalement : %uuid%"
-      - ""
-      - "&7[!] Clic-droit pour les détails"
-      - "&7[!] Clic-gauche pour vous assigner"
-      - "&7[!] Shift-clic pour fermer le ticket"
-
 # --- OUTILS & INTERFACES ---
 gui:
   pagination:
@@ -314,6 +197,45 @@ gui:
     time-all: "Tout"
     time-since: "Depuis Date"
     type-all: "Toutes"
+
+# --- LOGS ---
+logs:
+  usage: "&cUtilisation : /log lookup <joueur> [type] [page]"
+  invalid-type: "&cType de log invalide."
+  disabled: "&cLes logs sont désactivés."
+  gui:
+    title: "&6Logs : &e%target%"
+    filter-type-name: "&6Filtre : Type"
+    filter-time-name: "&6Filtre : Temps"
+    custom-time-title: "&8Temps personnalisé"
+    custom-time-name: "&6Entrez une durée"
+    custom-time-confirm: "&eCliquez pour confirmer"
+    custom-time-invalid: "&cDurée invalide. Exemples : 30m, 1h, 7d"
+    custom-time-success: "&aVous avez entré &6%time%"
+
+# --- TRACE D'OBJET ---
+trace:
+  no-item: "&cTenez un objet dans votre main pour le tracer."
+  no-trace: "&cCet objet n'a pas d'historique de traçage."
+  no-results: "&cAucune entrée de traçage trouvée pour cet objet."
+  header: "&8-- &6Traçage &7(%item%) &8--"
+  entry: " &7#%num% &e%player% &7- &f%action% &7à %location% (%time%)"
+  footer: "&8----------------------------------------"
+  error: "&cUne erreur s'est produite lors du traçage de cet objet."
+  action:
+    CRAFT: "&eFabriqué"
+    PICKUP: "&aRamassé"
+    DROP: "&cJeté"
+    CONSUME: "&dConsommé"
+    DESPAWN: "&8Disparu"
+    RETRIEVE: "&bRetiré du conteneur"
+    STORE: "&6Stocké dans un conteneur"
+    SMELT: "&6Fondu"
+    ENCHANT: "&dEnchanté"
+    MOB_DROP: "&7Butin de monstre"
+    FISHING: "&bPêché"
+    DESTROYED: "&4Détruit"
+    SPAWNED: "&7Apparu"
 
 # --- OUTILS DE MODÉRATION ---
 mod:
@@ -541,11 +463,6 @@ commands:
       invalid: "%prefix%&cFormat de temps invalide !"
   chatclear:
     message: "%prefix%&cLe chat a été effacé."
-
-  reports:
-    usage: "&eUtilisation : /report <joueur> <raison>"
-    submitted: "&aSignalement envoyé contre &e%target% &apour : &f%reason% &7(&eServeur : %server%&7)"
-    yourself: "&cVous ne pouvez pas vous signaler vous-même !"
 
   freeze:
     usage: "%prefix%&cUtilisation : /freeze <joueur>"

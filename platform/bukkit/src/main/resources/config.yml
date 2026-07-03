@@ -284,10 +284,6 @@ modules:
         title: "Moderation Mode"
         description: "> %player% has toggled moderation mode!"
         color: "#FF0000"
-      report:
-        title: "New Report"
-        description: "> %player% has reported someone!"
-        color: "#FF0000"
       ban:
         title: "New Ban"
         description: "> %player% has been banned by %issuer% for: %reason%"
@@ -376,8 +372,6 @@ commands:
     warn: true
     history: true
     case: true
-    report: true
-    reports: true
     staffchat: true
     vanish: true
     freeze: true
@@ -401,6 +395,25 @@ gui:
   pagination:
     previous-material: ARROW
     next-material: ARROW
+  logs:
+    filter-type-material: HOPPER
+    filter-type-lore:
+      - "&7Current: &f%type%"
+      - ""
+      - "&eLeft-click to cycle types"
+      - "&eShift-click to reset to ALL"
+    filter-time-material: CLOCK
+    filter-time-lore:
+      - ""
+      - "&eLeft-click to cycle"
+      - "&eRight-click for custom time"
+      - "&eShift-click to reset"
+    info-material: BOOK
+    info-lore:
+      - "&7Type: &f%type%"
+      - "&7Range: %range%"
+      - "&7Total: &f%count%"
+    custom-time-item-material: NAME_TAG
   sanctions:
     materials:
       BAN: RED_CONCRETE
@@ -408,24 +421,11 @@ gui:
       WARN: YELLOW_CONCRETE
       KICK: GRAY_CONCRETE
       default: PAPER
-  reports:
-    item-material: PAPER
-    detail:
-      reporter-material: PLAYER_HEAD
-      target-material: PLAYER_HEAD
-      info-material: BOOK
-      teleport-material: COMPASS
-      assign-material: LIME_DYE
-      close-material: RED_DYE
-      back-material: ARROW
   alts:
     materials:
       banned: RED_TERRACOTTA
       online: LIME_TERRACOTTA
       offline: GRAY_TERRACOTTA
-  notes:
-    add-material: WRITABLE_BOOK
-    item-material: PAPER
   staffhistory:
     filter-type-material: HOPPER
     filter-player-material: PLAYER_HEAD

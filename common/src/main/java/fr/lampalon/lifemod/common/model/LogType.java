@@ -109,6 +109,8 @@ public enum LogType {
     STAFF_HISTORY_VIEW,
     SCAN_ENTITY,
 
+    ITEM_TRACE,
+
     SERVER_START,
     SERVER_STOP,
     RELOAD,

@@ -13,25 +13,6 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
     @Override
     public abstract Connection getConnection() throws SQLException;
 
-    protected Report mapResultSetToReport(ResultSet rs) throws SQLException {
-        Report report = new Report(
-                UUID.fromString(rs.getString("uuid")),
-                UUID.fromString(rs.getString("reporter_uuid")),
-                UUID.fromString(rs.getString("target_uuid")),
-                rs.getString("reason"),
-                rs.getString("server_name"),
-                ReportStatus.valueOf(rs.getString("status")),
-                rs.getString("assigned_to") != null ? UUID.fromString(rs.getString("assigned_to")) : null,
-                rs.getLong("created_at"),
-                rs.getLong("updated_at"),
-                rs.getString("last_updated_by") != null ? UUID.fromString(rs.getString("last_updated_by")) : null,
-                rs.getLong("closed_at"),
-                rs.getString("close_reason"));
-        report.setLocation(rs.getString("location_world"), rs.getDouble("location_x"),
-                rs.getDouble("location_y"), rs.getDouble("location_z"));
-        return report;
-    }
-
     protected Sanction mapResultSetToSanction(ResultSet rs) throws SQLException {
         Sanction s = new Sanction(
                 UUID.fromString(rs.getString("uuid")),
@@ -78,104 +59,6 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
                 .serverName(rs.getString("server_name"))
                 .createdAt(rs.getLong("created_at"))
                 .build();
-    }
-
-    // --- Reports ---
-
-    @Override
-    public Report getReportByUuid(UUID uuid) {
-        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports WHERE uuid = ?")) {
-            ps.setString(1, uuid.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return mapResultSetToReport(rs);
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return null;
-    }
-
-    @Override
-    public void updateReport(Report report) { saveReport(report); }
-
-    @Override
-    public List<Report> getAllReports(int limit, int offset) {
-        List<Report> reports = new ArrayList<>();
-        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports ORDER BY created_at DESC LIMIT ? OFFSET ?")) {
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) reports.add(mapResultSetToReport(rs));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return reports;
-    }
-
-    @Override
-    public List<Report> getReportsByTarget(UUID targetUuid) {
-        List<Report> reports = new ArrayList<>();
-        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM reports WHERE target_uuid = ? ORDER BY created_at DESC")) {
-            ps.setString(1, targetUuid.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) reports.add(mapResultSetToReport(rs));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return reports;
-    }
-
-    @Override
-    public void deleteReport(UUID uuid) {
-        try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM reports WHERE uuid = ?")) {
-            ps.setString(1, uuid.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
-    }
-
-    @Override
-    public List<StaffNote> getStaffNotesForReport(UUID reportId) {
-        List<StaffNote> notes = new ArrayList<>();
-        try (PreparedStatement ps = getConnection().prepareStatement("SELECT * FROM report_staff_notes WHERE report_id = ? ORDER BY created_at ASC")) {
-            ps.setString(1, reportId.toString());
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) notes.add(new StaffNote(
-                        UUID.fromString(rs.getString("note_id")),
-                        UUID.fromString(rs.getString("author")),
-                        rs.getLong("created_at"),
-                        rs.getLong("updated_at"),
-                        rs.getString("content")));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return notes;
-    }
-
-    @Override
-    public void addStaffNote(UUID reportId, StaffNote note) {
-        try (PreparedStatement ps = getConnection().prepareStatement(
-                "INSERT INTO report_staff_notes (note_id, report_id, author, created_at, updated_at, content) VALUES (?, ?, ?, ?, ?, ?)")) {
-            ps.setString(1, note.getNoteId().toString());
-            ps.setString(2, reportId.toString());
-            ps.setString(3, note.getAuthor().toString());
-            ps.setLong(4, note.getCreatedAt());
-            ps.setLong(5, note.getUpdatedAt());
-            ps.setString(6, note.getContent());
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
-    }
-
-    @Override
-    public void deleteStaffNote(UUID noteId) {
-        try (PreparedStatement ps = getConnection().prepareStatement("DELETE FROM report_staff_notes WHERE note_id = ?")) {
-            ps.setString(1, noteId.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
-    }
-
-    @Override
-    public void updateStaffNote(StaffNote note) {
-        try (PreparedStatement ps = getConnection().prepareStatement("UPDATE report_staff_notes SET updated_at = ?, content = ? WHERE note_id = ?")) {
-            ps.setLong(1, note.getUpdatedAt());
-            ps.setString(2, note.getContent());
-            ps.setString(3, note.getNoteId().toString());
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     // --- Inventories ---
@@ -432,7 +315,7 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
 
     protected void setLogParameters(PreparedStatement ps, LogEntry e) throws SQLException {
         ps.setInt(1, e.getType());
-        ps.setString(2, e.getPlayerUuid().toString());
+        ps.setString(2, e.getPlayerUuid() != null ? e.getPlayerUuid().toString() : null);
         ps.setString(3, e.getPlayerName());
         ps.setString(4, e.getTargetUuid() != null ? e.getTargetUuid().toString() : null);
         ps.setString(5, e.getTargetName());

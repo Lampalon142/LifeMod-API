@@ -39,8 +39,6 @@ public class MySQLManager extends AbstractDatabaseProvider {
         this.dataSource = new HikariDataSource(hikariConfig);
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reports (uuid VARCHAR(36) PRIMARY KEY, reporter_uuid VARCHAR(36), target_uuid VARCHAR(36), reason TEXT, server_name VARCHAR(64), status VARCHAR(32), assigned_to VARCHAR(36), created_at BIGINT, updated_at BIGINT, closed_at BIGINT, close_reason TEXT, location_world VARCHAR(64), location_x DOUBLE, location_y DOUBLE, location_z DOUBLE, location_yaw FLOAT, location_pitch FLOAT, last_updated_by VARCHAR(36));");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS report_staff_notes (note_id VARCHAR(36) PRIMARY KEY, report_id VARCHAR(36) NOT NULL, author VARCHAR(36) NOT NULL, created_at BIGINT NOT NULL, updated_at BIGINT NOT NULL, content TEXT NOT NULL, FOREIGN KEY (report_id) REFERENCES reports(uuid));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid VARCHAR(36), server_name VARCHAR(64), inventory_data LONGBLOB NOT NULL, saved_at BIGINT, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid VARCHAR(36) PRIMARY KEY, world VARCHAR(64), x DOUBLE, y DOUBLE, z DOUBLE, yaw FLOAT, pitch FLOAT, saved_at BIGINT);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid VARCHAR(36) PRIMARY KEY, player_uuid VARCHAR(36), player_name VARCHAR(32), issuer_uuid VARCHAR(36), issuer_name VARCHAR(32), server_name VARCHAR(64), category VARCHAR(32), type VARCHAR(16), reason TEXT, created_at BIGINT, duration BIGINT, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid VARCHAR(36), removed_by_name VARCHAR(32), remove_reason TEXT, removed_at BIGINT);");
@@ -73,32 +71,6 @@ public class MySQLManager extends AbstractDatabaseProvider {
     @Override
     public void closeConnection() {
         if (dataSource != null) dataSource.close();
-    }
-
-    @Override
-    public void saveReport(Report report) {
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO reports (uuid, reporter_uuid, target_uuid, reason, server_name, status, assigned_to, created_at, updated_at, closed_at, close_reason, location_world, location_x, location_y, location_z, location_yaw, location_pitch, last_updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE status=VALUES(status), assigned_to=VALUES(assigned_to), updated_at=VALUES(updated_at), closed_at=VALUES(closed_at), close_reason=VALUES(close_reason), last_updated_by=VALUES(last_updated_by)")) {
-            ps.setString(1, report.getUuid().toString());
-            ps.setString(2, report.getReporterUuid().toString());
-            ps.setString(3, report.getTargetUuid().toString());
-            ps.setString(4, report.getReason());
-            ps.setString(5, report.getServerName());
-            ps.setString(6, report.getStatus().name());
-            ps.setString(7, report.getAssignedTo() != null ? report.getAssignedTo().toString() : null);
-            ps.setLong(8, report.getCreatedAt());
-            ps.setLong(9, report.getUpdatedAt());
-            ps.setLong(10, report.getClosedAt());
-            ps.setString(11, report.getCloseReason());
-            ps.setString(12, report.getLocationWorld());
-            ps.setDouble(13, report.getX());
-            ps.setDouble(14, report.getY());
-            ps.setDouble(15, report.getZ());
-            ps.setFloat(16, 0f);
-            ps.setFloat(17, 0f);
-            ps.setString(18, report.getLastUpdatedBy() != null ? report.getLastUpdatedBy().toString() : null);
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override

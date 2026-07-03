@@ -56,7 +56,6 @@ public class PlayerQuit implements Listener {
         plugin.getStaffModeManager().cleanupMemoryOnQuit(uuid);
         plugin.getVanishService().getVanishedPlayers().remove(uuid);
         plugin.getFreezeManager().handleQuit(uuid);
-        plugin.getNoteInputManager().handleQuit(uuid);
         if (plugin.getVanishService() instanceof VanishService vs) {
             vs.handleQuit(uuid);
         }

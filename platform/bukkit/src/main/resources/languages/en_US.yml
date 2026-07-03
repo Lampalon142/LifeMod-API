@@ -153,123 +153,6 @@ sanctions:
       public: "&a%target% has been unmuted by %issuer%. Reason: %reason%"
       silent: "&7[SILENT] &a%target% has been unmuted by %issuer%. Reason: %reason%"
 
-# --- REPORTS ---
-reports:
-  submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
-  usage: "&eUsage: /report <player> <reason>"
-  yourself: "&cYou cannot report yourself!"
-  join-alert: "&aThere are currently &e%open%&a open reports and &e%pending%&a pending reports."
-  not-found: "&cReport not found."
-  no-reports: "&cNo reports found matching your criteria."
-  
-  status:
-    open: "&aOpen"
-    pending: "&ePending"
-    in_progress: "&6In Progress"
-    closed: "&cClosed"
-    rejected: "&8Rejected"
-    archived: "&7Archived"
-    online: "&aOnline"
-    offline: "&cOffline"
-
-  gui:
-    main-title: "&d&lReports &7(Page %page%/%total%)"
-    item-name: "&eReport: %uuid%"
-    item-lore:
-      - "&7Target: &c%target% &7(%target_status%)"
-      - "&7Reporter: &b%reporter% &7(%reporter_status%)"
-      - "&7Reason: &6%reason%"
-      - "&7Status: &b%status%"
-      - "&7Server: &a%server%"
-      - "&7Date: &f%date%"
-      - "&8Report ID: %uuid%"
-      - ""
-      - "&7[!] Right-click to open details"
-      - "&7[!] Left-click to assign to yourself"
-      - "&7[!] Shift-click to close ticket"
-    
-    detail:
-      title: "&d&lReport Details &7- &e#%id%"
-      reporter: "&bReporter: &f%player%"
-      target: "&cTarget: &f%player%"
-      info-title: "&bReport Information"
-      info-reason: "&7Reason: &f%reason%"
-      info-server: "&7Server: &a%server%"
-      info-status: "&7Status: &e%status%"
-      info-date: "&7Date: &f%date%"
-      status-prefix: "&7Status: "
-      title-prefix: "&dReport: &e#"
-      teleport: "&dTeleport to Location"
-      teleport-lore: [ "&7Click to teleport to where", "&7the report was created." ]
-      assign: "&aAssign to Me"
-      assign-lore: [ "&7Click to take responsibility", "&7for this report." ]
-      close: "&cClose Report"
-      close-lore: [ "&7Click to resolve and", "&7close this report." ]
-      back: "&7« Back"
-      teleport-success: "&aTeleported to report location."
-
-    notes:
-      title: "&6Notes: &e#%id%"
-      add: "&a✚ Add a note"
-      prompt: "&aType your note in chat (or 'cancel' to abort)"
-      content-format: "&f%content%"
-      item-title: "&eNote by &f%author%"
-      item-date: "&7Date: &f%date%"
-      item-edit: "&eLeft-click to edit"
-      item-delete: "&cRight-click to delete"
-      delete-success: "&aNote deleted!"
-      chat-cancelled: "&eNote action cancelled."
-      chat-saved: "&aNote saved successfully!"
-      errors:
-        empty: "&cYour note cannot be empty."
-      menu:
-        edit:
-          cancelled: "&eEdit cancelled."
-          saved: "&aNote updated!"
-        chat:
-          cancelled: "&eNote creation cancelled."
-          saved: "&aNote added!"
-
-# Legacy/Code Compatibility for Reports
-report:
-  status:
-    online: "&aOnline"
-    offline: "&cOffline"
-  detail:
-    title: "&d&lReport Details &7- &e#%id%"
-    reporter: "&bReporter: &f%player%"
-    target: "&cTarget: &f%player%"
-    info: "&bReport Information"
-    reason: "&7Reason: &f%reason%"
-    server: "&7Server: &a%server%"
-    status: "&7Status: &e%status%"
-    date: "&7Date: &f%date%"
-    teleport: "&dTeleport to Location"
-    teleport-lore: [ "&7Click to teleport to where", "&7the report was created." ]
-    assign: "&aAssign to Me"
-    assign-lore: [ "&7Click to take responsibility", "&7for this report." ]
-    close: "&cClose Report"
-    close-lore: [ "&7Click to resolve and", "&7close this report." ]
-    notes:
-      title: "&6Notes: &e"
-      item:
-        date: "&7Date: &f%date%"
-        edit: "&eLeft-click to edit"
-        delete: "&cRight-click to delete"
-  gui:
-    lore:
-      - "&7Target: &c%target% &7(%target_status%)"
-      - "&7Reporter: &b%reporter% &7(%reporter_status%)"
-      - "&7Reason: &6%reason%"
-      - "&7Status: &b%status%"
-      - "&7Server: &a%server%"
-      - "&7Date: &f%date%"
-      - "&8Report ID: %uuid%"
-      - ""
-      - "&7[!] Right-click to open details"
-      - "&7[!] Left-click to assign to yourself"
-      - "&7[!] Shift-click to close ticket"
-
 # --- LOGS ---
 logs:
   usage: "&cUsage: /log lookup <player> [type] [page]"
@@ -277,6 +160,37 @@ logs:
   disabled: "&cLogs are disabled."
   gui:
     title: "&6Logs: &e%target%"
+    filter-type-name: "&6Filter: Type"
+    filter-time-name: "&6Filter: Time"
+    custom-time-title: "&8Custom Time Range"
+    custom-time-name: "&6Enter time range"
+    custom-time-confirm: "&eClick to confirm"
+    custom-time-invalid: "&cInvalid time. Use e.g. 30m, 1h, 7d"
+    custom-time-success: "&aYou have entered &6%time%"
+
+# --- ITEM TRACE ---
+trace:
+  no-item: "&cHold an item in your hand to trace."
+  no-trace: "&cThis item has no trace history."
+  no-results: "&cNo trace entries found for this item."
+  header: "&8-- &6Item Trace &7(%item%) &8--"
+  entry: " &7#%num% &e%player% &7- &f%action% &7at %location% (%time%)"
+  footer: "&8----------------------------------------"
+  error: "&cAn error occurred while tracing this item."
+  action:
+    CRAFT: "&eCrafted"
+    PICKUP: "&aPicked up"
+    DROP: "&cDropped"
+    CONSUME: "&dConsumed"
+    DESPAWN: "&8Despawned"
+    RETRIEVE: "&bRetrieved from container"
+    STORE: "&6Stored in container"
+    SMELT: "&6Smelted"
+    ENCHANT: "&dEnchanted"
+    MOB_DROP: "&7Mob drop"
+    FISHING: "&bFished"
+    DESTROYED: "&4Destroyed"
+    SPAWNED: "&7Spawned"
 
 # --- TOOLS & GUIS ---
 gui:
@@ -552,11 +466,6 @@ commands:
       invalid: "%prefix%&cInvalid time format!"
   chatclear:
     message: "%prefix%&cThe chat has been cleared."
-
-  reports:
-    usage: "&eUsage: /report <player> <reason>"
-    submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
-    yourself: "&cYou cannot report yourself!"
 
   freeze:
     usage: "%prefix%&cUsage: /freeze <player>"

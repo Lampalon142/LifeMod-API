@@ -81,17 +81,22 @@ public class SanctionService implements ISanctionService {
     @Override
     public CompletableFuture<Boolean> revokeSanction(UUID playerUuid, SanctionType type, UUID removedBy, String removedByName, String reason, boolean silent) {
         return CompletableFuture.supplyAsync(() -> {
-            Sanction active = db.getActiveSanction(playerUuid, platform.getPlayerName(playerUuid), type);
-            if (active == null) return false;
+            List<Sanction> allActive = db.getActiveSanctions(playerUuid);
+            List<Sanction> toRevoke = allActive.stream()
+                    .filter(s -> s.getType() == type)
+                    .collect(Collectors.toList());
+            if (toRevoke.isEmpty()) return false;
 
-            active.revoke(removedBy, removedByName, reason);
-            db.updateSanction(active);
+            for (Sanction active : toRevoke) {
+                active.revoke(removedBy, removedByName, reason);
+                db.updateSanction(active);
+            }
 
             if (messaging != null) {
                 String message = String.format("REMOVE|%s|%s|%s|%s|%s|%b",
                         type.name(),
                         playerUuid,
-                        active.getPlayerName(),
+                        toRevoke.get(0).getPlayerName(),
                         removedByName,
                         reason,
                         silent
@@ -204,8 +209,16 @@ public class SanctionService implements ISanctionService {
                 command = config.getString("modules.auto-punish.global.thresholds." + count, null);
             }
 
-            if (command != null) {
-                String finalCommand = command.replace("%player%", platform.getPlayerName(playerUuid));
+            if (command != null && !history.isEmpty()) {
+                String playerName = history.get(0).getPlayerName();
+                String lowerCmd = command.toLowerCase();
+                boolean isBan = lowerCmd.startsWith("ban");
+                boolean isMute = lowerCmd.startsWith("mute");
+                if (isBan || isMute) {
+                    Sanction active = db.getActiveSanction(playerUuid, playerName, isBan ? SanctionType.BAN : SanctionType.MUTE);
+                    if (active != null) return;
+                }
+                String finalCommand = command.replace("%player%", playerName);
                 platform.runTask(() -> {
                     platform.dispatchCommand(finalCommand);
                 });

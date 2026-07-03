@@ -51,8 +51,6 @@ public class SQLiteManager extends AbstractDatabaseProvider {
     @Override
     public void setupDatabase() {
         try (Statement stmt = getConnection().createStatement()) {
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reports (uuid TEXT PRIMARY KEY, reporter_uuid TEXT, target_uuid TEXT, reason TEXT, server_name TEXT, status TEXT, assigned_to TEXT, created_at INTEGER, updated_at INTEGER, closed_at INTEGER, close_reason TEXT, location_world TEXT, location_x REAL, location_y REAL, location_z REAL, location_yaw REAL, location_pitch REAL, last_updated_by TEXT);");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS report_staff_notes (note_id TEXT PRIMARY KEY, report_id TEXT NOT NULL, author TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, content TEXT NOT NULL, FOREIGN KEY (report_id) REFERENCES reports(uuid) ON DELETE CASCADE);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_inventories (uuid TEXT, server_name TEXT, inventory_data TEXT NOT NULL, saved_at INTEGER, PRIMARY KEY (uuid, server_name));");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_coords (uuid TEXT PRIMARY KEY, world TEXT, x REAL, y REAL, z REAL, yaw REAL, pitch REAL, saved_at INTEGER);");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS sanctions (uuid TEXT PRIMARY KEY, player_uuid TEXT, player_name TEXT, issuer_uuid TEXT, issuer_name TEXT, server_name TEXT, category TEXT, type TEXT, reason TEXT, created_at INTEGER, duration INTEGER, silent BOOLEAN, active BOOLEAN, evidence TEXT, removed_by_uuid TEXT, removed_by_name TEXT, remove_reason TEXT, removed_at INTEGER);");
@@ -70,32 +68,6 @@ public class SQLiteManager extends AbstractDatabaseProvider {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void saveReport(Report report) {
-        try (PreparedStatement ps = getConnection().prepareStatement(
-                "INSERT OR REPLACE INTO reports (uuid, reporter_uuid, target_uuid, reason, server_name, status, assigned_to, created_at, updated_at, closed_at, close_reason, location_world, location_x, location_y, location_z, location_yaw, location_pitch, last_updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-            ps.setString(1, report.getUuid().toString());
-            ps.setString(2, report.getReporterUuid().toString());
-            ps.setString(3, report.getTargetUuid().toString());
-            ps.setString(4, report.getReason());
-            ps.setString(5, report.getServerName());
-            ps.setString(6, report.getStatus().name());
-            ps.setString(7, report.getAssignedTo() != null ? report.getAssignedTo().toString() : null);
-            ps.setLong(8, report.getCreatedAt());
-            ps.setLong(9, report.getUpdatedAt());
-            ps.setLong(10, report.getClosedAt());
-            ps.setString(11, report.getCloseReason());
-            ps.setString(12, report.getLocationWorld());
-            ps.setDouble(13, report.getX());
-            ps.setDouble(14, report.getY());
-            ps.setDouble(15, report.getZ());
-            ps.setFloat(16, 0f);
-            ps.setFloat(17, 0f);
-            ps.setString(18, report.getLastUpdatedBy() != null ? report.getLastUpdatedBy().toString() : null);
-            ps.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override

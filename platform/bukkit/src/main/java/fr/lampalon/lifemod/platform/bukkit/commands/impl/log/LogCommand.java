@@ -8,6 +8,7 @@ import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
 import fr.lampalon.lifemod.platform.bukkit.commands.utils.TabCompleterUtils;
 import fr.lampalon.lifemod.platform.bukkit.gui.LogLookupGui;
+import fr.lampalon.lifemod.platform.bukkit.gui.LogLookupGui.TimeRange;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -62,7 +63,6 @@ public class LogCommand extends LifeCommand {
         } else {
             filterType = null;
         }
-        final LogType finalFilterType = filterType;
 
         int page;
         if (context.getArgs().length >= 4) {
@@ -74,7 +74,11 @@ public class LogCommand extends LifeCommand {
         } else {
             page = 1;
         }
-        final int finalPage = page;
+
+        TimeRange timeRange = TimeRange.DAY_7;
+        if (context.getArgs().length >= 5) {
+            timeRange = TimeRange.byName(context.getArgs()[4].toUpperCase());
+        }
 
         ILogService logService = ServiceRegistry.get(ILogService.class);
         if (logService == null) {
@@ -82,7 +86,12 @@ public class LogCommand extends LifeCommand {
             return;
         }
 
-        long from = System.currentTimeMillis() - 7L * 86400000L; // 7 days default
+        openLogGui(context, targetName, targetUuid, filterType, page, timeRange, logService);
+    }
+
+    private void openLogGui(CommandContext context, String targetName, UUID targetUuid,
+                            LogType filterType, int page, TimeRange timeRange, ILogService logService) {
+        long from = timeRange.millis == Long.MAX_VALUE ? 0 : System.currentTimeMillis() - timeRange.millis;
         LogQuery query = LogQuery.builder()
                 .playerUuid(targetUuid)
                 .type(filterType)
@@ -91,10 +100,14 @@ public class LogCommand extends LifeCommand {
                 .offset((page - 1) * 45)
                 .build();
 
+        LogLookupGui.ReopenCallback callback = (newType, newRange, newPage) -> {
+            openLogGui(context, targetName, targetUuid, newType, newPage, newRange, logService);
+        };
+
         logService.count(query).thenAccept(count -> {
             logService.query(query).thenAccept(entries -> {
                 Bukkit.getScheduler().runTask(context.getPlugin(), () -> {
-                    new LogLookupGui(context.getPlayer(), entries, count, targetName, targetUuid, finalFilterType, finalPage).open();
+                    new LogLookupGui(context.getPlayer(), entries, count, targetName, targetUuid, filterType, page, from, timeRange, callback).open();
                 });
             });
         }).exceptionally(ex -> {

@@ -21,6 +21,13 @@ public class LogDeathListener extends LogBaseListener {
         if (p.getKiller() != null) {
             type = LogType.DEATH_PLAYER;
             data = "{\"k\":\"" + p.getKiller().getName() + "\",\"w\":\"" + p.getKiller().getInventory().getItemInMainHand().getType().name() + "\"}";
+            Location loc = p.getLocation();
+            logAsync(LogEntry.builder()
+                .type(LogType.KILL_PLAYER).playerUuid(p.getKiller().getUniqueId()).playerName(p.getKiller().getName())
+                .targetName(p.getName())
+                .actionData("{\"w\":\"" + p.getKiller().getInventory().getItemInMainHand().getType().name() + "\"}")
+                .world(locData(loc)).x(loc.getBlockX()).y(loc.getBlockY()).z(loc.getBlockZ())
+                .serverName(serverName()).now().build());
         } else if (p.getLastDamageCause() != null) {
             switch (p.getLastDamageCause().getCause()) {
                 case FALL: case FLY_INTO_WALL: type = LogType.DEATH_ENVIRONMENT; data = "{\"c\":\"fall\"}"; break;
