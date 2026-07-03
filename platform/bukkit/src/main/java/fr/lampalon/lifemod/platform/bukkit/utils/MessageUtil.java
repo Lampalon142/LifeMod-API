@@ -2,6 +2,7 @@ package fr.lampalon.lifemod.platform.bukkit.utils;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import net.md_5.bungee.api.ChatColor;
 
 import java.awt.*;
