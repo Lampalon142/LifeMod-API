@@ -241,6 +241,7 @@ reports:
     evidence-item-name: "&7%author% &8(%type%)"
     evidence-item-data: "&f%data%"
     evidence-item-date: "&7%date%"
+    evidence-header: "&b&lPreuves"
     status-updated: "&aStatut mis à jour : %status%"
 
   status:

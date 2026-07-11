@@ -70,6 +70,7 @@ public class MySQLManager extends AbstractDatabaseProvider {
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN assigned_to VARCHAR(36);"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN closed_at BIGINT DEFAULT 0;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN replay_id VARCHAR(36);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("UPDATE reports SET status = UPPER(status);"); } catch (SQLException ignored) {}
             createLogTableIfNeeded();
         } catch (SQLException e) {
             e.printStackTrace();

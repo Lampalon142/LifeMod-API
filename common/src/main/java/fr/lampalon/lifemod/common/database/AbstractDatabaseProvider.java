@@ -156,7 +156,7 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
                 rs.getString("target_name"),
                 rs.getString("reason"),
                 rs.getString("server_name"),
-                ReportStatus.valueOf(rs.getString("status")),
+                ReportStatus.valueOf(rs.getString("status").toUpperCase()),
                 rs.getString("assigned_to") != null ? UUID.fromString(rs.getString("assigned_to")) : null,
                 rs.getLong("created_at"),
                 rs.getLong("updated_at"),

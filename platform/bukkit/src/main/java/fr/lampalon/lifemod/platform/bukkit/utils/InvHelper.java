@@ -34,7 +34,6 @@ public class InvHelper {
 
     public static void fillBorder(Inventory inv, ItemStack item) {
         int size = inv.getSize();
-        int rows = size / 9;
 
         for (int i = 0; i < size; i++) {
             if (i < 9 || i >= size - 9 || i % 9 == 0 || (i + 1) % 9 == 0) {

@@ -15,12 +15,31 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ReportCommand extends LifeCommand {
 
     public ReportCommand() {
         super("report", "lifemod.report", true);
         setDescription("Report a player for rule breaking");
         setUsage("/report <player> <reason>");
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandContext context) {
+        String[] args = context.getArgs();
+        if (args.length == 1) {
+            String partial = args[0].toLowerCase();
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(n -> n.toLowerCase().startsWith(partial))
+                    .collect(Collectors.toList());
+        }
+        if (args.length == 2) {
+            return List.of("<reason>");
+        }
+        return List.of();
     }
 
     @Override

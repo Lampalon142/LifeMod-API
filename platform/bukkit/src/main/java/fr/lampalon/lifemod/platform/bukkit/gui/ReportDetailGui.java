@@ -26,6 +26,9 @@ import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.AbstractItem;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -59,6 +62,7 @@ public class ReportDetailGui extends AbstractGui {
                     String msg = event.getMessage();
                     if (msg.equalsIgnoreCase("cancel")) {
                         event.getPlayer().sendMessage(lang.getMessage("reports.gui.evidence-cancelled"));
+                        new ReportDetailGui(event.getPlayer(), reportId).open();
                         return;
                     }
                     ReportEvidence evidence = new ReportEvidence();
@@ -100,11 +104,6 @@ public class ReportDetailGui extends AbstractGui {
                 ? String.format("%s %.0f %.0f %.0f", report.getLocationWorld(),
                 report.getLocationX(), report.getLocationY(), report.getLocationZ())
                 : "N/A";
-        String assignedTo = report.getAssignedTo() != null
-                ? Bukkit.getOfflinePlayer(report.getAssignedTo()).getName()
-                : lang.getMessage("reports.gui.detail-unassigned");
-
-        Material statusMat = statusMaterial(report.getStatus());
 
         Item infoReporter = createInfoItem(Material.PLAYER_HEAD,
                 "reports.gui.detail-reporter", "%reporter%", report.getReporterName());
@@ -114,16 +113,23 @@ public class ReportDetailGui extends AbstractGui {
                 "reports.gui.detail-reason", "%reason%", report.getReason());
         Item infoServer = createInfoItem(Material.GRASS_BLOCK,
                 "reports.gui.detail-server", "%server%", report.getServerName());
-        Item infoStatus = createInfoItem(statusMat,
+        Item infoStatus = createInfoItem(statusMaterial(report.getStatus()),
                 "reports.gui.detail-status", "%status%", report.getStatus().name());
         Item infoDate = createInfoItem(Material.CLOCK,
                 "reports.gui.detail-date", "%date%", DATE_FMT.format(new Date(report.getCreatedAt())));
         Item infoLocation = createInfoItem(Material.COMPASS,
                 "reports.gui.detail-location", "%location%", loc);
         Item infoAssigned = createInfoItem(Material.NAME_TAG,
-                "reports.gui.detail-assigned", "%assigned%", assignedTo);
+                "reports.gui.detail-assigned", "%assigned%",
+                report.getAssignedTo() != null
+                        ? Bukkit.getOfflinePlayer(report.getAssignedTo()).getName()
+                        : lang.getMessage("reports.gui.detail-unassigned"));
 
         List<Item> evidenceItems = new ArrayList<>();
+        if (!evidenceList.isEmpty()) {
+            evidenceItems.add(new SimpleItem(new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE)
+                    .setDisplayName(lang.getMessage("reports.gui.evidence-header"))));
+        }
         for (ReportEvidence ev : evidenceList) {
             evidenceItems.add(createEvidenceItem(ev));
         }
@@ -167,36 +173,23 @@ public class ReportDetailGui extends AbstractGui {
             }
         };
 
-        List<Item> infoSlots = new ArrayList<>();
-        infoSlots.add(infoReporter);
-        infoSlots.add(infoTarget);
-        infoSlots.add(infoReason);
-        infoSlots.add(infoServer);
-        infoSlots.add(infoStatus);
-        infoSlots.add(infoDate);
-        infoSlots.add(infoLocation);
-        infoSlots.add(infoAssigned);
+        List<Item> infoItems = List.of(infoReporter, infoTarget, infoReason, infoServer,
+                infoStatus, infoDate, infoLocation, infoAssigned);
 
-        while (infoSlots.size() < 14) {
-            infoSlots.add(new SimpleItem(new ItemBuilder(Material.AIR)));
-        }
-
-        List<Item> contentItems = new ArrayList<>();
-        contentItems.addAll(infoSlots);
-        contentItems.addAll(evidenceItems);
-
-        while (contentItems.size() < 28) {
+        List<Item> contentItems = new ArrayList<>(infoItems);
+        while (contentItems.size() < 9) {
             contentItems.add(new SimpleItem(new ItemBuilder(Material.AIR)));
         }
+        contentItems.addAll(evidenceItems);
 
         return PagedGui.items()
                 .setStructure(
                         "# # # # # # # # #",
-                        "# i i i i i i i #",
-                        "# i i i i i i i #",
-                        "# e e e e e e e #",
-                        "# e e e e e e e #",
-                        "# # B # A C R E #")
+                        "i i i i i i i i i",
+                        "e e e e e e e e e",
+                        "e e e e e e e e e",
+                        "# # # # # # # # #",
+                        "# B # A C R E # #")
                 .addIngredient('i', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
                 .addIngredient('e', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
                 .addIngredient('#', createBorder())
@@ -230,7 +223,7 @@ public class ReportDetailGui extends AbstractGui {
                 click -> {
                     UUID assignee = newStatus == ReportStatus.ASSIGNED
                             ? player.getUniqueId() : report.getAssignedTo();
-                    db.updateReportStatus(reportId, newStatus.name().toLowerCase(), assignee);
+                    db.updateReportStatus(reportId, newStatus.name(), assignee);
                     report = db.getReportById(reportId);
                     player.sendMessage(lang.getMessage("reports.gui.status-updated",
                             "%status%", newStatus.name()));
@@ -249,7 +242,29 @@ public class ReportDetailGui extends AbstractGui {
                 "%data%", evidence.getData()));
         builder.addLoreLines(lang.getMessage("reports.gui.evidence-item-date",
                 "%date%", date));
-        return new SimpleItem(builder);
+        if ("image_url".equals(evidence.getType())) {
+            builder.addLoreLines("§e§nClick to open in browser");
+        } else {
+            builder.addLoreLines("§e§nClick to view in chat");
+        }
+        return new AbstractItem() {
+            @Override
+            public ItemProvider getItemProvider() {
+                return builder;
+            }
+
+            @Override
+            public void handleClick(@NotNull ClickType clickType, @NotNull Player player,
+                                    @NotNull InventoryClickEvent event) {
+                if ("image_url".equals(evidence.getType())) {
+                    TextComponent msg = new TextComponent("§6§n" + evidence.getData());
+                    msg.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, evidence.getData()));
+                    player.spigot().sendMessage(msg);
+                } else {
+                    player.sendMessage("§7[Evidence] §f" + evidence.getData());
+                }
+            }
+        };
     }
 
     private static Material statusMaterial(ReportStatus status) {
