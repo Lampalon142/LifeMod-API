@@ -1,6 +1,6 @@
 #!/bin/bash
 # generate-changelog.sh <from> <to>
-# Outputs categorized markdown changelog to stdout
+# Outputs categorized markdown changelog with descriptions to stdout
 
 FROM="$1"
 TO="$2"
@@ -10,46 +10,58 @@ CHANGED=""
 FIXED=""
 REMOVED=""
 
-while IFS=' ' read -r HASH MSG; do
-  case "$MSG" in
+while IFS='§' read -r HASH SUBJECT BODY; do
+  SHORT_HASH="${HASH:0:7}"
+  LINE="- **${SUBJECT}** ([${SHORT_HASH}](https://github.com/Lampalon142/LifeMod/commit/${HASH}))"
+
+  if [ -n "$BODY" ]; then
+    LINE+=$'\n'
+    while IFS= read -r BODY_LINE; do
+      if [ -n "$BODY_LINE" ]; then
+        LINE+="  ${BODY_LINE}"$'\n'
+      fi
+    done <<< "$BODY"
+  fi
+
+  case "$SUBJECT" in
     feat*|feature*)
-      WHATS_NEW+="- ${MSG} (#${HASH})"$'\n'
+      WHATS_NEW+="$LINE"$'\n'
       ;;
     fix*)
-      FIXED+="- ${MSG} (#${HASH})"$'\n'
+      FIXED+="$LINE"$'\n'
       ;;
     remove*)
-      REMOVED+="- ${MSG} (#${HASH})"$'\n'
+      REMOVED+="$LINE"$'\n'
       ;;
     *)
-      CHANGED+="- ${MSG} (#${HASH})"$'\n'
+      CHANGED+="$LINE"$'\n'
       ;;
   esac
-done < <(git log --oneline --reverse "$FROM..$TO" 2>/dev/null || true)
+done < <(git log --format="%H§%s§%b" --reverse "$FROM..$TO" 2>/dev/null || true)
 
 if [ -n "$WHATS_NEW" ]; then
-  echo "## Whats new ?"
+  echo "## 🆕 What's New"
   echo
   echo -n "$WHATS_NEW"
   echo
 fi
 
 if [ -n "$CHANGED" ]; then
-  echo "## Changed"
+  echo "## 🔧 Changed"
   echo
   echo -n "$CHANGED"
   echo
 fi
 
 if [ -n "$FIXED" ]; then
-  echo "## Fixed"
+  echo "## 🐛 Fixed"
   echo
   echo -n "$FIXED"
   echo
 fi
 
 if [ -n "$REMOVED" ]; then
-  echo "## Removed"
+  echo "## ❌ Removed"
   echo
   echo -n "$REMOVED"
   echo
