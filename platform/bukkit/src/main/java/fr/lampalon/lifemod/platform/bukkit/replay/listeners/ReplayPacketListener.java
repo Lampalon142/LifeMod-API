@@ -91,7 +91,7 @@ public class ReplayPacketListener implements PacketListener {
             if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
             ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
             if (recvSession == null || !recvSession.isRecording()) return;
-            int moveEntityId = readPacketEntityId(event.getByteBuf());
+            int moveEntityId = readPacketEntityId((io.netty.buffer.ByteBuf) event.getByteBuf());
             if (moveEntityId == recvSession.getEntityId()) return;
             byte[] data = serializeWithMagic(event.getByteBuf(), MAGIC_ENTITY_PACKET);
             if (data != null) {
