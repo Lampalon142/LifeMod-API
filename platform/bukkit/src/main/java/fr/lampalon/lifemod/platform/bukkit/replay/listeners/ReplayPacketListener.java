@@ -81,13 +81,23 @@ public class ReplayPacketListener implements PacketListener {
             }
         }
 
-        // ── Movement — skip, ReplayPositionRecorder handles these ─────────────
+        // ── Movement — record for OTHER entities, skip only the recorded player ──
         if (type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)
                 || type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION)
                 || type.equals(PacketType.Play.Server.ENTITY_ROTATION)
                 || type.equals(PacketType.Play.Server.ENTITY_TELEPORT)
                 || type.equals(PacketType.Play.Server.ENTITY_VELOCITY)
                 || type.equals(PacketType.Play.Server.ENTITY_HEAD_LOOK)) {
+            if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
+            ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
+            if (recvSession == null || !recvSession.isRecording()) return;
+            int moveEntityId = readPacketEntityId(event.getByteBuf());
+            if (moveEntityId == recvSession.getEntityId()) return;
+            byte[] data = serializeWithMagic(event.getByteBuf(), MAGIC_ENTITY_PACKET);
+            if (data != null) {
+                recvSession.addFrame(new ReplayFrame(
+                        System.currentTimeMillis(), Collections.singletonList(data)));
+            }
             return;
         }
 
@@ -198,5 +208,21 @@ public class ReplayPacketListener implements PacketListener {
         } finally {
             b.readerIndex(savedIndex);
         }
+    }
+
+    private int readPacketEntityId(ByteBuf buf) {
+        int savedIndex = buf.readerIndex();
+        try {
+            buf.readerIndex(0);
+            return readVarInt(buf);
+        } finally {
+            buf.readerIndex(savedIndex);
+        }
+    }
+
+    private int readVarInt(ByteBuf buf) {
+        int v = 0, s = 0; byte b;
+        do { b = buf.readByte(); v |= (b & 0x7F) << s; s += 7; } while ((b & 0x80) != 0);
+        return v;
     }
 }

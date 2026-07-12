@@ -11,6 +11,7 @@ import fr.lampalon.lifemod.common.nms.api.NMSProvider;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.core.ILifePlatform;
@@ -318,6 +319,12 @@ public class PlaybackManager {
             return;
         }
 
+        // ── 0xF1-0xF8 : event frames — display to spectator ────────────────────
+        if (magic >= (byte) 0xF1 && magic <= (byte) 0xF8) {
+            displayEvent(spectator, data);
+            return;
+        }
+
         // Strip magic byte
         byte[] raw = new byte[data.length - 1];
         System.arraycopy(data, 1, raw, 0, raw.length);
@@ -421,5 +428,63 @@ public class PlaybackManager {
         obs.setYaw(npcLoc.getYaw() + (float) yawOffset);
         obs.setPitch(pitch);
         return obs;
+    }
+
+    private void displayEvent(Player spectator, byte[] data) {
+        try {
+            DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
+            byte magic = dis.readByte();
+            ILangService lang = ServiceRegistry.get(ILangService.class);
+            switch (magic) {
+                case (byte) 0xF1: {
+                    String item = dis.readUTF();
+                    int count = dis.readInt();
+                    spectator.sendMessage("§e[Replay] §7Dropped §f" + item + " §7x" + count);
+                    break;
+                }
+                case (byte) 0xF2: {
+                    String msg = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §7Chat: §f" + msg);
+                    break;
+                }
+                case (byte) 0xF3: {
+                    String cmd = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §7Command: §f" + cmd);
+                    break;
+                }
+                case (byte) 0xF4: {
+                    String attacker = dis.readUTF();
+                    double dmg = dis.readDouble();
+                    String cause = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §cDamage §7from §f" + attacker
+                            + " §7(" + String.format("%.1f", dmg) + " §7" + cause + ")");
+                    break;
+                }
+                case (byte) 0xF5: {
+                    String deathMsg = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §4Death: §f" + deathMsg);
+                    break;
+                }
+                case (byte) 0xF6: {
+                    String projectile = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §7Launched §f" + projectile);
+                    break;
+                }
+                case (byte) 0xF7: {
+                    String target = dis.readUTF();
+                    String type = dis.readUTF();
+                    spectator.sendMessage("§e[Replay] §7Interacted with §f" + target + " §7(" + type + ")");
+                    break;
+                }
+                case (byte) 0xF8: {
+                    String item = dis.readUTF();
+                    int count = dis.readInt();
+                    spectator.sendMessage("§e[Replay] §7Picked up §f" + item + " §7x" + count);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warning("displayEvent error: " + e.getMessage());
+        }
     }
 }

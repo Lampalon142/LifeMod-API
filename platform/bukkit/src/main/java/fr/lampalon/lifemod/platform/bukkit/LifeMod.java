@@ -513,6 +513,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayEventRecorder(replayManager), this);
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         pm.registerEvents(new ServerListPingListener(vanishService), this);
         pm.registerEvents(new ReportListener(this), this);
