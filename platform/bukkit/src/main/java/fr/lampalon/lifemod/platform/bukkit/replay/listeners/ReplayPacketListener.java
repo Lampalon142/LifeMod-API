@@ -81,23 +81,13 @@ public class ReplayPacketListener implements PacketListener {
             }
         }
 
-        // ── Movement — record for OTHER entities, skip only the recorded player ──
+        // ── Movement — skip all, ReplayPositionRecorder handles the recorded player ──
         if (type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)
                 || type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION)
                 || type.equals(PacketType.Play.Server.ENTITY_ROTATION)
                 || type.equals(PacketType.Play.Server.ENTITY_TELEPORT)
                 || type.equals(PacketType.Play.Server.ENTITY_VELOCITY)
                 || type.equals(PacketType.Play.Server.ENTITY_HEAD_LOOK)) {
-            if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
-            ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
-            if (recvSession == null || !recvSession.isRecording()) return;
-            int moveEntityId = readPacketEntityId((io.netty.buffer.ByteBuf) event.getByteBuf());
-            if (moveEntityId == recvSession.getEntityId()) return;
-            byte[] data = serializeWithMagic(event.getByteBuf(), MAGIC_ENTITY_PACKET);
-            if (data != null) {
-                recvSession.addFrame(new ReplayFrame(
-                        System.currentTimeMillis(), Collections.singletonList(data)));
-            }
             return;
         }
 

@@ -331,7 +331,7 @@ public class PlaybackManager {
 
         // ── 0xFD : world packet — send as-is ─────────────────────────────────
         if (magic == ReplayPacketListener.MAGIC_WORLD_PACKET) {
-            PacketEvents.getAPI().getProtocolManager().sendPacket(
+            PacketEvents.getAPI().getPlayerManager().sendPacket(
                     spectator, Unpooled.wrappedBuffer(raw));
             return;
         }
@@ -340,14 +340,14 @@ public class PlaybackManager {
         if (magic == ReplayPacketListener.MAGIC_ENTITY_PACKET) {
             if (originalEntityId >= 0) {
                 byte[] rewritten = rewriteEntityId(raw, originalEntityId, virtualEntityId);
-                PacketEvents.getAPI().getProtocolManager().sendPacket(
+                PacketEvents.getAPI().getPlayerManager().sendPacket(
                         spectator, Unpooled.wrappedBuffer(rewritten));
             }
             return;
         }
 
         // Legacy — send as-is
-        PacketEvents.getAPI().getProtocolManager().sendPacket(
+        PacketEvents.getAPI().getPlayerManager().sendPacket(
                 spectator, Unpooled.wrappedBuffer(data));
     }
 
