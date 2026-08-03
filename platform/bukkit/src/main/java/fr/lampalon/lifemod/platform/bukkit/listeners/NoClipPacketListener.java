@@ -131,7 +131,8 @@ public class NoClipPacketListener extends PacketListenerAbstract {
         if (player.getLocation().distanceSquared(blockLoc) > 36) return;
 
         if (originalGm == GameMode.CREATIVE) {
-            block.setType(org.bukkit.Material.AIR);
+            Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
+                block.setType(org.bukkit.Material.AIR));
         } else {
             Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
                 block.breakNaturally(player.getInventory().getItemInMainHand()));
@@ -162,8 +163,10 @@ public class NoClipPacketListener extends PacketListenerAbstract {
     }
 
     private void tempCreative(Player player) {
-        player.setGameMode(GameMode.CREATIVE);
-        Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
-            player.setGameMode(GameMode.SPECTATOR));
+        Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () -> {
+            player.setGameMode(GameMode.CREATIVE);
+            Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
+                player.setGameMode(GameMode.SPECTATOR));
+        });
     }
 }
