@@ -2,6 +2,7 @@
 
 ## Workflow
 - **Required order:** `./gradlew build shadowJar` then `./gradlew test`
+- **Commit & push proactively:** Always take the initiative to commit and push any modification to `v2` with conventional commits — do NOT wait to be asked
 - **No test classes exist** — `./gradlew test` produces 0% JaCoCo coverage; report is still generated and uploaded to Codecov
 - **No lint/format/typecheck** rules configured
 - **Java 21 toolchain** in `build.gradle`; CI runner uses JDK 17 (Temurin) — toolchain resolves the mismatch
