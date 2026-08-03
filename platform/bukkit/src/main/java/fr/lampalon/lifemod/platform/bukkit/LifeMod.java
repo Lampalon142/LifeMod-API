@@ -47,7 +47,6 @@ import fr.lampalon.lifemod.platform.bukkit.adapter.IItemsAdderService;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.BukkitCommandWrapper;
 import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
-import fr.lampalon.lifemod.platform.bukkit.listeners.hooks.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
