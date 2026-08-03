@@ -71,6 +71,9 @@ public class MySQLManager extends AbstractDatabaseProvider {
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN closed_at BIGINT DEFAULT 0;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN replay_id VARCHAR(36);"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("UPDATE reports SET status = UPPER(status);"); } catch (SQLException ignored) {}
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_replays (session_name VARCHAR(64) PRIMARY KEY, player_uuid VARCHAR(36) NOT NULL, entity_id INT, player_name VARCHAR(32), world_name VARCHAR(64), start_x DOUBLE, start_y DOUBLE, start_z DOUBLE, start_yaw FLOAT, start_pitch FLOAT, duration_ms BIGINT, frame_count INT, data LONGBLOB NOT NULL, created_at BIGINT NOT NULL, is_report BOOLEAN DEFAULT FALSE);");
+            try { stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_replays_created ON player_replays(created_at);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_replays_report ON player_replays(is_report);"); } catch (SQLException ignored) {}
             createLogTableIfNeeded();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -80,6 +83,11 @@ public class MySQLManager extends AbstractDatabaseProvider {
     @Override
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
+    }
+
+    @Override
+    public boolean supportsAsyncWrites() {
+        return true;
     }
 
     @Override

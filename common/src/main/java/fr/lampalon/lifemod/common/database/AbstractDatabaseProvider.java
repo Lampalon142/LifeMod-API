@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 public abstract class AbstractDatabaseProvider implements DatabaseProvider {
@@ -165,6 +166,123 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
         r.setLocation(rs.getString("location_world"), rs.getDouble("location_x"),
                 rs.getDouble("location_y"), rs.getDouble("location_z"));
         return r;
+    }
+
+    @Override
+    public void setReportReplayId(int reportId, String replayId) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "UPDATE reports SET replay_id = ?, updated_at = ? WHERE id = ?")) {
+            ps.setString(1, replayId);
+            ps.setLong(2, System.currentTimeMillis());
+            ps.setInt(3, reportId);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    // --- Replays ---
+
+    @Override
+    public void saveReplay(String sessionName, UUID playerUuid, int entityId, String playerName, String worldName,
+                           double startX, double startY, double startZ, float startYaw, float startPitch,
+                           long durationMs, int frameCount, byte[] data) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "INSERT INTO player_replays (session_name, player_uuid, entity_id, player_name, world_name, start_x, start_y, start_z, start_yaw, start_pitch, duration_ms, frame_count, data, created_at, is_report) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)")) {
+            ps.setString(1, sessionName);
+            ps.setString(2, playerUuid.toString());
+            ps.setInt(3, entityId);
+            ps.setString(4, playerName);
+            ps.setString(5, worldName);
+            ps.setDouble(6, startX);
+            ps.setDouble(7, startY);
+            ps.setDouble(8, startZ);
+            ps.setFloat(9, startYaw);
+            ps.setFloat(10, startPitch);
+            ps.setLong(11, durationMs);
+            ps.setInt(12, frameCount);
+            ps.setBytes(13, data);
+            ps.setLong(14, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public List<DatabaseProvider.ReplayMeta> listReplays(int limit, int offset) {
+        List<DatabaseProvider.ReplayMeta> list = new ArrayList<>();
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "SELECT * FROM player_replays ORDER BY created_at DESC LIMIT ? OFFSET ?")) {
+            ps.setInt(1, limit);
+            ps.setInt(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) list.add(mapReplayMeta(rs));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    @Override
+    public DatabaseProvider.ReplayMeta getReplayMeta(String sessionName) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "SELECT * FROM player_replays WHERE session_name = ?")) {
+            ps.setString(1, sessionName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return mapReplayMeta(rs);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @Override
+    public byte[] getReplayData(String sessionName) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "SELECT data FROM player_replays WHERE session_name = ?")) {
+            ps.setString(1, sessionName);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getBytes("data");
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    @Override
+    public void deleteReplay(String sessionName) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "DELETE FROM player_replays WHERE session_name = ?")) {
+            ps.setString(1, sessionName);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void deleteExpiredReplays(long thresholdMs) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "DELETE FROM player_replays WHERE is_report = 0 AND created_at < ?")) {
+            ps.setLong(1, thresholdMs);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public void markReplayAsReport(String sessionName) {
+        try (PreparedStatement ps = getConnection().prepareStatement(
+                "UPDATE player_replays SET is_report = 1 WHERE session_name = ?")) {
+            ps.setString(1, sessionName);
+            ps.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    private DatabaseProvider.ReplayMeta mapReplayMeta(ResultSet rs) throws SQLException {
+        return new DatabaseProvider.ReplayMeta(
+                rs.getString("session_name"),
+                UUID.fromString(rs.getString("player_uuid")),
+                rs.getInt("entity_id"),
+                rs.getString("player_name"),
+                rs.getString("world_name"),
+                rs.getDouble("start_x"), rs.getDouble("start_y"), rs.getDouble("start_z"),
+                rs.getFloat("start_yaw"), rs.getFloat("start_pitch"),
+                rs.getLong("duration_ms"),
+                rs.getInt("frame_count"),
+                rs.getLong("created_at"),
+                rs.getBoolean("is_report"));
     }
 
     // --- Inventories ---

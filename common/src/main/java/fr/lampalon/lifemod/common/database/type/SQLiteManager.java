@@ -78,6 +78,9 @@ public class SQLiteManager extends AbstractDatabaseProvider {
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN closed_at INTEGER DEFAULT 0;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("ALTER TABLE reports ADD COLUMN replay_id TEXT;"); } catch (SQLException ignored) {}
             try { stmt.executeUpdate("UPDATE reports SET status = UPPER(status);"); } catch (SQLException ignored) {}
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS player_replays (session_name TEXT PRIMARY KEY, player_uuid TEXT NOT NULL, entity_id INTEGER, player_name TEXT, world_name TEXT, start_x REAL, start_y REAL, start_z REAL, start_yaw REAL, start_pitch REAL, duration_ms INTEGER, frame_count INTEGER, data BLOB NOT NULL, created_at INTEGER NOT NULL, is_report BOOLEAN DEFAULT 0);");
+            try { stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_replays_created ON player_replays(created_at);"); } catch (SQLException ignored) {}
+            try { stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_replays_report ON player_replays(is_report);"); } catch (SQLException ignored) {}
             createLogTableIfNeeded();
         } catch (SQLException e) {
             e.printStackTrace();

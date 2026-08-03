@@ -20,6 +20,15 @@ public interface DatabaseProvider {
     Connection getConnection() throws SQLException;
     void closeConnection();
 
+    /**
+     * Whether replay blobs may be written from a background thread.
+     * Pooled providers (e.g. MySQL/HikariCP) return true; providers backed by a
+     * single shared connection (SQLite) return false so writes stay on the caller thread.
+     */
+    default boolean supportsAsyncWrites() {
+        return false;
+    }
+
     // Reports
     int saveReport(Report report);
     Report getReportById(int id);
@@ -28,6 +37,7 @@ public interface DatabaseProvider {
     void updateReportStatus(int id, String status, UUID assignedTo);
     void addEvidence(ReportEvidence evidence);
     List<ReportEvidence> getEvidence(int reportId);
+    void setReportReplayId(int reportId, String replayId);
 
     void saveRawInventory(UUID uuid, String serverName, byte[] data);
     byte[] getRawInventory(UUID uuid, String serverName);
@@ -65,6 +75,42 @@ public interface DatabaseProvider {
     void saveIPInfo(String ip, String countryCode, String countryName, String isp, boolean isProxy, long lastUpdate);
     fr.lampalon.lifemod.common.antivpn.data.IPInfo getIPInfo(String ip);
     void deleteExpiredIPInfo(long threshold);
+
+    // Replays
+    void saveReplay(String sessionName, UUID playerUuid, int entityId, String playerName, String worldName,
+                    double startX, double startY, double startZ, float startYaw, float startPitch,
+                    long durationMs, int frameCount, byte[] data);
+    List<ReplayMeta> listReplays(int limit, int offset);
+    ReplayMeta getReplayMeta(String sessionName);
+    byte[] getReplayData(String sessionName);
+    void deleteReplay(String sessionName);
+    void deleteExpiredReplays(long thresholdMs);
+    void markReplayAsReport(String sessionName);
+
+    class ReplayMeta {
+        public final String sessionName;
+        public final UUID playerUuid;
+        public final int entityId;
+        public final String playerName;
+        public final String worldName;
+        public final double startX, startY, startZ;
+        public final float startYaw, startPitch;
+        public final long durationMs;
+        public final int frameCount;
+        public final long createdAt;
+        public final boolean isReport;
+
+        public ReplayMeta(String sessionName, UUID playerUuid, int entityId, String playerName, String worldName,
+                          double startX, double startY, double startZ, float startYaw, float startPitch,
+                          long durationMs, int frameCount, long createdAt, boolean isReport) {
+            this.sessionName = sessionName; this.playerUuid = playerUuid; this.entityId = entityId;
+            this.playerName = playerName; this.worldName = worldName;
+            this.startX = startX; this.startY = startY; this.startZ = startZ;
+            this.startYaw = startYaw; this.startPitch = startPitch;
+            this.durationMs = durationMs; this.frameCount = frameCount;
+            this.createdAt = createdAt; this.isReport = isReport;
+        }
+    }
 
     // Action Logs
     void saveLogBatch(List<LogEntry> entries);
