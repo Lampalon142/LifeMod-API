@@ -64,22 +64,6 @@ modules:
   staffchat:
     enabled: true
 
-  logs:
-    enabled: true
-    log-connection: true
-    log-chat: true
-    log-commands: true
-    flush-interval: 5
-    batch-size: 500
-    ignored-commands:
-      - "/shop"
-      - "/warp"
-      - "/spawn"
-      - "/tpa"
-    retention:
-      default: 30d
-      per-type: []
-
   auto-punish:
     enabled: true
     mode: "GLOBAL"

@@ -413,25 +413,6 @@ gui:
   pagination:
     previous-material: ARROW
     next-material: ARROW
-  logs:
-    filter-type-material: HOPPER
-    filter-type-lore:
-      - "&7Current: &f%type%"
-      - ""
-      - "&eLeft-click to cycle types"
-      - "&eShift-click to reset to ALL"
-    filter-time-material: CLOCK
-    filter-time-lore:
-      - ""
-      - "&eLeft-click to cycle"
-      - "&eRight-click for custom time"
-      - "&eShift-click to reset"
-    info-material: BOOK
-    info-lore:
-      - "&7Type: &f%type%"
-      - "&7Range: %range%"
-      - "&7Total: &f%count%"
-    custom-time-item-material: NAME_TAG
   sanctions:
     materials:
       BAN: RED_CONCRETE
@@ -493,31 +474,6 @@ auth:
       delete: 25
       clear: 43
       validate: 52
-
-# --- LOGS ---
-logs:
-  enabled: true
-  log-connection: true
-  log-chat: true
-  log-commands: true
-  log-block: true
-  log-container: true
-  log-item: true
-  log-entity: true
-  log-teleport: true
-  log-death: true
-  log-trade: true
-  log-world: true
-  flush-interval: 5
-  batch-size: 500
-  ignored-commands:
-    - "/shop"
-    - "/warp"
-    - "/spawn"
-    - "/tpa"
-  retention:
-    default: 30d
-    per-type: []
 
 # --- DEBUG ---
 debug:

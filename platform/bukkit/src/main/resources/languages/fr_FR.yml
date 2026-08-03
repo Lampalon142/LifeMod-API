@@ -254,45 +254,6 @@ reports:
     CLOSED: "&aFermé"
     REJECTED: "&cRejeté"
 
-# --- LOGS ---
-logs:
-  usage: "&cUtilisation : /log lookup <joueur> [type] [page]"
-  invalid-type: "&cType de log invalide."
-  disabled: "&cLes logs sont désactivés."
-  gui:
-    title: "&6Logs : &e%target%"
-    filter-type-name: "&6Filtre : Type"
-    filter-time-name: "&6Filtre : Temps"
-    custom-time-title: "&8Temps personnalisé"
-    custom-time-name: "&6Entrez une durée"
-    custom-time-confirm: "&eCliquez pour confirmer"
-    custom-time-invalid: "&cDurée invalide. Exemples : 30m, 1h, 7d"
-    custom-time-success: "&aVous avez entré &6%time%"
-
-# --- TRACE D'OBJET ---
-trace:
-  no-item: "&cTenez un objet dans votre main pour le tracer."
-  no-trace: "&cCet objet n'a pas d'historique de traçage."
-  no-results: "&cAucune entrée de traçage trouvée pour cet objet."
-  header: "&8-- &6Traçage &7(%item%) &8--"
-  entry: " &7#%num% &e%player% &7- &f%action% &7à %location% (%time%)"
-  footer: "&8----------------------------------------"
-  error: "&cUne erreur s'est produite lors du traçage de cet objet."
-  action:
-    CRAFT: "&eFabriqué"
-    PICKUP: "&aRamassé"
-    DROP: "&cJeté"
-    CONSUME: "&dConsommé"
-    DESPAWN: "&8Disparu"
-    RETRIEVE: "&bRetiré du conteneur"
-    STORE: "&6Stocké dans un conteneur"
-    SMELT: "&6Fondu"
-    ENCHANT: "&dEnchanté"
-    MOB_DROP: "&7Butin de monstre"
-    FISHING: "&bPêché"
-    DESTROYED: "&4Détruit"
-    SPAWNED: "&7Apparu"
-
 # --- OUTILS DE MODÉRATION ---
 mod:
   enable: "%prefix%&aMode modération activé."

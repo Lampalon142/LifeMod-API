@@ -225,45 +225,6 @@ reports:
     CLOSED: "&aClosed"
     REJECTED: "&cRejected"
 
-# --- LOGS ---
-logs:
-  usage: "&cUsage: /log lookup <player> [type] [page]"
-  invalid-type: "&cInvalid log type."
-  disabled: "&cLogs are disabled."
-  gui:
-    title: "&6Logs: &e%target%"
-    filter-type-name: "&6Filter: Type"
-    filter-time-name: "&6Filter: Time"
-    custom-time-title: "&8Custom Time Range"
-    custom-time-name: "&6Enter time range"
-    custom-time-confirm: "&eClick to confirm"
-    custom-time-invalid: "&cInvalid time. Use e.g. 30m, 1h, 7d"
-    custom-time-success: "&aYou have entered &6%time%"
-
-# --- ITEM TRACE ---
-trace:
-  no-item: "&cHold an item in your hand to trace."
-  no-trace: "&cThis item has no trace history."
-  no-results: "&cNo trace entries found for this item."
-  header: "&8-- &6Item Trace &7(%item%) &8--"
-  entry: " &7#%num% &e%player% &7- &f%action% &7at %location% (%time%)"
-  footer: "&8----------------------------------------"
-  error: "&cAn error occurred while tracing this item."
-  action:
-    CRAFT: "&eCrafted"
-    PICKUP: "&aPicked up"
-    DROP: "&cDropped"
-    CONSUME: "&dConsumed"
-    DESPAWN: "&8Despawned"
-    RETRIEVE: "&bRetrieved from container"
-    STORE: "&6Stored in container"
-    SMELT: "&6Smelted"
-    ENCHANT: "&dEnchanted"
-    MOB_DROP: "&7Mob drop"
-    FISHING: "&bFished"
-    DESTROYED: "&4Destroyed"
-    SPAWNED: "&7Spawned"
-
 # --- TOOLS & GUIS ---
 gui:
   pagination:
