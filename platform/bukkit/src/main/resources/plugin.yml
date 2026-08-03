@@ -52,8 +52,6 @@ commands:
     description: permit you to update your speed.
   hearts:
     description: "Manage player hearts: set or add a specific amount of hearts to any player."
-  settime:
-    description: Quickly set the world time to day, night, noon, or midnight.
   report:
     description: Report a player
   reports:
