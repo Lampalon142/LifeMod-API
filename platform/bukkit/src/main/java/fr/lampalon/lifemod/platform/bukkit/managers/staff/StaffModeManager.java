@@ -130,8 +130,8 @@ public class StaffModeManager {
             player.addPotionEffect(PotionEffectType.NIGHT_VISION.createEffect(Integer.MAX_VALUE, 0));
         }
         
-        itemManager.giveItems(player);
         plugin.getVanishService().setVanished(player, true, false);
+        itemManager.giveItems(player);
 
         ILifePlatform platform = ServiceRegistry.get(ILifePlatform.class);
         if (platform instanceof BukkitPlatform) {

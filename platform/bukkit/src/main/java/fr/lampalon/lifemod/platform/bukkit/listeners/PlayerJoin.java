@@ -34,6 +34,7 @@ public class PlayerJoin implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        plugin.getVanishService().updateAllForPlayer(player);
         ILangService lang = ServiceRegistry.get(ILangService.class);
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {

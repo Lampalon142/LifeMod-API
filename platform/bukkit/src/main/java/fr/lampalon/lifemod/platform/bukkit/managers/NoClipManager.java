@@ -82,8 +82,12 @@ public class NoClipManager {
             for (UUID uuid : noclipPlayers.keySet()) {
                 Player p = Bukkit.getPlayer(uuid);
                 if (p == null || !p.isOnline()) continue;
+                boolean isVanished = plugin.getVanishService().isVanished(p.getUniqueId());
                 for (Player other : Bukkit.getOnlinePlayers()) {
                     if (other.equals(p)) continue;
+                    if (isVanished && !other.hasPermission("lifemod.vanish.see")) {
+                        continue; // Don't unhide vanished players for normal users
+                    }
                     other.showPlayer(plugin, p);
                 }
             }

@@ -1,11 +1,14 @@
 package fr.lampalon.lifemod.platform.bukkit.managers.staff;
 
 import com.github.retrooper.packetevents.event.PacketListener;
-import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfo;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -24,6 +27,35 @@ public class VanishPacketListener implements PacketListener {
     public void onPacketSend(PacketSendEvent event) {
         Player receiver = (Player) event.getPlayer();
         if (receiver == null || receiver.hasPermission("lifemod.vanish.see")) return;
+
+        if (event.getPacketType() == PacketType.Play.Server.ENTITY_EQUIPMENT) {
+            WrapperPlayServerEntityEquipment wrapper = new WrapperPlayServerEntityEquipment(event);
+            if (isVanishedEntity(wrapper.getEntityId())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        if (event.getPacketType() == PacketType.Play.Server.SPAWN_PLAYER || event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
+            int entityId = -1;
+            if (event.getPacketType() == PacketType.Play.Server.SPAWN_PLAYER) {
+                entityId = new WrapperPlayServerSpawnPlayer(event).getEntityId();
+            } else {
+                entityId = new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity(event).getEntityId();
+            }
+            if (isVanishedEntity(entityId)) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+        if (event.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
+            WrapperPlayServerEntityMetadata wrapper = new WrapperPlayServerEntityMetadata(event);
+            if (isVanishedEntity(wrapper.getEntityId())) {
+                event.setCancelled(true);
+                return;
+            }
+        }
 
         // Always let PLAYER_INFO_REMOVE through — this is how the vanished player
         // gets removed from the tab list (modern clients).
@@ -72,5 +104,15 @@ public class VanishPacketListener implements PacketListener {
                 }
             }
         }
+    }
+
+    private boolean isVanishedEntity(int entityId) {
+        for (UUID uuid : vanishService.getVanishedPlayers()) {
+            Player p = Bukkit.getPlayer(uuid);
+            if (p != null && p.getEntityId() == entityId) {
+                return true;
+            }
+        }
+        return false;
     }
 }
