@@ -5,9 +5,13 @@ import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.model.Report;
 import fr.lampalon.lifemod.common.model.ReportEvidence;
 import fr.lampalon.lifemod.common.model.ReportStatus;
+import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.common.replay.storage.DatabaseReplayReader;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.replay.PlaybackManager;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -126,6 +130,30 @@ public class ReportDetailGui extends AbstractGui {
                         : lang.getMessage("reports.gui.detail-unassigned"));
 
         List<Item> evidenceItems = new ArrayList<>();
+
+        String replayId = report.getReplayId();
+        if (replayId != null && !replayId.isEmpty()) {
+            Item replayItem = new AbstractItem() {
+                @Override
+                public ItemProvider getItemProvider() {
+                    Material mat = Material.valueOf(
+                            config.getString("gui.reports.replay-evidence-material", "MUSIC_DISC_CAT"));
+                    ItemBuilder builder = new ItemBuilder(mat)
+                            .setDisplayName(lang.getMessage("reports.gui.replay-evidence"))
+                            .addLoreLines(lang.getMessage("reports.gui.replay-evidence-lore"));
+                    return builder;
+                }
+
+                @Override
+                public void handleClick(@NotNull ClickType clickType, @NotNull Player player,
+                                        @NotNull InventoryClickEvent event) {
+                    player.closeInventory();
+                    loadAndPlayReplay(replayId, player);
+                }
+            };
+            evidenceItems.add(replayItem);
+        }
+
         if (!evidenceList.isEmpty()) {
             evidenceItems.add(new SimpleItem(new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE)
                     .setDisplayName(lang.getMessage("reports.gui.evidence-header"))));
@@ -275,5 +303,31 @@ public class ReportDetailGui extends AbstractGui {
             case REJECTED: return Material.RED_CONCRETE;
             default: return Material.BARRIER;
         }
+    }
+
+    private void loadAndPlayReplay(String sessionName, Player player) {
+        LifeMod plugin = LifeMod.getInstance();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
+            DatabaseReplayReader reader = new DatabaseReplayReader(db, sessionName);
+            List<ReplayFrame> frames = reader.readAllFrames();
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (frames.isEmpty()) {
+                    player.sendMessage(lang.getMessage("replay.file-empty"));
+                    return;
+                }
+                Location startLoc = new Location(player.getWorld(),
+                        reader.getStartX(), reader.getStartY(), reader.getStartZ(),
+                        reader.getStartYaw(), reader.getStartPitch());
+                player.sendMessage(lang.getMessage("replay.loaded-frames",
+                        "%count%", String.valueOf(frames.size()),
+                        "%player%", reader.getPlayerName()));
+                plugin.getReplayPlayerManager().enterReplay(player);
+                PlaybackManager playbackManager = new PlaybackManager(plugin);
+                playbackManager.startPlayback(player, frames, reader.getEntityId(),
+                        reader.getPlayerUUID(), reader.getPlayerName(), startLoc);
+            });
+        });
     }
 }

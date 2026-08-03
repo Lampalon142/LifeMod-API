@@ -6,6 +6,8 @@ import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.common.model.Report;
 import fr.lampalon.lifemod.common.model.ReportStatus;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.common.replay.ReplayManager;
+import fr.lampalon.lifemod.common.replay.ReplaySession;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.CommandContext;
 import fr.lampalon.lifemod.platform.bukkit.commands.api.LifeCommand;
@@ -85,6 +87,30 @@ public class ReportCommand extends LifeCommand {
         LifeMod plugin = context.getPlugin();
         DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();
         int reportId = db.saveReport(report);
+
+        // Capture replay for the reported player
+        ReplayManager replayManager = plugin.getReplayManager();
+        ReplaySession replaySession = replayManager.getSession(target.getUniqueId());
+        if (replaySession != null && replaySession.isRecording()) {
+            String replayName = replaySession.getSessionName();
+            replayManager.stopRecording(target.getUniqueId());
+            db.markReplayAsReport(replayName);
+            db.setReportReplayId(reportId, replayName);
+
+            reporter.sendMessage(context.getLang().getMessage("reports.replay-captured",
+                    "%player%", target.getName()));
+
+            // Start a new recording session so the player continues being recorded
+            org.bukkit.Location loc = target.getLocation();
+            replayManager.startRecording(
+                    target.getUniqueId(),
+                    target.getEntityId(),
+                    target.getName(),
+                    target.getName() + "_" + System.currentTimeMillis(),
+                    loc.getWorld().getName(),
+                    loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch()
+            );
+        }
 
         String success = context.getLang().getMessage("reports.submitted",
                 "%target%", target.getName(),
