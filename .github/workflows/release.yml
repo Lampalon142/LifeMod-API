@@ -19,8 +19,6 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: java
-          package-name: lifemod
 
   build:
     name: Build & publish
