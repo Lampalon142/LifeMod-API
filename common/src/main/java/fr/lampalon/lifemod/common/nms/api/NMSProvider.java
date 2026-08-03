@@ -35,7 +35,10 @@ public interface NMSProvider {
     List<ChunkItemHit> scanChunkItems(InputStream chunkData, String targetMaterial, String targetIAId);
 
     default void spawnNPC(Player spectator, int entityId, UUID uuid, String name,
-                          TextureProperty[] skin, Location location) {
+                           TextureProperty[] skin, Location location) {
+    }
+
+    default void spawnEntity(Player spectator, int entityId, String entityType, Location location) {
     }
 
     default void removeNPC(Player spectator, int entityId, UUID uuid) {

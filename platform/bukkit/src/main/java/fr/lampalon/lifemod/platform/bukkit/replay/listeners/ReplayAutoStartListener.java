@@ -1,18 +1,18 @@
 package fr.lampalon.lifemod.platform.bukkit.replay.listeners;
 
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import java.util.logging.Logger;
 
 /**
  * Automatically starts replay recording for players joining the server.
  */
 public class ReplayAutoStartListener implements Listener {
 
-    private static final Logger LOGGER = Logger.getLogger("ReplayAutoStartListener");
     private final LifeMod plugin;
 
     public ReplayAutoStartListener(LifeMod plugin) {
@@ -21,16 +21,26 @@ public class ReplayAutoStartListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        String playerName = event.getPlayer().getName();
-        int entityId = event.getPlayer().getEntityId();
+        Player joined = event.getPlayer();
         
-        LOGGER.info("[DEBUG] PlayerJoinEvent: " + playerName + " (UUID: " + event.getPlayer().getUniqueId() + ", ID: " + entityId + ")");
+        // Hide any active replay spectators from the new joiner
+        for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (!online.equals(joined) && plugin.getReplayPlayerManager().isInReplay(online)) {
+                joined.hidePlayer(plugin, online);
+            }
+        }
         
-        org.bukkit.Location loc = event.getPlayer().getLocation();
+        String playerName = joined.getName();
+        int entityId = joined.getEntityId();
+        
+        DebugManager debug = plugin.getDebugManager();
+        debug.log("replay", "PlayerJoinEvent: " + playerName + " (UUID: " + joined.getUniqueId() + ", ID: " + entityId + ")");
+        
+        org.bukkit.Location loc = joined.getLocation();
         plugin.getReplayManager().startRecording(
-            event.getPlayer().getUniqueId(), 
+            joined.getUniqueId(), 
             entityId,
-            event.getPlayer().getName(),
+            joined.getName(),
             playerName + "_" + System.currentTimeMillis(),
             loc.getWorld().getName(),
             loc.getX(), loc.getY(), loc.getZ(), loc.getYaw(), loc.getPitch()
@@ -39,7 +49,8 @@ public class ReplayAutoStartListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        LOGGER.info("[DEBUG] PlayerQuitEvent: " + event.getPlayer().getName());
+        DebugManager debug = plugin.getDebugManager();
+        debug.log("replay", "PlayerQuitEvent: " + event.getPlayer().getName());
         plugin.getReplayManager().stopRecording(event.getPlayer().getUniqueId());
     }
 }

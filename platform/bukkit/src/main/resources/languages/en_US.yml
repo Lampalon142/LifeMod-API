@@ -7,6 +7,7 @@ system:
   no-permission: "%prefix%&cYou don't have permission for this."
   player-only: "%prefix%&cThis command can only be executed by a player."
   player-not-found: "%prefix%&cThis player is not connected to the server."
+  module-disabled: "%prefix%&cThis module is disabled in the configuration."
   config-reloaded: "%prefix%&aConfiguration reloaded successfully!"
   date-format: "dd/MM/yyyy HH:mm:ss" # Optional override
   update:
@@ -58,6 +59,22 @@ auth:
     progress-entered: "&a●"
     progress-empty: "&7○"
     progress-name: "&fPIN Progress: %progress%"
+  admin-info-usage: "&cUsage: /auth info <player>"
+  admin-info-header: "&6=== PIN Info for &e%player% &6==="
+  admin-info-registered: "&7Registered: &aYes"
+  admin-info-not-registered: "&7%player% &cis not registered."
+  admin-info-last-auth: "&7Last Auth: &e%time%"
+  admin-info-last-ip: "&7Last IP: &e%ip%"
+  admin-info-never: "Never"
+  admin-set-usage: "&cUsage: /auth set <player> <pin>"
+  admin-set-success: "&aPIN for &e%player% &ahas been updated."
+  admin-invalid-pin: "&cPIN must be between 4 and 8 digits."
+  admin-list-header: "&6=== Registered Players (&e%count%&6) ==="
+  admin-list-entry: "&7- &e%name%"
+  admin-lock-usage: "&cUsage: /auth lock <player>"
+  admin-lock-success: "&cAccount of &e%player% &chas been locked."
+  admin-unlock-usage: "&cUsage: /auth unlock <player>"
+  admin-unlock-success: "&aAccount of &e%player% &ahas been unlocked."
 
 # --- SANCTIONS ---
 sanctions:
@@ -160,6 +177,7 @@ reports:
   not-found: "&cPlayer not found."
   submitted: "&aReport submitted against &e%target% &afor: &f%reason% &7(&eServer: %server%&7)"
   staff-notify: "&c[Report] &e%player% &7reported &e%target% &7for: &f%reason% &7(&e%server%&7) &7- &aClick here"
+  replay-captured: "&aReplay captured for &e%player%"
 
   gui:
     main-title: "&d&lReports &7(Page %page%/%total%)"
@@ -197,6 +215,8 @@ reports:
     evidence-item-data: "&f%data%"
     evidence-item-date: "&7%date%"
     evidence-header: "&b&lEvidence"
+    replay-evidence: "&dReplay Evidence"
+    replay-evidence-lore: "&7Click to view replay"
     status-updated: "&aStatus updated to %status%"
 
   status:
@@ -510,12 +530,6 @@ commands:
     half-heart-warning: "%prefix%&eWarning: Using odd numbers results in half-hearts."
     changed: "%prefix%&aYour max health was changed to &e%amount% &aby a moderator!"
 
-  world:
-    time-set: "%prefix%&aTime set to &e%time%&a."
-    time:
-      usage: "%prefix%&cUsage: /settime <time|day|night>"
-      success: "%prefix%&aTime set to &e%time%&a."
-      invalid: "%prefix%&cInvalid time format!"
   chatclear:
     message: "%prefix%&cThe chat has been cleared."
 
@@ -581,6 +595,7 @@ commands:
     help-list: "&e/replay list &7- List saved replays"
     help-stop: "&e/replay stop &7- Exit current replay"
     help-duration: "&7Duration: 1m, 2.5m, 10s (max 1h)"
+    load-error: "&cFailed to load replay. Check console for details."
     no-replays: "&cNo replays found."
     list-title: "&6&lAvailable Replays:"
     list-entry: "&e- %name% &7(%size% KB)"
@@ -593,6 +608,15 @@ commands:
     invalid-duration: "&cInvalid duration format. Use e.g. 5m, 10s. Max 1h."
     no-data: "&cNo data found for the requested duration."
     loading-frames: "&aLoading &e%count%&a frames from active session for &e%player%"
+    playback:
+      finished: "&aReplay finished. Your state has been restored."
+      progress: "&7Progress: &e%percent%%"
+      blocks-restored: "&aRestored &e%count% &ablocks for replay context."
+    items:
+      rewind: "&bRewind 5s"
+      forward: "&bForward 5s"
+      pause: "&ePlay/Pause"
+      exit: "&cExit Replay"
     interaction:
       paused: "&eReplay paused."
       resumed: "&aReplay resumed."
@@ -600,6 +624,20 @@ commands:
       forward: "&bForward 5 seconds..."
       speed-not-implemented: "&dSpeed control not implemented."
       exit: "&aExited replay mode. Your state has been restored."
+    gui:
+      stop: "&cStop"
+      pause: "&ePause"
+      play: "&aPlay/Speed x1"
+      speed: "&aSpeed x4"
+      title: "Replay Controls"
+      inventory:
+        title: "&8Replay Controls"
+        timeline: "&7Timeline"
+        play-pause: "&aPlay / Pause"
+        speed: "&eSpeed x1.0"
+        pov-switch: "&bPov Switch"
+        exit: "&cExit Replay"
+
   admin-info-usage: "&cUsage: /auth info <player>"
   admin-info-header: "&6=== PIN Info for &e%player% &6==="
   admin-info-registered: "&7Registered: &aYes"
@@ -616,19 +654,6 @@ commands:
   admin-lock-success: "&cAccount of &e%player% &chas been locked."
   admin-unlock-usage: "&cUsage: /auth unlock <player>"
   admin-unlock-success: "&aAccount of &e%player% &ahas been unlocked."
-  gui:
-      stop: "&cStop"
-      pause: "&ePause"
-      play: "&aPlay/Speed x1"
-      speed: "&aSpeed x4"
-      title: "Replay Controls"
-      inventory:
-        title: "&8Replay Controls"
-        timeline: "&7Timeline"
-        play-pause: "&aPlay / Pause"
-        speed: "&eSpeed x1.0"
-        pov-switch: "&bPov Switch"
-        exit: "&cExit Replay"
 
   scan:
     usage: "&cUsage: /scan <map|inventories|enderchest|all> <player|all> <item|hand>"
@@ -687,6 +712,61 @@ commands:
     player-not-found: "%prefix%&cPlayer %target% doesn't exist or has never connected."
     no-position: "%prefix%&cNo saved position for %target%."
     teleported: "%prefix%&aYou have been teleported to %target%'s last position."
+
+# --- REPLAY ---
+replay:
+  player-only: "&cOnly players can use this command."
+  not-in-replay: "&cYou are not in a replay session."
+  stopped: "&aReplay session stopped. Your state has been restored."
+  usage-load: "&cUsage: /replay load <sessionName>"
+  help-title: "&6&lLifeMod Replay System"
+  help-play: "&e/replay <player> [duration] &7- Play from active recording"
+  help-load: "&e/replay load <name> &7- Play from saved file"
+  help-list: "&e/replay list &7- List saved replays"
+  help-stop: "&e/replay stop &7- Exit current replay"
+  help-duration: "&7Duration: 1m, 2.5m, 10s (max 1h)"
+  load-error: "&cFailed to load replay. Check console for details."
+  no-replays: "&cNo replays found."
+  list-title: "&6&lAvailable Replays:"
+  list-entry: "&e- %name% &7(%size% KB)"
+  file-not-found: "&cReplay file not found: %name%"
+  reading-file: "&aReading replay file..."
+  file-empty: "&cReplay file is empty or invalid."
+  loaded-frames: "&aLoaded &e%count%&a frames for &e%player%"
+  player-not-found: "&cPlayer not found: %name%"
+  no-active-recording: "&cNo active recording for &e%player%"
+  invalid-duration: "&cInvalid duration format. Use e.g. 5m, 10s. Max 1h."
+  no-data: "&cNo data found for the requested duration."
+  loading-frames: "&aLoading &e%count%&a frames from active session for &e%player%"
+  playback:
+    finished: "&aReplay finished. Your state has been restored."
+    progress: "&7Progress: &e%percent%%"
+    blocks-restored: "&aRestored &e%count% &ablocks for replay context."
+  items:
+    rewind: "&bRewind 5s"
+    forward: "&bForward 5s"
+    pause: "&ePlay/Pause"
+    exit: "&cExit Replay"
+  interaction:
+    paused: "&eReplay paused."
+    resumed: "&aReplay resumed."
+    rewind: "&bRewinding 5 seconds..."
+    forward: "&bForward 5 seconds..."
+    speed-not-implemented: "&dSpeed control not implemented."
+    exit: "&aExited replay mode. Your state has been restored."
+  gui:
+    stop: "&cStop"
+    pause: "&ePause"
+    play: "&aPlay/Speed x1"
+    speed: "&aSpeed x4"
+    title: "Replay Controls"
+    inventory:
+      title: "&8Replay Controls"
+      timeline: "&7Timeline"
+      play-pause: "&aPlay / Pause"
+      speed: "&eSpeed x1.0"
+      pov-switch: "&bPov Switch"
+      exit: "&cExit Replay"
 
 # --- DEBUG ---
 debug:

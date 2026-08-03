@@ -5,39 +5,49 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
+import fr.lampalon.lifemod.platform.bukkit.replay.ReplayCodec;
 import io.netty.buffer.ByteBuf;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.Collections;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
- * Intercepts outgoing packets to record them into the active ReplaySession.
- *
  * Magic byte scheme:
- *   0xFE = custom position packet (ReplayPositionRecorder)
- *   0xFD = world packet  → send as-is (block change, spawn, sound…)
- *   0xFC = entity packet → rewrite originalEntityId → virtualEntityId
- *   0xFB = self arm-swing (from incoming client packet)
+ *   0xFE = position packet (ReplayPositionRecorder)
+ *   0xFD = world packet → sent as-is
+ *   0xFC = entity packet → entity ID rewritten via mapper on playback
+ *   0xFB = arm-swing (from client)
  *   0xFA = undo block state (ReplayBlockListener)
+ *   0xF9 = block change (ReplayBlockListener)
+ *   0xDD = spawn entity (non-player, masked when mask-entities=true)
+ *   0xDC = destroy entities
+ *   0xDE = spawn player (recorded nearby player within radius)
+ *   0xF1-F8 = event frames (ReplayEventRecorder)
  */
 public class ReplayPacketListener implements PacketListener {
 
     private static final Logger LOGGER = Logger.getLogger("ReplayPacketListener");
 
-    public static final byte MAGIC_WORLD_PACKET  = (byte) 0xFD;
-    public static final byte MAGIC_ENTITY_PACKET = (byte) 0xFC;
+    private static final double MOVEMENT_THRESHOLD = 0.1;
 
     private final ReplayManager replayManager;
 
     public ReplayPacketListener(ReplayManager replayManager) {
+        if (replayManager == null) throw new IllegalArgumentException("replayManager cannot be null");
         this.replayManager = replayManager;
     }
 
     // -------------------------------------------------------------------------
-    // Incoming
+    // Incoming — arm swing
     // -------------------------------------------------------------------------
 
     @Override
@@ -49,7 +59,7 @@ public class ReplayPacketListener implements PacketListener {
             if (session != null && session.isRecording()) {
                 session.addFrame(new ReplayFrame(
                         System.currentTimeMillis(),
-                        Collections.singletonList(new byte[]{(byte) 0xFB})
+                        Collections.singletonList(new byte[]{ReplayCodec.ARM_SWING})
                 ));
             }
         }
@@ -61,106 +71,274 @@ public class ReplayPacketListener implements PacketListener {
 
     @Override
     public void onPacketSend(PacketSendEvent event) {
-        com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type =
-                event.getPacketType();
+        com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type = event.getPacketType();
 
         // ── Skin caching ──────────────────────────────────────────────────────
         if (type.equals(PacketType.Play.Server.PLAYER_INFO)) {
-            WrapperPlayServerPlayerInfo info = new WrapperPlayServerPlayerInfo(event);
-            if (info.getAction() == WrapperPlayServerPlayerInfo.Action.ADD_PLAYER) {
-                for (WrapperPlayServerPlayerInfo.PlayerData data : info.getPlayerDataList()) {
-                    if (data.getUserProfile().getTextureProperties() != null) {
-                        fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance()
-                                .getReplayManager().getSkinManager().cacheSkin(
-                                        data.getUserProfile().getUUID(),
-                                        data.getUserProfile().getTextureProperties().toArray(
-                                                new com.github.retrooper.packetevents.protocol.player.TextureProperty[0])
-                                );
-                    }
-                }
-            }
-        }
-
-        // ── Movement — skip all, ReplayPositionRecorder handles the recorded player ──
-        if (type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)
-                || type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION)
-                || type.equals(PacketType.Play.Server.ENTITY_ROTATION)
-                || type.equals(PacketType.Play.Server.ENTITY_TELEPORT)
-                || type.equals(PacketType.Play.Server.ENTITY_VELOCITY)
-                || type.equals(PacketType.Play.Server.ENTITY_HEAD_LOOK)) {
+            handlePlayerInfo(event);
             return;
         }
 
-        // ── World packets — send as-is (0xFD) ────────────────────────────────
+        // ── SPAWN_PLAYER (nearby players → recorded as separate NPCs) ──────────
+        if (type.equals(PacketType.Play.Server.SPAWN_PLAYER)) {
+            handleSpawnPlayer(event);
+            return;
+        }
+
+        // ── SPAWN_ENTITY (non-players, masked when mask-entities=true) ─────────
+        if (type.equals(PacketType.Play.Server.SPAWN_ENTITY)) {
+            handleSpawnEntity(event);
+            return;
+        }
+
+        // ── DESTROY_ENTITIES ──────────────────────────────────────────────────
+        if (type.equals(PacketType.Play.Server.DESTROY_ENTITIES)) {
+            handleDestroyEntities(event);
+            return;
+        }
+
+        // ── Entity movement (throttled: only every 10th tick) ─────────────────
+        if (isMovementPacket(type)) {
+            handleMovement(event, type);
+            return;
+        }
+
+        // ── World packets ─────────────────────────────────────────────────────
         if (type.equals(PacketType.Play.Server.BLOCK_CHANGE)
                 || type.equals(PacketType.Play.Server.MULTI_BLOCK_CHANGE)
-                || type.equals(PacketType.Play.Server.SPAWN_ENTITY)
-                || type.equals(PacketType.Play.Server.DESTROY_ENTITIES)
                 || type.equals(PacketType.Play.Server.NAMED_SOUND_EFFECT)
                 || type.equals(PacketType.Play.Server.BLOCK_BREAK_ANIMATION)) {
-            recordForReceiver(event, MAGIC_WORLD_PACKET);
+            queueForReceiver(event, ReplayCodec.WORLD_PACKET);
             return;
         }
 
         // ── ENTITY_EQUIPMENT ──────────────────────────────────────────────────
-        // This packet is sent to the player themselves AND to nearby players.
-        // We need BOTH strategies:
-        //   1. recordForReceiver → catches it when sent to the recorded player themselves
-        //      (holds item in hand — the packet the server sends back to the holder)
-        //   2. getSessionByEntityId → catches it when sent to OTHER nearby players
-        //      (so other players see the item too)
-        // Using recordForReceiver as primary since that's what the recorded player receives.
         if (type.equals(PacketType.Play.Server.ENTITY_EQUIPMENT)) {
-            // Strategy 1: record for the player who is being recorded (sent to self)
-            recordForReceiver(event, MAGIC_ENTITY_PACKET);
-
-            // Strategy 2: also record via entity ID for completeness
-            int equipEntityId = new WrapperPlayServerEntityEquipment(event).getEntityId();
-            ReplaySession equipSession = replayManager.getSessionByEntityId(equipEntityId);
-            if (equipSession != null && equipSession.isRecording()) {
-                // Avoid duplicate: only record if the receiver is NOT the recorded player
-                if (event.getPlayer() instanceof org.bukkit.entity.Player) {
-                    org.bukkit.entity.Player receiver = (org.bukkit.entity.Player) event.getPlayer();
-                    if (!receiver.getUniqueId().equals(equipSession.getPlayerUUID())) {
-                        byte[] data = serializeWithMagic(event.getByteBuf(), MAGIC_ENTITY_PACKET);
-                        if (data != null) {
-                            equipSession.addFrame(new ReplayFrame(
-                                    System.currentTimeMillis(),
-                                    Collections.singletonList(data)
-                            ));
-                        }
-                    }
-                }
-            }
+            handleEquipment(event);
             return;
         }
 
-        // ── Other entity packets (0xFC) ───────────────────────────────────────
-        int entityId = -1;
+        // ── Other entity packets (animation, metadata, status, effect) ────────
+        int eId = -1;
 
         if (type.equals(PacketType.Play.Server.ENTITY_ANIMATION)) {
-            entityId = new WrapperPlayServerEntityAnimation(event).getEntityId();
+            eId = new WrapperPlayServerEntityAnimation(event).getEntityId();
         } else if (type.equals(PacketType.Play.Server.ENTITY_METADATA)) {
-            entityId = new WrapperPlayServerEntityMetadata(event).getEntityId();
+            eId = new WrapperPlayServerEntityMetadata(event).getEntityId();
         } else if (type.equals(PacketType.Play.Server.ENTITY_STATUS)) {
-            entityId = new WrapperPlayServerEntityStatus(event).getEntityId();
+            eId = new WrapperPlayServerEntityStatus(event).getEntityId();
         } else if (type.equals(PacketType.Play.Server.ENTITY_EFFECT)) {
-            entityId = new WrapperPlayServerEntityEffect(event).getEntityId();
+            eId = new WrapperPlayServerEntityEffect(event).getEntityId();
         } else if (type.equals(PacketType.Play.Server.REMOVE_ENTITY_EFFECT)) {
-            entityId = new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
+            eId = new WrapperPlayServerRemoveEntityEffect(event).getEntityId();
         }
 
-        if (entityId != -1) {
-            ReplaySession session = replayManager.getSessionByEntityId(entityId);
-            if (session != null && session.isRecording()) {
-                byte[] data = serializeWithMagic(event.getByteBuf(), MAGIC_ENTITY_PACKET);
-                if (data != null) {
-                    session.addFrame(new ReplayFrame(
-                            System.currentTimeMillis(),
-                            Collections.singletonList(data)
-                    ));
+        if (eId != -1) {
+            queueEntityPacket(event, eId);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Handlers
+    // -------------------------------------------------------------------------
+
+    private double recordRadius() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        return cfg != null ? cfg.getDouble("modules.replay.record-radius", 300.0) : 300.0;
+    }
+
+    private boolean maskEntities() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        return cfg != null ? cfg.getBoolean("modules.replay.mask-entities", true) : true;
+    }
+
+    private boolean recordNearbyPlayers() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        return cfg != null ? cfg.getBoolean("modules.replay.record-nearby-players", true) : true;
+    }
+
+    private boolean recordEquipment() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        return cfg != null ? cfg.getBoolean("modules.replay.record-equipment", true) : true;
+    }
+
+    private void handlePlayerInfo(PacketSendEvent event) {
+        WrapperPlayServerPlayerInfo info = new WrapperPlayServerPlayerInfo(event);
+        if (info.getAction() == WrapperPlayServerPlayerInfo.Action.ADD_PLAYER) {
+            for (WrapperPlayServerPlayerInfo.PlayerData data : info.getPlayerDataList()) {
+                if (data.getUserProfile().getTextureProperties() != null) {
+                    fr.lampalon.lifemod.platform.bukkit.LifeMod.getInstance()
+                            .getReplayManager().getSkinManager().cacheSkin(
+                                    data.getUserProfile().getUUID(),
+                                    data.getUserProfile().getTextureProperties().toArray(
+                                            new com.github.retrooper.packetevents.protocol.player.TextureProperty[0])
+                            );
                 }
             }
+        }
+    }
+
+    private void handleSpawnEntity(PacketSendEvent event) {
+        if (maskEntities()) return; // hide non-player entities (zombies, mobs, ...) in replays
+        WrapperPlayServerSpawnEntity spawn = readPacket(event, WrapperPlayServerSpawnEntity::new);
+        int eId = spawn.getEntityId();
+
+        if (event.getPlayer() instanceof org.bukkit.entity.Player receiver) {
+            ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
+            if (recvSession != null && recvSession.isRecording()) {
+                recvSession.trackSpawn(eId);
+                recvSession.queuePacket(serializeWithMagic(event.getByteBuf(), ReplayCodec.SPAWN_ENTITY));
+            }
+        }
+
+        ReplaySession entitySession = replayManager.getSessionByEntityId(eId);
+        if (entitySession != null && entitySession.isRecording()) {
+            entitySession.trackSpawn(eId);
+        }
+    }
+
+    private void handleSpawnPlayer(PacketSendEvent event) {
+        if (!recordNearbyPlayers()) return;
+        WrapperPlayServerSpawnPlayer spawn = readPacket(event, WrapperPlayServerSpawnPlayer::new);
+        int eId = spawn.getEntityId();
+        UUID uuid = spawn.getUUID();
+        if (uuid == null) return;
+        if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
+        ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
+        if (recvSession == null || !recvSession.isRecording()) return;
+
+        org.bukkit.entity.Player realNearby = org.bukkit.Bukkit.getPlayer(uuid);
+        if (realNearby == null) return;
+        if (realNearby.getLocation().distance(receiver.getLocation()) > recordRadius()) return;
+
+        if (recvSession.isRecordable(eId)) return;
+
+        com.github.retrooper.packetevents.util.Vector3d pos = spawn.getPosition();
+        String name = realNearby.getName();
+
+        recvSession.trackSpawn(eId);
+        recvSession.trackRecordablePlayer(eId);
+
+        byte[] frame;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             DataOutputStream dos = new DataOutputStream(baos)) {
+            dos.writeByte(ReplayCodec.SPAWN_PLAYER);
+            dos.writeInt(eId);
+            dos.writeLong(uuid.getMostSignificantBits());
+            dos.writeLong(uuid.getLeastSignificantBits());
+            dos.writeUTF(name);
+            dos.writeDouble(pos.x);
+            dos.writeDouble(pos.y);
+            dos.writeDouble(pos.z);
+            dos.writeFloat(spawn.getYaw());
+            dos.writeFloat(spawn.getPitch());
+            frame = baos.toByteArray();
+        } catch (Exception ignored) {
+            return;
+        }
+
+        recvSession.queuePacket(frame);
+        ReplaySession spawnedSession = replayManager.getSessionByEntityId(eId);
+        if (spawnedSession != null && spawnedSession.isRecording() && spawnedSession.getEntityId() != eId) {
+            spawnedSession.queuePacket(frame);
+        }
+    }
+
+    private void handleDestroyEntities(PacketSendEvent event) {
+        WrapperPlayServerDestroyEntities destroy = readPacket(event, WrapperPlayServerDestroyEntities::new);
+        if (event.getPlayer() instanceof org.bukkit.entity.Player receiver) {
+            ReplaySession recvSession = replayManager.getSession(receiver.getUniqueId());
+            if (recvSession != null && recvSession.isRecording()) {
+                boolean anyActive = false;
+                for (int id : destroy.getEntityIds()) {
+                    if (recvSession.isEntityActive(id)) anyActive = true;
+                    recvSession.trackDestroy(id);
+                    recvSession.untrackRecordablePlayer(id);
+                }
+                if (anyActive) {
+                    recvSession.queuePacket(serializeWithMagic(event.getByteBuf(), ReplayCodec.DESTROY_ENTITIES));
+                }
+            }
+        }
+    }
+
+    private boolean isMovementPacket(com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type) {
+        return type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)
+                || type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION)
+                || type.equals(PacketType.Play.Server.ENTITY_ROTATION)
+                || type.equals(PacketType.Play.Server.ENTITY_TELEPORT);
+    }
+
+    private void handleMovement(PacketSendEvent event, com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon type) {
+        if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
+        ReplaySession session = replayManager.getSession(receiver.getUniqueId());
+        if (session == null || !session.isRecording()) return;
+
+        // Throttle: only record movement every MOVEMENT_INTERVAL ticks
+        if (!session.isMovementTick()) return;
+
+        int eId = readEntityId((ByteBuf) event.getByteBuf());
+
+        // Skip recorded player (handled by 0xFE)
+        if (eId == session.getEntityId()) return;
+
+        // Skip if entity wasn't tracked (never spawned / already destroyed)
+        if (!session.isEntityActive(eId)) return;
+
+        // Dedup: max 1 movement per entity per frame
+        if (!session.markMoved(eId)) return;
+
+        // Delta threshold for relative moves
+        if (type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)
+                || type.equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE_AND_ROTATION)) {
+            if (!isSignificant(event)) return;
+        }
+
+            session.queuePacket(serializeWithMagic(event.getByteBuf(), ReplayCodec.ENTITY_PACKET));
+    }
+
+    private boolean isSignificant(PacketSendEvent event) {
+        ByteBuf b = (ByteBuf) event.getByteBuf();
+        int saved = b.readerIndex();
+        try {
+            double dx, dy, dz;
+            if (event.getPacketType().equals(PacketType.Play.Server.ENTITY_RELATIVE_MOVE)) {
+                WrapperPlayServerEntityRelativeMove move = new WrapperPlayServerEntityRelativeMove(event);
+                dx = move.getDeltaX(); dy = move.getDeltaY(); dz = move.getDeltaZ();
+            } else {
+                WrapperPlayServerEntityRelativeMoveAndRotation move = new WrapperPlayServerEntityRelativeMoveAndRotation(event);
+                dx = move.getDeltaX(); dy = move.getDeltaY(); dz = move.getDeltaZ();
+            }
+            return Math.sqrt(dx * dx + dy * dy + dz * dz) >= MOVEMENT_THRESHOLD;
+        } catch (Exception e) {
+            return true;
+        } finally {
+            b.readerIndex(saved);
+        }
+    }
+
+    private void handleEquipment(PacketSendEvent event) {
+        if (!(event.getPlayer() instanceof org.bukkit.entity.Player receiver)) return;
+        ReplaySession session = replayManager.getSession(receiver.getUniqueId());
+        if (session == null || !session.isRecording()) return;
+        if (!recordEquipment()) return;
+        int equipEntityId = readPacket(event, WrapperPlayServerEntityEquipment::new).getEntityId();
+        if (!session.isRecordable(equipEntityId)) return;
+
+        queueForReceiver(event, ReplayCodec.ENTITY_PACKET);
+
+        ReplaySession equipSession = replayManager.getSessionByEntityId(equipEntityId);
+        if (equipSession != null && equipSession.isRecording()) {
+            if (!receiver.getUniqueId().equals(equipSession.getPlayerUUID())) {
+                equipSession.queuePacket(serializeWithMagic(event.getByteBuf(), ReplayCodec.ENTITY_PACKET));
+            }
+        }
+    }
+
+    private void queueEntityPacket(PacketSendEvent event, int entityId) {
+        ReplaySession session = replayManager.getSessionByEntityId(entityId);
+        if (session != null && session.isRecording()) {
+        session.queuePacket(serializeWithMagic(event.getByteBuf(), ReplayCodec.ENTITY_PACKET));
         }
     }
 
@@ -168,18 +346,12 @@ public class ReplayPacketListener implements PacketListener {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private void recordForReceiver(PacketSendEvent event, byte magic) {
+    private void queueForReceiver(PacketSendEvent event, byte magic) {
         if (!(event.getPlayer() instanceof org.bukkit.entity.Player)) return;
         org.bukkit.entity.Player receiver = (org.bukkit.entity.Player) event.getPlayer();
         ReplaySession session = replayManager.getSession(receiver.getUniqueId());
         if (session != null && session.isRecording()) {
-            byte[] data = serializeWithMagic(event.getByteBuf(), magic);
-            if (data != null) {
-                session.addFrame(new ReplayFrame(
-                        System.currentTimeMillis(),
-                        Collections.singletonList(data)
-                ));
-            }
+            session.queuePacket(serializeWithMagic(event.getByteBuf(), magic));
         }
     }
 
@@ -200,19 +372,31 @@ public class ReplayPacketListener implements PacketListener {
         }
     }
 
-    private int readPacketEntityId(ByteBuf buf) {
+    /**
+     * Reads entity ID from a packet buffer by skipping the packet ID VarInt first.
+     */
+    private int readEntityId(ByteBuf buf) {
         int savedIndex = buf.readerIndex();
         try {
             buf.readerIndex(0);
-            return readVarInt(buf);
+            ReplayCodec.readVarInt(buf); // skip packet ID
+            return ReplayCodec.readVarInt(buf); // read entity ID
         } finally {
             buf.readerIndex(savedIndex);
         }
     }
 
-    private int readVarInt(ByteBuf buf) {
-        int v = 0, s = 0; byte b;
-        do { b = buf.readByte(); v |= (b & 0x7F) << s; s += 7; } while ((b & 0x80) != 0);
-        return v;
+    /**
+     * Reads a wrapper from the live packet buffer and restores the reader index
+     * afterwards, so the packet sent to the client is not truncated/corrupted.
+     */
+    private <T> T readPacket(PacketSendEvent event, Function<PacketSendEvent, T> reader) {
+        ByteBuf b = (ByteBuf) event.getByteBuf();
+        int saved = b.readerIndex();
+        try {
+            return reader.apply(event);
+        } finally {
+            b.readerIndex(saved);
+        }
     }
 }

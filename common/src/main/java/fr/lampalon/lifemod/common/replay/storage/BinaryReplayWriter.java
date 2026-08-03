@@ -1,93 +1,75 @@
 package fr.lampalon.lifemod.common.replay.storage;
 
 import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
-import java.io.*;
+
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Implementation of ReplayWriter using binary format for storage.
+ * Writes replays to a compressed binary file (fallback when no database is configured).
+ * The full payload is buffered and flushed/compressed once on {@link #close()}, which is
+ * how the recording lifecycle invokes it (a single {@code writeFrames} at session stop).
  */
 public class BinaryReplayWriter implements ReplayWriter {
 
     private static final Logger LOGGER = Logger.getLogger("BinaryReplayWriter");
-    private DataOutputStream outputStream;
+
     private File sessionFile;
+    private UUID playerUUID;
+    private int entityId;
+    private String playerName;
+    private double startX, startY, startZ;
+    private float startYaw, startPitch;
+    private boolean headerWritten;
+    private final List<ReplayFrame> pending = new ArrayList<>();
 
     @Override
     public void initialize(String sessionName) {
         File replayDir = new File("plugins/LifeMod/replays");
-        if (!replayDir.exists()) {
-            replayDir.mkdirs();
-        }
+        if (!replayDir.exists()) replayDir.mkdirs();
         this.sessionFile = new File(replayDir, sessionName + ".replay");
-        try {
-            this.outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(sessionFile)));
-            LOGGER.info("[DEBUG] Initialized writer for file: " + sessionFile.getAbsolutePath());
-        } catch (IOException e) {
-            LOGGER.severe("[DEBUG] Failed to initialize writer for " + sessionName + ": " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 
-    public void writeHeader(UUID playerUUID, int entityId, String playerName, double x, double y, double z, float yaw, float pitch) {
-        if (outputStream == null) return;
-        try {
-            outputStream.writeUTF("LIFEREPLAY"); // Magic string
-            outputStream.writeInt(1); // Version
-            outputStream.writeLong(playerUUID.getMostSignificantBits());
-            outputStream.writeLong(playerUUID.getLeastSignificantBits());
-            outputStream.writeInt(entityId);
-            outputStream.writeUTF(playerName);
-            outputStream.writeDouble(x);
-            outputStream.writeDouble(y);
-            outputStream.writeDouble(z);
-            outputStream.writeFloat(yaw);
-            outputStream.writeFloat(pitch);
-            outputStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void writeHeader(UUID playerUUID, int entityId, String playerName, String worldName,
+                            double x, double y, double z, float yaw, float pitch) {
+        this.playerUUID = playerUUID;
+        this.entityId = entityId;
+        this.playerName = playerName;
+        this.startX = x;
+        this.startY = y;
+        this.startZ = z;
+        this.startYaw = yaw;
+        this.startPitch = pitch;
+        this.headerWritten = true;
     }
 
     @Override
     public void writeFrames(List<ReplayFrame> frames) {
-        if (outputStream == null) {
-            LOGGER.warning("[DEBUG] writeFrames called but outputStream is null!");
-            return;
-        }
-        try {
-            int packetTotal = 0;
-            for (ReplayFrame frame : frames) {
-                outputStream.writeLong(frame.getTimestamp());
-                outputStream.writeInt(frame.getPackets().size());
-                for (byte[] packetData : frame.getPackets()) {
-                    outputStream.writeInt(packetData.length);
-                    outputStream.write(packetData);
-                    packetTotal++;
-                }
-            }
-            outputStream.flush();
-            LOGGER.info("[DEBUG] Wrote " + frames.size() + " frames (" + packetTotal + " packets) to " + sessionFile.getName());
-        } catch (IOException e) {
-            LOGGER.severe("[DEBUG] Error writing frames to " + sessionFile.getName() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
+        if (frames != null) pending.addAll(frames);
     }
 
     @Override
     public void close() {
-        if (outputStream != null) {
-            try {
-                outputStream.close();
-                LOGGER.info("[DEBUG] Closed writer for " + sessionFile.getName() + ". Final size: " + sessionFile.length() + " bytes.");
-            } catch (IOException e) {
-                LOGGER.severe("[DEBUG] Error closing writer for " + sessionFile.getName() + ": " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                outputStream = null;
+        if (sessionFile == null || playerUUID == null || !headerWritten) return;
+        try {
+            ReplayFormat.SerializedReplay serialized = ReplayFormat.serialize(
+                    playerUUID, entityId, playerName, startX, startY, startZ, startYaw, startPitch, pending);
+            byte[] envelope = ReplayFormat.toEnvelope(serialized.payload);
+            try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(sessionFile)))) {
+                out.write(envelope);
             }
+            LOGGER.fine("Wrote " + serialized.frameCount + " frames to " + sessionFile.getName()
+                    + " (" + envelope.length + " bytes, compressed)");
+        } catch (IOException e) {
+            LOGGER.severe("Failed to write " + sessionFile.getName() + ": " + e.getMessage());
         }
     }
 }

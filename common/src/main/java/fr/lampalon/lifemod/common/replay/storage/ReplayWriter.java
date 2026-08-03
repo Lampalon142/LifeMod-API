@@ -17,7 +17,7 @@ public interface ReplayWriter {
     /**
      * Writes metadata header for the session.
      */
-    void writeHeader(java.util.UUID playerUUID, int entityId, String playerName, double x, double y, double z, float yaw, float pitch);
+    void writeHeader(java.util.UUID playerUUID, int entityId, String playerName, String worldName, double x, double y, double z, float yaw, float pitch);
 
     /**
      * Writes a batch of recorded frames to the storage.

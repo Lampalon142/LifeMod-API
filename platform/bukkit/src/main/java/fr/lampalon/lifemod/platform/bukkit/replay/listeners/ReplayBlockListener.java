@@ -2,7 +2,9 @@ package fr.lampalon.lifemod.platform.bukkit.replay.listeners;
 
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
-import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.platform.bukkit.LifeMod;
+import fr.lampalon.lifemod.platform.bukkit.replay.ReplayCodec;
+import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -16,7 +18,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ public class ReplayBlockListener implements Listener {
     private final ReplayManager replayManager;
 
     public ReplayBlockListener(ReplayManager replayManager) {
+        if (replayManager == null) throw new IllegalArgumentException("replayManager cannot be null");
         this.replayManager = replayManager;
     }
 
@@ -51,7 +53,7 @@ public class ReplayBlockListener implements Listener {
 
         // Record BEFORE state (for undo at replay start)
         recordUndoFrame(session, event.getBlock());
-        LOGGER.info("[ReplayBlockListener] Break BEFORE at " + pos(event.getBlock())
+        LifeMod.getInstance().getDebugManager().log("replay", "Break BEFORE at " + pos(event.getBlock())
                 + " type=" + event.getBlock().getType());
     }
 
@@ -63,7 +65,7 @@ public class ReplayBlockListener implements Listener {
         // Record AFTER state: block is now AIR (id=0)
         recordBlockChangeFrame(session,
                 event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), 0);
-        LOGGER.info("[ReplayBlockListener] Break AFTER at " + pos(event.getBlock()) + " → AIR");
+        LifeMod.getInstance().getDebugManager().log("replay", "Break AFTER at " + pos(event.getBlock()) + " → AIR");
     }
 
     // ─── PLACE ───────────────────────────────────────────────────────────────
@@ -76,7 +78,7 @@ public class ReplayBlockListener implements Listener {
 
         // Record BEFORE state (what was there before placement, usually AIR)
         recordUndoFrameFromState(session, event.getBlockReplacedState());
-        LOGGER.info("[ReplayBlockListener] Place BEFORE at " + pos(event.getBlockPlaced())
+        LifeMod.getInstance().getDebugManager().log("replay", "Place BEFORE at " + pos(event.getBlockPlaced())
                 + " replacing=" + event.getBlockReplacedState().getType());
     }
 
@@ -92,7 +94,7 @@ public class ReplayBlockListener implements Listener {
             int blockId = SpigotConversionUtil
                     .fromBukkitBlockData(placed.getBlockData()).getGlobalId();
             recordBlockChangeFrame(session, placed.getX(), placed.getY(), placed.getZ(), blockId);
-            LOGGER.info("[ReplayBlockListener] Place AFTER at " + pos(placed)
+            LifeMod.getInstance().getDebugManager().log("replay", "Place AFTER at " + pos(placed)
                     + " type=" + placed.getType() + " id=" + blockId);
         } catch (Exception e) {
             LOGGER.warning("[ReplayBlockListener] Place AFTER failed: " + e.getMessage());
@@ -166,7 +168,7 @@ public class ReplayBlockListener implements Listener {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream(17);
             DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF9);  // magic: block change to replay
+            dos.writeByte(ReplayCodec.BLOCK_CHANGE);  // magic: block change to replay
             dos.writeInt(x);
             dos.writeInt(y);
             dos.writeInt(z);
@@ -180,7 +182,7 @@ public class ReplayBlockListener implements Listener {
     private byte[] buildUndoBytes(int x, int y, int z, int blockId) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(17);
         DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeByte(0xFA);
+        dos.writeByte(ReplayCodec.BLOCK_UNDO);
         dos.writeInt(x);
         dos.writeInt(y);
         dos.writeInt(z);
@@ -189,10 +191,7 @@ public class ReplayBlockListener implements Listener {
     }
 
     private void writeRawFrame(ReplaySession session, byte[] data) {
-        session.addFrame(new ReplayFrame(
-                System.currentTimeMillis(),
-                Collections.singletonList(data)
-        ));
+        session.queuePacket(data);
     }
 
     private String pos(Block b) {

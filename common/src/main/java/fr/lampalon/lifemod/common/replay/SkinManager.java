@@ -98,6 +98,7 @@ public class SkinManager {
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
+            conn.setRequestProperty("User-Agent", "LifeMod-Replay/1.0");
 
             int code = conn.getResponseCode();
             if (code != 200) {

@@ -73,6 +73,7 @@ import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import org.bstats.bukkit.Metrics;
 import org.bstats.charts.SingleLineChart;
 import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.Location;
 import org.bukkit.command.CommandMap;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -107,6 +108,7 @@ public class LifeMod extends JavaPlugin {
     private StaffActionManager staffActionManager;
     private fr.lampalon.lifemod.platform.bukkit.managers.ScanManager scanManager;
     private fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager noClipManager;
+    private fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener traceItemListener;
     private fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager replayPlayerManager;
     private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
     private IVanishService vanishService;
@@ -461,6 +463,13 @@ public class LifeMod extends JavaPlugin {
 
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
         this.replayManager = new fr.lampalon.lifemod.common.replay.ReplayManager();
+        this.replayManager.cleanupExpiredReplays();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                replayManager.cleanupExpiredReplays();
+            }
+        }.runTaskTimer(this, 36000L, 36000L); // every 30 minutes (on the main thread, safe for SQLite/MySQL)
         this.replayPacketListener = new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayPacketListener(this.replayManager);
         PacketEvents.getAPI().getEventManager().registerListener(
                 replayPacketListener,
@@ -512,6 +521,7 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new AntiAltListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayInteractionListener(this), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayAutoStartListener(this), this);
+        pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayJoinListener(replayManager.getSkinManager()), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayBlockListener(replayManager), this);
         pm.registerEvents(new fr.lampalon.lifemod.platform.bukkit.replay.listeners.ReplayEventRecorder(replayManager), this);
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
@@ -527,7 +537,8 @@ public class LifeMod extends JavaPlugin {
             pm.registerEvents(new LogItemListener(), this);
             pm.registerEvents(new LogEntityListener(), this);
             pm.registerEvents(new LogMovementListener(), this);
-            pm.registerEvents(new TraceItemListener(), this);
+            traceItemListener = new TraceItemListener();
+            pm.registerEvents(traceItemListener, this);
             pm.registerEvents(new VaultHook(), this);
             pm.registerEvents(new AxTradesHook(), this);
             pm.registerEvents(new QuickShopHook(), this);
@@ -578,6 +589,8 @@ public class LifeMod extends JavaPlugin {
     public InvseeManager getInvseeManager() { return invseeManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.ScanManager getScanManager() { return scanManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager getNoClipManager() { return noClipManager; }
+
+    public fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener getTraceItemListener() { return traceItemListener; }
     public fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager getAntiAltManager() { return antiAltManager; }
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }

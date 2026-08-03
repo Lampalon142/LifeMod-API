@@ -319,6 +319,10 @@ modules:
     spawn-delay-ticks: 20
     ticks-per-frame: 1
     progress-interval: 200
+    record-radius: 300.0
+    record-nearby-players: true
+    mask-entities: true
+    record-equipment: true
     game-mode: "CREATIVE"
     allow-flight: true
     items:
@@ -390,7 +394,6 @@ commands:
     otp: true
     speed: true
     hearts: true
-    settime: true
     modlogin: true
     modregister: true
     modchangepass: true
@@ -519,6 +522,7 @@ debug:
     vanish: false
     mod: false
     chat: false
+    replay: false
 
 # Metadata
 version: 201

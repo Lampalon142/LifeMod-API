@@ -37,6 +37,11 @@ public class BukkitConfigurationService implements IConfigurationService {
     }
 
     @Override
+    public long getLong(String key, long defaultValue) {
+        return config.getLong(key, defaultValue);
+    }
+
+    @Override
     public String getPrefix() {
         return config.getString("prefix");
     }

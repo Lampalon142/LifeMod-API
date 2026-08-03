@@ -39,10 +39,11 @@ public class ReplayPlayerManager {
         player.setAllowFlight(config.getBoolean("modules.replay.allow-flight", true));
         player.setFlying(true);
 
-        // Hide all real players to isolate the moderator
+        // Hide all real players from the moderator, AND hide the moderator from all other players
         for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
             if (!online.equals(player)) {
                 player.hidePlayer(plugin, online);
+                online.hidePlayer(plugin, player);
             }
         }
 
@@ -60,10 +61,11 @@ public class ReplayPlayerManager {
             pm.stopPlayback();
         }
 
-        // Show players again
+        // Show players again (bidirectional)
         for (Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
             if (!online.equals(player)) {
                 player.showPlayer(plugin, online);
+                online.showPlayer(plugin, player);
             }
         }
 

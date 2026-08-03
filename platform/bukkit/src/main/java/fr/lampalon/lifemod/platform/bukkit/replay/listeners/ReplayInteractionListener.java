@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.common.core.ServiceRegistry;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,7 +38,6 @@ public class ReplayInteractionListener implements Listener {
 
         event.setCancelled(true);
         ILangService lang = ServiceRegistry.get(ILangService.class);
-        String name = item.getItemMeta().hasDisplayName() ? item.getItemMeta().getDisplayName() : "";
 
         switch (item.getType()) {
             case CLOCK:
@@ -45,15 +45,19 @@ public class ReplayInteractionListener implements Listener {
                 pm.setPaused(paused);
                 player.sendMessage(lang.getMessage(paused ? "replay.interaction.paused" : "replay.interaction.resumed"));
                 break;
-            case ARROW:
-                if (name.contains("Reculer")) {
+            case ARROW: {
+                String stripped = ChatColor.stripColor(item.getItemMeta().getDisplayName());
+                String rewindName = ChatColor.stripColor(lang.getMessage("replay.items.rewind"));
+                String forwardName = ChatColor.stripColor(lang.getMessage("replay.items.forward"));
+                if (stripped.equals(rewindName)) {
                     pm.seekTo(player, pm.getCurrentIndex() - 100);
                     player.sendMessage(lang.getMessage("replay.interaction.rewind"));
-                } else {
+                } else if (stripped.equals(forwardName)) {
                     pm.seekTo(player, pm.getCurrentIndex() + 100);
                     player.sendMessage(lang.getMessage("replay.interaction.forward"));
                 }
                 break;
+            }
             case BOOK:
                 player.sendMessage(lang.getMessage("replay.interaction.speed-not-implemented"));
                 break;

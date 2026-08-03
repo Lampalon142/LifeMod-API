@@ -2,8 +2,11 @@ package fr.lampalon.lifemod.platform.bukkit.replay.listeners;
 
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.replay.ReplaySession;
-import fr.lampalon.lifemod.common.replay.packet.ReplayFrame;
+import fr.lampalon.lifemod.platform.bukkit.replay.ReplayCodec;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -18,7 +21,8 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.util.Collections;
+import java.io.IOException;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 public class ReplayEventRecorder implements Listener {
@@ -27,161 +31,141 @@ public class ReplayEventRecorder implements Listener {
     private final ReplayManager replayManager;
 
     public ReplayEventRecorder(ReplayManager replayManager) {
+        if (replayManager == null) throw new IllegalArgumentException("replayManager cannot be null");
         this.replayManager = replayManager;
+    }
+
+    /**
+     * Builds a single-magic-byte event frame and queues it on the recording session.
+     * Shared by every event handler to avoid repeating the stream/queue boilerplate.
+     */
+    @FunctionalInterface
+    private interface DataWriter {
+        void write(DataOutputStream out) throws IOException;
+    }
+
+    private void recordEvent(ReplaySession session, byte magic, DataWriter body) {
+        if (session == null || !session.isRecording()) return;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeByte(magic);
+            body.write(dos);
+            session.queuePacket(baos.toByteArray());
+        } catch (Exception e) {
+            LOGGER.warning("ReplayEventRecorder: event " + magic + " failed " + e.getMessage());
+        }
+    }
+
+    private void recordEvent(UUID playerUuid, byte magic, DataWriter body) {
+        recordEvent(replayManager.getSession(playerUuid), magic, body);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onItemDrop(PlayerDropItemEvent event) {
-        ReplaySession session = replayManager.getSession(event.getPlayer().getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF1);
-            dos.writeUTF(event.getItemDrop().getItemStack().getType().name());
-            dos.writeInt(event.getItemDrop().getItemStack().getAmount());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: drop failed " + e.getMessage());
-        }
+        var stack = event.getItemDrop().getItemStack();
+        recordEvent(event.getPlayer().getUniqueId(), ReplayCodec.EVENT_DROP, dos -> {
+            dos.writeUTF(stack.getType().name());
+            dos.writeInt(stack.getAmount());
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChat(AsyncPlayerChatEvent event) {
-        ReplaySession session = replayManager.getSession(event.getPlayer().getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF2);
-            dos.writeUTF(event.getMessage());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: chat failed " + e.getMessage());
-        }
+        recordEvent(event.getPlayer().getUniqueId(), ReplayCodec.EVENT_CHAT, dos -> dos.writeUTF(event.getMessage()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
-        ReplaySession session = replayManager.getSession(event.getPlayer().getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF3);
-            dos.writeUTF(event.getMessage());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: command failed " + e.getMessage());
-        }
+        recordEvent(event.getPlayer().getUniqueId(), ReplayCodec.EVENT_COMMAND, dos -> dos.writeUTF(event.getMessage()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) return;
-        ReplaySession session = replayManager.getSession(victim.getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            String attacker = event.getDamager().getName();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF4);
-            dos.writeUTF(attacker);
-            dos.writeDouble(event.getFinalDamage());
-            dos.writeUTF(event.getCause().name());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: damage failed " + e.getMessage());
+        Entity attacked = event.getEntity();
+        Entity damager = event.getDamager();
+
+        ReplaySession victimSession = attacked instanceof Player p
+                ? replayManager.getSession(p.getUniqueId()) : null;
+        ReplaySession attackerSession = damager instanceof Player p
+                ? replayManager.getSession(p.getUniqueId()) : null;
+
+        if (attacked instanceof Player victim) {
+            recordEvent(victimSession, ReplayCodec.EVENT_DAMAGE, dos -> {
+                dos.writeUTF(damager.getName());
+                dos.writeDouble(event.getFinalDamage());
+                dos.writeUTF(event.getCause().name());
+            });
+            Entity mob = resolveAttackerMob(damager);
+            if (mob != null) spawnCombatMob(victimSession, mob);
         }
-        // Also record for the attacker if they are being recorded
-        if (event.getDamager() instanceof Player attacker) {
-            ReplaySession atkSession = replayManager.getSession(attacker.getUniqueId());
-            if (atkSession != null && atkSession.isRecording() && !attacker.equals(victim)) {
-                try {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    DataOutputStream dos = new DataOutputStream(baos);
-                    dos.writeByte(0xF4);
-                    dos.writeUTF(victim.getName());
-                    dos.writeDouble(event.getFinalDamage());
-                    dos.writeUTF(event.getCause().name());
-                    atkSession.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                            Collections.singletonList(baos.toByteArray())));
-                } catch (Exception e) {
-                    LOGGER.warning("ReplayEventRecorder: damage-attacker failed " + e.getMessage());
-                }
+        if (damager instanceof Player attacker && !(attacked instanceof Player)) {
+            recordEvent(attackerSession, ReplayCodec.EVENT_DAMAGE, dos -> {
+                dos.writeUTF(attacked.getName());
+                dos.writeDouble(event.getFinalDamage());
+                dos.writeUTF(event.getCause().name());
+            });
+            if (attacked instanceof LivingEntity && !(attacked instanceof Player)) {
+                spawnCombatMob(attackerSession, attacked);
             }
         }
+        if (damager instanceof Player attacker && attacked instanceof Player victim
+                && !attacker.equals(victim)) {
+            recordEvent(attackerSession, ReplayCodec.EVENT_DAMAGE, dos -> {
+                dos.writeUTF(victim.getName());
+                dos.writeDouble(event.getFinalDamage());
+                dos.writeUTF(event.getCause().name());
+            });
+        }
+    }
+
+    private Entity resolveAttackerMob(Entity damager) {
+        if (damager instanceof LivingEntity && !(damager instanceof Player)) return damager;
+        if (damager instanceof Projectile p && p.getShooter() instanceof LivingEntity s
+                && !(s instanceof Player)) return s;
+        return null;
+    }
+
+    private void spawnCombatMob(ReplaySession session, Entity mob) {
+        if (session == null || !session.isRecording()) return;
+        if (!(mob instanceof LivingEntity) || mob instanceof Player) return;
+        int eId = mob.getEntityId();
+        if (session.isEntityActive(eId)) return;
+        byte[] frame = ReplayCodec.buildSpawnMobFrame(eId, mob.getType().name(),
+                mob.getLocation().getX(), mob.getLocation().getY(), mob.getLocation().getZ(),
+                mob.getLocation().getYaw(), mob.getLocation().getPitch());
+        if (frame == null) return;
+        session.trackSpawn(eId);
+        session.queuePacket(frame);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDeath(PlayerDeathEvent event) {
-        ReplaySession session = replayManager.getSession(event.getEntity().getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF5);
-            dos.writeUTF(event.getDeathMessage() != null ? event.getDeathMessage() : "");
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: death failed " + e.getMessage());
-        }
+        recordEvent(event.getEntity().getUniqueId(), ReplayCodec.EVENT_DEATH,
+                dos -> dos.writeUTF(event.getDeathMessage() != null ? event.getDeathMessage() : ""));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (!(event.getEntity().getShooter() instanceof Player shooter)) return;
-        ReplaySession session = replayManager.getSession(shooter.getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF6);
-            dos.writeUTF(event.getEntity().getType().name());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: projectile failed " + e.getMessage());
-        }
+        recordEvent(shooter.getUniqueId(), ReplayCodec.EVENT_PROJECTILE, dos -> dos.writeUTF(event.getEntity().getType().name()));
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityInteract(PlayerInteractEntityEvent event) {
-        ReplaySession session = replayManager.getSession(event.getPlayer().getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF7);
+        recordEvent(event.getPlayer().getUniqueId(), ReplayCodec.EVENT_INTERACT, dos -> {
             dos.writeUTF(event.getRightClicked().getName());
             dos.writeUTF(event.getRightClicked().getType().name());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: interact failed " + e.getMessage());
-        }
+        });
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onItemPickup(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        ReplaySession session = replayManager.getSession(player.getUniqueId());
-        if (session == null || !session.isRecording()) return;
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
-            dos.writeByte(0xF8);
-            dos.writeUTF(event.getItem().getItemStack().getType().name());
-            dos.writeInt(event.getItem().getItemStack().getAmount());
-            session.addFrame(new ReplayFrame(System.currentTimeMillis(),
-                    Collections.singletonList(baos.toByteArray())));
-        } catch (Exception e) {
-            LOGGER.warning("ReplayEventRecorder: pickup failed " + e.getMessage());
-        }
+        var stack = event.getItem().getItemStack();
+        recordEvent(player.getUniqueId(), ReplayCodec.EVENT_PICKUP, dos -> {
+            dos.writeUTF(stack.getType().name());
+            dos.writeInt(stack.getAmount());
+        });
     }
 }

@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.nms.v1_21_R1;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.protocol.player.TextureProperty;
@@ -93,6 +94,25 @@ public final class NmsHandlerImpl extends AbstractNmsHandler {
             PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, headLook);
             PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, teleport);
         }, 3L);
+    }
+
+    @Override
+    public void spawnEntity(Player spectator, int entityId, String entityType, Location location) {
+        EntityType type = EntityTypes.getByName(entityType);
+        if (type == null) return;
+
+        WrapperPlayServerSpawnEntity packetSpawn = new WrapperPlayServerSpawnEntity(
+                entityId,
+                Optional.empty(),
+                type,
+                new Vector3d(location.getX(), location.getY(), location.getZ()),
+                location.getPitch(),
+                location.getYaw(),
+                location.getYaw(),
+                0,
+                Optional.empty()
+        );
+        PacketEvents.getAPI().getPlayerManager().sendPacket(spectator, packetSpawn);
     }
 
     @Override
