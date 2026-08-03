@@ -690,6 +690,8 @@ commands:
   noclip:
     activate: "%prefix%&aNoClip enabled!"
     deactivate: "%prefix%&cNoClip disabled!"
+    usage: "%prefix%&cUsage: /noclip <on|off>"
+    chest-opened: "%prefix%&aChest opened (NoClip)."
 
   clearinv:
     usage: "%prefix%&cUsage: /clearinv [player]"

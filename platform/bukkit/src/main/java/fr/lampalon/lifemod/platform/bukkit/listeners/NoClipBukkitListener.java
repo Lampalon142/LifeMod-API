@@ -12,7 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
  * Bukkit listener for NoClip edge cases:
  *  - Disconnect: cleans up state without restoring GameMode (player is gone)
  *  - Death: disables NoClip properly before respawn
- *  - External GameMode change (e.g. /gamemode by another admin): disables NoClip
+ *  - External GameMode change away from SPECTATOR: disables NoClip
  */
 public class NoClipBukkitListener implements Listener {
 
@@ -22,15 +22,11 @@ public class NoClipBukkitListener implements Listener {
         this.noClipManager = noClipManager;
     }
 
-    // Disconnect → remove from the map (no need to restore GM)
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
-        if (noClipManager.isNoClip(event.getPlayer().getUniqueId())) {
-            noClipManager.disableNoClip(event.getPlayer());
-        }
+        noClipManager.cleanupQuit(event.getPlayer().getUniqueId());
     }
 
-    // Death → disable NoClip properly (otherwise respawns in Spectator)
     @EventHandler(priority = EventPriority.HIGH)
     public void onDeath(PlayerDeathEvent event) {
         if (noClipManager.isNoClip(event.getEntity().getUniqueId())) {
@@ -38,13 +34,13 @@ public class NoClipBukkitListener implements Listener {
         }
     }
 
-    // If an admin changes the player's GameMode manually → disable NoClip
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
-        if (!noClipManager.isNoClip(event.getPlayer().getUniqueId())) return;
-
-        // If we are the ones changing to SPECTATOR (enableNoClip), ignore
-        // Detect this when the cause is not PLUGIN (external command)
-        // In practice: let it pass, disableNoClip will be called by the command
+        // Our own enable/disable manage the state; any change leaving SPECTATOR
+        // while in NoClip is treated as an external override and disables NoClip.
+        if (noClipManager.isNoClip(event.getPlayer().getUniqueId())
+                && event.getNewGameMode() != org.bukkit.GameMode.SPECTATOR) {
+            noClipManager.disableNoClip(event.getPlayer());
+        }
     }
 }

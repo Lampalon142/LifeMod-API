@@ -1,8 +1,8 @@
 package fr.lampalon.lifemod.platform.bukkit.managers;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.listeners.NoClipPacketListener;
@@ -10,21 +10,26 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.UUID;
 
 public class NoClipManager {
 
+    private static final float DEFAULT_FLY_SPEED = 0.1f;
+
     private final LifeMod plugin;
-    private final Map<UUID, GameMode> noclipPlayers = new HashMap<>();
+    private final Map<UUID, FlightState> states = new HashMap<>();
     private int visibilityTaskId = -1;
 
     public NoClipManager(LifeMod plugin) {
         this.plugin = plugin;
-        PacketEvents.getAPI().getEventManager()
-                .registerListener(new NoClipPacketListener(this));
+        PacketEvents.getAPI().getEventManager().registerListener(new NoClipPacketListener(this));
     }
 
     public void toggleNoClip(Player player) {
+        if (player == null) return;
         if (isNoClip(player.getUniqueId())) {
             disableNoClip(player);
         } else {
@@ -33,15 +38,18 @@ public class NoClipManager {
     }
 
     public void enableNoClip(Player player) {
-        GameMode original = player.getGameMode();
-        noclipPlayers.put(player.getUniqueId(), original);
+        if (player == null || isNoClip(player.getUniqueId())) return;
 
+        states.put(player.getUniqueId(), new FlightState(
+                player.getGameMode(), player.isFlying(), player.getAllowFlight(), player.getFlySpeed()));
+
+        // Server-side SPECTATOR gives collision-free flight; the packet listener
+        // spoofs the client into CREATIVE so interactions behave natively.
         player.setGameMode(GameMode.SPECTATOR);
-        spoofClientGameMode(player, original);
 
-        player.setFlySpeed(0.2f);
         player.setAllowFlight(true);
         player.setFlying(true);
+        player.setFlySpeed(flySpeed());
 
         startVisibilityTask();
 
@@ -50,71 +58,103 @@ public class NoClipManager {
     }
 
     public void disableNoClip(Player player) {
-        GameMode original = noclipPlayers.remove(player.getUniqueId());
+        if (player == null) return;
+        FlightState state = states.remove(player.getUniqueId());
 
-        player.setGameMode(original != null ? original : GameMode.SURVIVAL);
-        spoofClientGameMode(player, original != null ? original : GameMode.SURVIVAL);
-        player.setFlySpeed(0.1f);
+        player.setGameMode(state != null ? state.originalMode : GameMode.SURVIVAL);
+
+        if (state != null) {
+            player.setFlying(state.wasFlying && state.allowFlight);
+            player.setAllowFlight(state.allowFlight);
+            player.setFlySpeed(state.flySpeed);
+        }
+
+        stopVisibilityIfEmpty();
 
         ILangService lang = ServiceRegistry.get(ILangService.class);
         player.sendMessage(lang.getMessage("commands.noclip.deactivate"));
     }
 
-    private void spoofClientGameMode(Player player, GameMode gameMode) {
-        int value = switch (gameMode) {
-            case SURVIVAL  -> 0;
-            case CREATIVE  -> 1;
-            case ADVENTURE -> 2;
-            case SPECTATOR -> 3;
-        };
-        WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(3, value);
-        PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
-    }
-
-    private void startVisibilityTask() {
-        if (visibilityTaskId != -1) return;
-        visibilityTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            if (noclipPlayers.isEmpty()) {
-                Bukkit.getScheduler().cancelTask(visibilityTaskId);
-                visibilityTaskId = -1;
-                return;
-            }
-            for (UUID uuid : noclipPlayers.keySet()) {
-                Player p = Bukkit.getPlayer(uuid);
-                if (p == null || !p.isOnline()) continue;
-                boolean isVanished = plugin.getVanishService().isVanished(p.getUniqueId());
-                for (Player other : Bukkit.getOnlinePlayers()) {
-                    if (other.equals(p)) continue;
-                    if (isVanished && !other.hasPermission("lifemod.vanish.see")) {
-                        continue; // Don't unhide vanished players for normal users
-                    }
-                    other.showPlayer(plugin, p);
-                }
-            }
-        }, 10L, 10L);
+    public void cleanupQuit(UUID uuid) {
+        if (states.remove(uuid) != null) {
+            stopVisibilityIfEmpty();
+        }
     }
 
     public void shutdown() {
-        for (UUID uuid : new HashSet<>(noclipPlayers.keySet())) {
+        for (UUID uuid : new HashSet<>(states.keySet())) {
             Player p = Bukkit.getPlayer(uuid);
-            if (p != null) disableNoClip(p);
+            if (p != null && p.isOnline()) {
+                disableNoClip(p);
+            } else {
+                states.remove(uuid);
+            }
         }
-        noclipPlayers.clear();
         if (visibilityTaskId != -1) {
             Bukkit.getScheduler().cancelTask(visibilityTaskId);
             visibilityTaskId = -1;
         }
     }
 
+    private void startVisibilityTask() {
+        if (visibilityTaskId != -1) return;
+        long interval = visibilityInterval();
+        visibilityTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+            if (states.isEmpty()) {
+                Bukkit.getScheduler().cancelTask(visibilityTaskId);
+                visibilityTaskId = -1;
+                return;
+            }
+            for (UUID uuid : new HashSet<>(states.keySet())) {
+                Player p = Bukkit.getPlayer(uuid);
+                if (p == null || !p.isOnline()) continue;
+                boolean isVanished = plugin.getVanishService().isVanished(uuid);
+                for (Player other : Bukkit.getOnlinePlayers()) {
+                    if (other.equals(p)) continue;
+                    if (isVanished && !other.hasPermission("lifemod.vanish.see")) continue;
+                    other.showPlayer(plugin, p);
+                }
+            }
+        }, interval, interval);
+    }
+
+    private void stopVisibilityIfEmpty() {
+        if (states.isEmpty() && visibilityTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(visibilityTaskId);
+            visibilityTaskId = -1;
+        }
+    }
+
     public boolean isNoClip(UUID uuid) {
-        return noclipPlayers.containsKey(uuid);
+        return states.containsKey(uuid);
     }
 
     public GameMode getOriginalGameMode(UUID uuid) {
-        return noclipPlayers.getOrDefault(uuid, GameMode.SURVIVAL);
+        FlightState state = states.get(uuid);
+        return state != null ? state.originalMode : GameMode.SURVIVAL;
+    }
+
+    public float flySpeed() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        float speed = cfg != null ? (float) cfg.getDouble("modules.noclip.speed", 0.3) : 0.3f;
+        return Math.max(0.0f, Math.min(speed, 1.0f));
+    }
+
+    public double reach() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        return cfg != null ? cfg.getDouble("modules.noclip.reach", 7) : 7;
+    }
+
+    private long visibilityInterval() {
+        IConfigurationService cfg = ServiceRegistry.get(IConfigurationService.class);
+        long interval = cfg != null ? cfg.getLong("modules.noclip.visibility-refresh-interval", 20) : 20L;
+        return Math.max(1L, interval);
     }
 
     public LifeMod getPlugin() {
         return plugin;
+    }
+
+    private record FlightState(GameMode originalMode, boolean wasFlying, boolean allowFlight, float flySpeed) {
     }
 }

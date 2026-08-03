@@ -7,19 +7,32 @@ import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.DiggingAction;
+import com.github.retrooper.packetevents.protocol.player.GameMode;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChangeGameState;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerAbilities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager;
-import java.util.ArrayList;
-import java.util.List;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NoClipPacketListener extends PacketListenerAbstract {
 
@@ -40,18 +53,13 @@ public class NoClipPacketListener extends PacketListenerAbstract {
             return;
         }
 
+        if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
+            handlePlacement(event, player);
+            return;
+        }
+
         if (event.getPacketType() == PacketType.Play.Client.INTERACT_ENTITY) {
             handleEntityInteract(event, player);
-            return;
-        }
-
-        if (event.getPacketType() == PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT) {
-            tempCreative(player);
-            return;
-        }
-
-        if (event.getPacketType() == PacketType.Play.Client.USE_ITEM) {
-            tempCreative(player);
         }
     }
 
@@ -64,20 +72,21 @@ public class NoClipPacketListener extends PacketListenerAbstract {
             WrapperPlayServerChangeGameState packet = new WrapperPlayServerChangeGameState(event);
             if (packet.getReason() != WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE) return;
 
-            float originalValue = switch (noClipManager.getOriginalGameMode(player.getUniqueId())) {
-                case SURVIVAL  -> 0.0f;
-                case CREATIVE  -> 1.0f;
-                case ADVENTURE -> 2.0f;
-                case SPECTATOR -> 3.0f;
-            };
-
-            if (Math.abs(packet.getValue() - originalValue) > 0.01f) {
+            // Keep the client thinking it is in CREATIVE (spoofed)
+            if (Math.abs(packet.getValue() - 1.0f) > 0.01f) {
                 event.setCancelled(true);
                 PacketEvents.getAPI().getPlayerManager().sendPacket(player,
-                    new WrapperPlayServerChangeGameState(
-                        WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE,
-                        originalValue));
+                        new WrapperPlayServerChangeGameState(
+                                WrapperPlayServerChangeGameState.Reason.CHANGE_GAME_MODE, 1.0f));
             }
+            return;
+        }
+
+        if (event.getPacketType() == PacketType.Play.Server.PLAYER_ABILITIES) {
+            WrapperPlayServerPlayerAbilities abilities = new WrapperPlayServerPlayerAbilities(event);
+            abilities.setFlying(true);
+            abilities.setFlightAllowed(true);
+            abilities.setInCreativeMode(true);
             return;
         }
 
@@ -85,19 +94,11 @@ public class NoClipPacketListener extends PacketListenerAbstract {
             WrapperPlayServerPlayerInfoUpdate wrapper = new WrapperPlayServerPlayerInfoUpdate(event);
             if (!wrapper.getActions().contains(WrapperPlayServerPlayerInfoUpdate.Action.UPDATE_GAME_MODE)) return;
 
-            GameMode original = noClipManager.getOriginalGameMode(player.getUniqueId());
-            com.github.retrooper.packetevents.protocol.player.GameMode peGameMode = switch (original) {
-                case SURVIVAL -> com.github.retrooper.packetevents.protocol.player.GameMode.SURVIVAL;
-                case CREATIVE -> com.github.retrooper.packetevents.protocol.player.GameMode.CREATIVE;
-                case ADVENTURE -> com.github.retrooper.packetevents.protocol.player.GameMode.ADVENTURE;
-                case SPECTATOR -> com.github.retrooper.packetevents.protocol.player.GameMode.SPECTATOR;
-            };
-
             List<WrapperPlayServerPlayerInfoUpdate.PlayerInfo> entries = new ArrayList<>(wrapper.getEntries());
             boolean changed = false;
             for (WrapperPlayServerPlayerInfoUpdate.PlayerInfo entry : entries) {
-                if (entry.getGameMode() != peGameMode) {
-                    entry.setGameMode(peGameMode);
+                if (entry.getGameMode() != GameMode.CREATIVE) {
+                    entry.setGameMode(GameMode.CREATIVE);
                     changed = true;
                 }
             }
@@ -112,30 +113,74 @@ public class NoClipPacketListener extends PacketListenerAbstract {
         WrapperPlayClientPlayerDigging wrapper = new WrapperPlayClientPlayerDigging(event);
         DiggingAction action = wrapper.getAction();
 
-        if (action != DiggingAction.FINISHED_DIGGING && action != DiggingAction.START_DIGGING) return;
-
-        Vector3i pos = wrapper.getBlockPosition();
-        GameMode originalGm = noClipManager.getOriginalGameMode(player.getUniqueId());
-
-        boolean shouldBreak = (originalGm == GameMode.CREATIVE && action == DiggingAction.START_DIGGING)
-                || (originalGm != GameMode.CREATIVE && action == DiggingAction.FINISHED_DIGGING);
-
-        if (!shouldBreak) return;
+        if (action != DiggingAction.START_DIGGING && action != DiggingAction.FINISHED_DIGGING) return;
 
         event.setCancelled(true);
+        Vector3i pos = wrapper.getBlockPosition();
 
-        org.bukkit.block.Block block = player.getWorld().getBlockAt(pos.x, pos.y, pos.z);
-        if (block.isEmpty()) return;
+        Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () -> {
+            Block block = player.getWorld().getBlockAt(pos.x, pos.y, pos.z);
+            if (block.isEmpty() || block.isLiquid()) return;
+            if (!inReach(player, block.getLocation().add(0.5, 0.5, 0.5))) return;
 
-        Location blockLoc = block.getLocation().add(0.5, 0.5, 0.5);
-        if (player.getLocation().distanceSquared(blockLoc) > 36) return;
+            if (noClipManager.getOriginalGameMode(player.getUniqueId()) == org.bukkit.GameMode.CREATIVE) {
+                block.setType(Material.AIR);
+            } else {
+                block.breakNaturally(player.getInventory().getItemInMainHand());
+            }
 
-        if (originalGm == GameMode.CREATIVE) {
-            Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
-                block.setType(org.bukkit.Material.AIR));
-        } else {
-            Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
-                block.breakNaturally(player.getInventory().getItemInMainHand()));
+            sendBlockChange(player, block);
+        });
+    }
+
+    private void handlePlacement(PacketReceiveEvent event, Player player) {
+        WrapperPlayClientPlayerBlockPlacement wrapper = new WrapperPlayClientPlayerBlockPlacement(event);
+        event.setCancelled(true);
+
+        Vector3i clicked = wrapper.getBlockPosition();
+        if (wrapper.getFace() == null || wrapper.getFace() == com.github.retrooper.packetevents.protocol.world.BlockFace.OTHER) {
+            return;
+        }
+        Vector3i target = clicked.offset(wrapper.getFace());
+
+        Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
+                handlePlacementSync(player, clicked, target));
+    }
+
+    private void handlePlacementSync(Player player, Vector3i clickedPos, Vector3i targetPos) {
+        Block clicked = player.getWorld().getBlockAt(clickedPos.x, clickedPos.y, clickedPos.z);
+        BlockState clickedState = clicked.getState();
+
+        if (clickedState instanceof InventoryHolder holder) {
+            player.openInventory(holder.getInventory());
+            ILangService lang = ServiceRegistry.get(ILangService.class);
+            if (lang != null) {
+                player.sendMessage(lang.getMessage("commands.noclip.chest-opened"));
+            }
+            return;
+        }
+
+        Block target = player.getWorld().getBlockAt(targetPos.x, targetPos.y, targetPos.z);
+        if (!target.isPassable()) return;
+        if (!inReach(player, target.getLocation().add(0.5, 0.5, 0.5))) return;
+
+        ItemStack held = player.getInventory().getItemInMainHand();
+        if (held == null || held.getType().isAir() || !held.getType().isBlock()) return;
+
+        if (hasEntityInside(target)) return;
+
+        target.setBlockData(held.getType().createBlockData(), true);
+        sendBlockChange(player, target);
+        sendBlockChange(player, clicked);
+
+        if (noClipManager.getOriginalGameMode(player.getUniqueId()) != org.bukkit.GameMode.CREATIVE) {
+            int amount = held.getAmount() - 1;
+            if (amount > 0) {
+                held.setAmount(amount);
+                player.getInventory().setItemInMainHand(held);
+            } else {
+                player.getInventory().setItemInMainHand(null);
+            }
         }
     }
 
@@ -155,18 +200,27 @@ public class NoClipPacketListener extends PacketListenerAbstract {
             event.setCancelled(true);
             Entity finalTarget = target;
             Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
-                player.attack(finalTarget));
-        } else {
-            event.setCancelled(true);
-            tempCreative(player);
+                    player.attack(finalTarget));
         }
     }
 
-    private void tempCreative(Player player) {
-        Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () -> {
-            player.setGameMode(GameMode.CREATIVE);
-            Bukkit.getScheduler().runTask(noClipManager.getPlugin(), () ->
-                player.setGameMode(GameMode.SPECTATOR));
-        });
+    private boolean inReach(Player player, Location location) {
+        double reach = noClipManager.reach();
+        return player.getEyeLocation().distanceSquared(location) <= reach * reach;
+    }
+
+    private boolean hasEntityInside(Block block) {
+        BoundingBox box = BoundingBox.of(block.getLocation(), block.getLocation().add(1, 1, 1));
+        return !block.getWorld().getNearbyEntities(box).isEmpty();
+    }
+
+    private void sendBlockChange(Player player, Block block) {
+        try {
+            int blockId = SpigotConversionUtil.fromBukkitBlockData(block.getBlockData()).getGlobalId();
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player,
+                    new WrapperPlayServerBlockChange(
+                            new Vector3i(block.getX(), block.getY(), block.getZ()), blockId));
+        } catch (Exception ignored) {
+        }
     }
 }

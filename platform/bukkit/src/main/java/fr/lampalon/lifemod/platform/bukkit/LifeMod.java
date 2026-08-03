@@ -455,10 +455,12 @@ public class LifeMod extends JavaPlugin {
         invseeManager = new InvseeManager();
         staffActionManager = new StaffActionManager();
         scanManager = new fr.lampalon.lifemod.platform.bukkit.managers.ScanManager(this);
-        noClipManager = new NoClipManager(this);
-        getServer().getPluginManager().registerEvents(
-                new NoClipBukkitListener(noClipManager), this
-        );
+        if (configConfig.getBoolean("modules.noclip.enabled", true)) {
+            noClipManager = new NoClipManager(this);
+            getServer().getPluginManager().registerEvents(
+                    new NoClipBukkitListener(noClipManager), this
+            );
+        }
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
 
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
