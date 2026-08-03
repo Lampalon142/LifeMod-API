@@ -24,6 +24,10 @@ public class AuthCommand extends LifeCommand {
     public void execute(CommandContext context) {
         ModeratorSessionManager sessionManager = context.getPlugin().getModeratorSessionManager();
         ModeratorAuthService authService = context.getPlugin().getModeratorAuthService();
+        if (sessionManager == null || authService == null) {
+            context.getSender().sendMessage(context.getLang().getMessage("system.module-disabled"));
+            return;
+        }
         Player player = context.getPlayer();
 
         if (context.getArgs().length == 0){
@@ -197,7 +201,8 @@ public class AuthCommand extends LifeCommand {
 
         String sub = context.getArgs()[0].toLowerCase();
         if (List.of("reset", "info", "set", "lock", "unlock").contains(sub) && context.getArgs().length == 2) {
-            return context.getPlugin().getModeratorAuthService().getAllRegisteredNames();
+            ModeratorAuthService authService = context.getPlugin().getModeratorAuthService();
+            if (authService != null) return authService.getAllRegisteredNames();
         }
 
         return List.of();

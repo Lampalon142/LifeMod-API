@@ -1,6 +1,7 @@
 package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.gui.PinGui;
@@ -60,15 +61,20 @@ public class ModeratorAuthListener implements Listener {
         // Already authenticated this in-memory session
         if (sessionManager.isAuthenticated(player.getUniqueId())) return;
 
-        // Try to restore session from DB (same IP + within timeout)
-        String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : null;
-        String lastIp = authService.getLastAuthIp(player.getUniqueId());
-        long lastTime = authService.getLastAuthTime(player.getUniqueId());
-        long timeoutMs = 5L * 60L * 1000L; // 5 minutes
+        // Try to restore session from DB (same IP + within config timeout, only if require-ip-match is true)
+        IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
+        boolean requireIpMatch = config.getBoolean("modules.moderator-auth.require-ip-match", false);
 
-        if (currentIp != null && currentIp.equals(lastIp) && lastTime > 0 && (System.currentTimeMillis() - lastTime) < timeoutMs) {
-            sessionManager.authenticate(player.getUniqueId());
-            return;
+        if (requireIpMatch) {
+            String currentIp = player.getAddress() != null ? player.getAddress().getAddress().getHostAddress() : null;
+            String lastIp = authService.getLastAuthIp(player.getUniqueId());
+            long lastTime = authService.getLastAuthTime(player.getUniqueId());
+            long timeoutMs = config.getLong("modules.moderator-auth.session-timeout-minutes", 30) * 60L * 1000L;
+
+            if (currentIp != null && currentIp.equals(lastIp) && lastTime > 0 && (System.currentTimeMillis() - lastTime) < timeoutMs) {
+                sessionManager.authenticate(player.getUniqueId());
+                return;
+            }
         }
 
         // Otherwise ask for PIN
@@ -78,7 +84,7 @@ public class ModeratorAuthListener implements Listener {
                 activeGuis.put(player.getUniqueId(), gui);
                 gui.open();
             }
-        }, 10L);
+        }, 2L);
     }
 
     @EventHandler
