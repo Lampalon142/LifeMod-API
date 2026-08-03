@@ -9,9 +9,7 @@ import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
 import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
-import fr.lampalon.lifemod.common.service.ILogService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
-import fr.lampalon.lifemod.common.service.LogService;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
 import fr.lampalon.lifemod.platform.bungee.adapter.BungeeConfigurationService;
@@ -91,18 +89,9 @@ public class BungeeLifeMod extends Plugin {
 
         ServiceRegistry.register(ISanctionService.class, new SanctionService(databaseManager.getDatabaseProvider()));
 
-        if (config.getBoolean("logs.enabled", true)) {
-            ServiceRegistry.register(ILogService.class,
-                new LogService(databaseManager.getDatabaseProvider(),
-                    ServiceRegistry.get(IConfigurationService.class), null));
-        }
-
         getProxy().getPluginManager().registerListener(this, new BungeeConnectionListener());
         getProxy().getPluginManager().registerListener(this, new BungeeChatListener());
         getProxy().getPluginManager().registerListener(this, new BungeeAntiAltListener(this));
-        if (ServiceRegistry.get(ILogService.class) != null) {
-            getProxy().getPluginManager().registerListener(this, new BungeeLogListener());
-        }
 
         if (config.getBoolean("modules.staffchat.enabled", true)) {
             getProxy().getPluginManager().registerCommand(this, new BungeeStaffchatCommand(this));
@@ -297,9 +286,6 @@ public class BungeeLifeMod extends Plugin {
     }
 
     private void shutdown() {
-        ILogService logSvc = ServiceRegistry.get(ILogService.class);
-        if (logSvc != null) logSvc.shutdown();
-
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
 
