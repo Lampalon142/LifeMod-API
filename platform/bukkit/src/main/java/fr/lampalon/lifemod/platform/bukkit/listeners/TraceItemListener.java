@@ -26,12 +26,13 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TraceItemListener extends LogBaseListener {
 
-    private static final NamespacedKey TRACE_KEY = new NamespacedKey(LifeMod.getInstance(), "trace_id");
     private static final String ACTION_CRAFT = "CRAFT";
     private static final String ACTION_PICKUP = "PICKUP";
     private static final String ACTION_DROP = "DROP";
@@ -46,6 +47,16 @@ public class TraceItemListener extends LogBaseListener {
     private static final String ACTION_DESTROYED = "DESTROYED";
     private static final String ACTION_SPAWNED = "SPAWNED";
 
+    private static final NamespacedKey TRACE_KEY = new NamespacedKey(LifeMod.getInstance(), "trace_id");
+
+    /**
+     * In-memory cache keyed by ItemStack reference so we only ever write the
+     * trace UUID into the item's NBT ONCE per lot (a full stack = one reference).
+     * This keeps stacking intact inside a lot while letting /trace read the UUID.
+     */
+    private final Map<ItemStack, String> traceIds = new ConcurrentHashMap<>();
+    private final Map<Item, String> groundTraceIds = new ConcurrentHashMap<>();
+
     public TraceItemListener() {
         // Tâche périodique : détruit les items dans la lave/fire/void/cactus
         org.bukkit.Bukkit.getScheduler().runTaskTimer(
@@ -58,8 +69,10 @@ public class TraceItemListener extends LogBaseListener {
             InventoryType.SHULKER_BOX, InventoryType.ENDER_CHEST
     ));
 
-    public static String getOrAssignTraceId(ItemStack item) {
+    public String getOrAssignTraceId(ItemStack item) {
         if (item == null || item.getType().isAir()) return null;
+        String cached = traceIds.get(item);
+        if (cached != null) return cached;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return null;
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -69,14 +82,46 @@ public class TraceItemListener extends LogBaseListener {
             pdc.set(TRACE_KEY, PersistentDataType.STRING, id);
             item.setItemMeta(meta);
         }
+        traceIds.put(item, id);
         return id;
     }
 
-    public static String readTraceId(ItemStack item) {
+    public String readTraceId(ItemStack item) {
         if (item == null || item.getType().isAir()) return null;
+        String cached = traceIds.get(item);
+        if (cached != null) return cached;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return null;
         return meta.getPersistentDataContainer().get(TRACE_KEY, PersistentDataType.STRING);
+    }
+
+    /**
+     * Finds a trace ID for any item held/owned by the player. The in-memory map
+     * is keyed by ItemStack reference, so we scan the player's inventory
+     * (including the item in hand) to locate a known reference.
+     */
+    public static String findTraceId(Player player) {
+        if (player == null) return null;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && !item.getType().isAir()) {
+                String id = getActiveInstance().readTraceId(item);
+                if (id != null) return id;
+            }
+        }
+        ItemStack[] armor = player.getInventory().getArmorContents();
+        if (armor != null) {
+            for (ItemStack item : armor) {
+                if (item != null && !item.getType().isAir()) {
+                    String id = getActiveInstance().readTraceId(item);
+                    if (id != null) return id;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static TraceItemListener getActiveInstance() {
+        return LifeMod.getInstance().getTraceItemListener();
     }
 
     private void logTrace(String traceId, ItemStack item, String action, Player player,
@@ -117,9 +162,12 @@ public class TraceItemListener extends LogBaseListener {
     public void onPickup(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         Player p = (Player) event.getEntity();
-        ItemStack item = event.getItem().getItemStack();
+        Item itemEntity = event.getItem();
+        ItemStack item = itemEntity.getItemStack();
         if (item.getType().isAir()) return;
-        String traceId = getOrAssignTraceId(item);
+        String traceId = groundTraceIds.remove(itemEntity);
+        if (traceId == null) traceId = getOrAssignTraceId(item);
+        else traceIds.put(item, traceId);
         logTrace(traceId, item, ACTION_PICKUP, p,
                 p.getLocation().getWorld().getName(),
                 p.getLocation().getBlockX(),
@@ -132,9 +180,11 @@ public class TraceItemListener extends LogBaseListener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDrop(PlayerDropItemEvent event) {
         Player p = event.getPlayer();
-        ItemStack item = event.getItemDrop().getItemStack();
+        Item itemEntity = event.getItemDrop();
+        ItemStack item = itemEntity.getItemStack();
         if (item.getType().isAir()) return;
         String traceId = getOrAssignTraceId(item);
+        groundTraceIds.put(itemEntity, traceId);
         logTrace(traceId, item, ACTION_DROP, p,
                 p.getLocation().getWorld().getName(),
                 p.getLocation().getBlockX(),
@@ -161,9 +211,11 @@ public class TraceItemListener extends LogBaseListener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDespawn(ItemDespawnEvent event) {
-        ItemStack item = event.getEntity().getItemStack();
+        Item itemEntity = event.getEntity();
+        ItemStack item = itemEntity.getItemStack();
         if (item.getType().isAir()) return;
-        String traceId = readTraceId(item);
+        String traceId = groundTraceIds.remove(itemEntity);
+        if (traceId == null) traceId = readTraceId(item);
         logTrace(traceId, item, ACTION_DESPAWN, null,
                 event.getLocation().getWorld().getName(),
                 event.getLocation().getBlockX(),
@@ -283,9 +335,7 @@ public class TraceItemListener extends LogBaseListener {
         String sourceTraceId = readTraceId(source);
         if (sourceTraceId == null) return;
         result = result.clone();
-        ItemMeta meta = result.getItemMeta();
-        meta.getPersistentDataContainer().set(TRACE_KEY, PersistentDataType.STRING, sourceTraceId);
-        result.setItemMeta(meta);
+        traceIds.put(result, sourceTraceId);
         event.setResult(result);
         logTrace(sourceTraceId, result, ACTION_SMELT, null,
                 event.getBlock().getWorld().getName(),
@@ -321,9 +371,7 @@ public class TraceItemListener extends LogBaseListener {
         if (leftTraceId == null) return;
         if (leftTraceId.equals(readTraceId(result))) return;
         result = result.clone();
-        ItemMeta meta = result.getItemMeta();
-        meta.getPersistentDataContainer().set(TRACE_KEY, PersistentDataType.STRING, leftTraceId);
-        result.setItemMeta(meta);
+        traceIds.put(result, leftTraceId);
         event.setResult(result);
     }
 
@@ -404,7 +452,8 @@ public class TraceItemListener extends LogBaseListener {
             for (org.bukkit.entity.Entity entity : world.getEntities()) {
                 if (!(entity instanceof Item itemEntity)) continue;
                 ItemStack item = itemEntity.getItemStack();
-                String traceId = readTraceId(item);
+                String traceId = groundTraceIds.remove(itemEntity);
+                if (traceId == null) traceId = readTraceId(item);
                 if (traceId == null) continue;
                 org.bukkit.Location loc = itemEntity.getLocation();
                 Material block = loc.getBlock().getType();
