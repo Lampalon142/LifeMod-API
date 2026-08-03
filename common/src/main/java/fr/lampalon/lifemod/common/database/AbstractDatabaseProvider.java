@@ -46,22 +46,6 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
                 rs.getBoolean("in_staff_mode"));
     }
 
-    protected LogEntry mapLogEntry(ResultSet rs) throws SQLException {
-        return LogEntry.builder()
-                .id(rs.getLong("id"))
-                .type(rs.getInt("type"))
-                .playerUuid(UUID.fromString(rs.getString("player_uuid")))
-                .playerName(rs.getString("player_name"))
-                .targetUuid(rs.getString("target_uuid") != null ? UUID.fromString(rs.getString("target_uuid")) : null)
-                .targetName(rs.getString("target_name"))
-                .actionData(rs.getString("action_data"))
-                .world(rs.getString("world"))
-                .x(rs.getInt("x")).y(rs.getInt("y")).z(rs.getInt("z"))
-                .serverName(rs.getString("server_name"))
-                .createdAt(rs.getLong("created_at"))
-                .build();
-    }
-
     // --- Reports ---
 
     @Override
@@ -533,22 +517,5 @@ public abstract class AbstractDatabaseProvider implements DatabaseProvider {
             ps.setLong(1, threshold);
             ps.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
-    }
-
-    // --- Logs (shared helper) ---
-
-    protected void setLogParameters(PreparedStatement ps, LogEntry e) throws SQLException {
-        ps.setInt(1, e.getType());
-        ps.setString(2, e.getPlayerUuid() != null ? e.getPlayerUuid().toString() : "00000000-0000-0000-0000-000000000000");
-        ps.setString(3, e.getPlayerName());
-        ps.setString(4, e.getTargetUuid() != null ? e.getTargetUuid().toString() : null);
-        ps.setString(5, e.getTargetName());
-        ps.setString(6, e.getActionData());
-        ps.setString(7, e.getWorld());
-        ps.setInt(8, e.getX());
-        ps.setInt(9, e.getY());
-        ps.setInt(10, e.getZ());
-        ps.setString(11, e.getServerName());
-        ps.setLong(12, e.getCreatedAt());
     }
 }

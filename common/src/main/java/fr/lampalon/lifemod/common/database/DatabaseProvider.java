@@ -1,7 +1,5 @@
 package fr.lampalon.lifemod.common.database;
 
-import fr.lampalon.lifemod.common.model.LogEntry;
-import fr.lampalon.lifemod.common.model.LogQuery;
 import fr.lampalon.lifemod.common.model.PlayerData;
 import fr.lampalon.lifemod.common.model.Sanction;
 import fr.lampalon.lifemod.common.model.SanctionType;
@@ -12,7 +10,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public interface DatabaseProvider {
@@ -111,12 +108,6 @@ public interface DatabaseProvider {
             this.createdAt = createdAt; this.isReport = isReport;
         }
     }
-
-    // Action Logs
-    void saveLogBatch(List<LogEntry> entries);
-    List<LogEntry> queryLogs(LogQuery query);
-    long countLogs(LogQuery query);
-    void purgeLogs(Map<Integer, Long> retentionMsPerType, long defaultRetentionMs);
 
     class IPReputation {
         public String ip;
