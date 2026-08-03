@@ -68,8 +68,19 @@ shadowJar {
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
 
+}
+
+task deployDevServers {
     doLast {
-        def jarFile = destinationDirectory.get().asFile.toPath().resolve(archiveFileName.get()).toFile()
+        def jarName = shadowJar.archiveFileName.get()
+        def jarFile = shadowJar.destinationDirectory.get().asFile.toPath().resolve(jarName).toFile()
+
+        // Clean old JARs from out/
+        delete fileTree(shadowJar.destinationDirectory.get().asFile).matching {
+            include "LifeMod*.jar"
+            exclude jarName
+        }
+
         def targets = [
             'C:/Users/Lampalon/Desktop/serveurs/Lobby/plugins',
             'C:/Users/Lampalon/Desktop/serveurs/Proxy/plugins',
@@ -77,11 +88,17 @@ shadowJar {
             'C:/Users/Lampalon/Desktop/serveurs/1.21.11/plugins'
         ]
         targets.each { dir ->
+            def targetDir = file(dir)
+            // Delete old LifeMod JARs in target
+            delete fileTree(targetDir).matching { include "LifeMod*.jar" }
+            // Copy new JAR
             copy {
                 from jarFile
-                into file(dir)
+                into targetDir
             }
             println "Deployed LifeMod to ${dir}"
         }
     }
 }
+
+shadowJar.finalizedBy deployDevServers
