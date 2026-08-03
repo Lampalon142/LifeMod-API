@@ -30,8 +30,7 @@ public class NoClipListener implements Listener {
     @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (!noClipManager.isNoClip(event.getPlayer().getUniqueId())) return;
-        GameMode target = event.getNewGameMode();
-        if (target != GameMode.SPECTATOR) {
+        if (event.getNewGameMode() != GameMode.CREATIVE) {
             noClipManager.disableNoClip(event.getPlayer());
         }
     }
