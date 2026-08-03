@@ -13,11 +13,9 @@ import fr.lampalon.lifemod.common.messaging.RedisMessagingService;
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
-import fr.lampalon.lifemod.common.service.ILogService;
 import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.IWebhookService;
-import fr.lampalon.lifemod.common.service.LogService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
 
@@ -36,11 +34,9 @@ import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.replay.ReplayManager;
 import fr.lampalon.lifemod.common.service.IConfigurationService;
 import fr.lampalon.lifemod.common.service.ILangService;
-import fr.lampalon.lifemod.common.service.ILogService;
 import fr.lampalon.lifemod.common.service.IPinService;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.IWebhookService;
-import fr.lampalon.lifemod.common.service.LogService;
 import fr.lampalon.lifemod.common.service.PinServiceImpl;
 import fr.lampalon.lifemod.common.service.SanctionService;
 import fr.lampalon.lifemod.common.utils.TimeUtil;
@@ -53,7 +49,6 @@ import fr.lampalon.lifemod.platform.bukkit.commands.engine.CommandRegistry;
 import fr.lampalon.lifemod.platform.bukkit.listeners.*;
 import fr.lampalon.lifemod.platform.bukkit.listeners.hooks.*;
 import fr.lampalon.lifemod.platform.bukkit.managers.*;
-import fr.lampalon.lifemod.platform.bukkit.managers.LogCommandInterceptor;
 import fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.*;
 import fr.lampalon.lifemod.api.LifeModAPI;
@@ -108,7 +103,6 @@ public class LifeMod extends JavaPlugin {
     private StaffActionManager staffActionManager;
     private fr.lampalon.lifemod.platform.bukkit.managers.ScanManager scanManager;
     private fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager noClipManager;
-    private fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener traceItemListener;
     private fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager replayPlayerManager;
     private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
     private IVanishService vanishService;
@@ -153,8 +147,6 @@ public class LifeMod extends JavaPlugin {
 
     private void shutdown() {
         if (noClipManager != null) noClipManager.shutdown();
-        ILogService logSvc = ServiceRegistry.get(ILogService.class);
-        if (logSvc != null) logSvc.shutdown();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
@@ -194,15 +186,6 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(IPinService.class, moderatorAuthService);
 
         PacketEvents.getAPI().getEventManager().registerListener(new FreezePacketListener(this), PacketListenerPriority.NORMAL);
-
-        if (ServiceRegistry.get(ILogService.class) != null) {
-            try {
-                PacketEvents.getAPI().getEventManager().registerListener(
-                    new LogCommandInterceptor(), PacketListenerPriority.LOW);
-            } catch (Exception e) {
-                getLogger().warning("Failed to register LogCommandInterceptor: " + e.getMessage());
-            }
-        }
 
         this.commandRegistry = new CommandRegistry(this);
         registerEvents();
@@ -437,15 +420,6 @@ public class LifeMod extends JavaPlugin {
         ServiceRegistry.register(DatabaseProvider.class, dbProvider);
         ServiceRegistry.register(ISanctionService.class, new SanctionService(dbProvider));
 
-        if (configConfig.getBoolean("logs.enabled", true)) {
-            try {
-                ServiceRegistry.register(ILogService.class,
-                    new LogService(dbProvider, ServiceRegistry.get(IConfigurationService.class), ServiceRegistry.get(ExecutorService.class)));
-            } catch (Exception e) {
-                getLogger().severe("Failed to initialize LogService: " + e.getMessage());
-            }
-        }
-
         moderatorAuthService = new ModeratorAuthService(this);
         moderatorSessionManager = new ModeratorSessionManager(configConfig.getInt("modules.moderator-auth.max-attempts", 3));
         reactionManager = new ReactionManager(this);
@@ -529,24 +503,6 @@ public class LifeMod extends JavaPlugin {
         pm.registerEvents(new PlayerJoin(this, updateChecker), this);
         pm.registerEvents(new ServerListPingListener(vanishService), this);
         pm.registerEvents(new ReportListener(this), this);
-
-        if (ServiceRegistry.get(ILogService.class) != null) {
-            pm.registerEvents(new LogConnectionListener(), this);
-            pm.registerEvents(new LogChatListener(), this);
-            pm.registerEvents(new LogDeathListener(), this);
-            pm.registerEvents(new LogBlockListener(), this);
-            pm.registerEvents(new LogContainerListener(), this);
-            pm.registerEvents(new LogItemListener(), this);
-            pm.registerEvents(new LogEntityListener(), this);
-            pm.registerEvents(new LogMovementListener(), this);
-            traceItemListener = new TraceItemListener();
-            pm.registerEvents(traceItemListener, this);
-            pm.registerEvents(new VaultHook(), this);
-            pm.registerEvents(new AxTradesHook(), this);
-            pm.registerEvents(new QuickShopHook(), this);
-            pm.registerEvents(new ChestShopHook(), this);
-            pm.registerEvents(new ShopKeepersHook(), this);
-        }
     }
 
     private void registerCommands() {
@@ -592,7 +548,6 @@ public class LifeMod extends JavaPlugin {
     public fr.lampalon.lifemod.platform.bukkit.managers.ScanManager getScanManager() { return scanManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager getNoClipManager() { return noClipManager; }
 
-    public fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener getTraceItemListener() { return traceItemListener; }
     public fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager getAntiAltManager() { return antiAltManager; }
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
