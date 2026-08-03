@@ -374,16 +374,6 @@ modules:
     # Use strict item matching (compare full NBT/components when available)
     strict-item-matching: true
 
-  # NoClip (Spectator flight + creative interactions)
-  noclip:
-    enabled: true
-    # Flight speed while in noclip (0.0 - 1.0)
-    speed: 0.3
-    # Block reach in blocks for breaking/placing
-    reach: 7
-    # Ticks between visibility refreshes (how often the moderator is re-shown to others)
-    visibility-refresh-interval: 20
-
 # --- COMMANDS STATUS ---
 commands:
   enabled:
@@ -409,7 +399,6 @@ commands:
     modchangepass: true
     modreset: true
     auth: true
-    noclip: true
 
 # --- GUI MATERIALS ---
 gui:

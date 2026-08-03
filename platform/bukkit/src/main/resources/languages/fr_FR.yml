@@ -585,12 +585,6 @@ commands:
     self: "%prefix%&aVotre inventaire a été vidé."
     message: "%prefix%&aInventaire vidé pour &e%target%&a."
 
-  noclip:
-    activate: "%prefix%&aNoClip activé !"
-    deactivate: "%prefix%&cNoClip désactivé !"
-    usage: "%prefix%&cUtilisation : /noclip <on|off>"
-    chest-opened: "%prefix%&aCoffre ouvert (NoClip)."
-
   ec:
     usage: "%prefix%&cUtilisation : /ec [joueur]"
     yourself: "%prefix%&cVous ne pouvez pas ouvrir votre propre enderchest avec cette commande."

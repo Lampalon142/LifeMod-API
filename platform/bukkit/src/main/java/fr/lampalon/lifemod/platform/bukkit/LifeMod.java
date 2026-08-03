@@ -107,7 +107,6 @@ public class LifeMod extends JavaPlugin {
     private InvseeManager invseeManager;
     private StaffActionManager staffActionManager;
     private fr.lampalon.lifemod.platform.bukkit.managers.ScanManager scanManager;
-    private fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager noClipManager;
     private fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener traceItemListener;
     private fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager replayPlayerManager;
     private fr.lampalon.lifemod.common.replay.ReplayManager replayManager;
@@ -152,7 +151,6 @@ public class LifeMod extends JavaPlugin {
     }
 
     private void shutdown() {
-        if (noClipManager != null) noClipManager.shutdown();
         ILogService logSvc = ServiceRegistry.get(ILogService.class);
         if (logSvc != null) logSvc.shutdown();
         PacketEvents.getAPI().terminate();
@@ -455,12 +453,6 @@ public class LifeMod extends JavaPlugin {
         invseeManager = new InvseeManager();
         staffActionManager = new StaffActionManager();
         scanManager = new fr.lampalon.lifemod.platform.bukkit.managers.ScanManager(this);
-        if (configConfig.getBoolean("modules.noclip.enabled", true)) {
-            noClipManager = new NoClipManager(this);
-            getServer().getPluginManager().registerEvents(
-                    new NoClipBukkitListener(noClipManager), this
-            );
-        }
         antiAltManager = new fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager(this);
 
         this.replayPlayerManager = new fr.lampalon.lifemod.platform.bukkit.replay.ReplayPlayerManager(this);
@@ -590,7 +582,6 @@ public class LifeMod extends JavaPlugin {
     public StaffModeManager getStaffModeManager() { return staffModeManager; }
     public InvseeManager getInvseeManager() { return invseeManager; }
     public fr.lampalon.lifemod.platform.bukkit.managers.ScanManager getScanManager() { return scanManager; }
-    public fr.lampalon.lifemod.platform.bukkit.managers.NoClipManager getNoClipManager() { return noClipManager; }
 
     public fr.lampalon.lifemod.platform.bukkit.listeners.TraceItemListener getTraceItemListener() { return traceItemListener; }
     public fr.lampalon.lifemod.platform.bukkit.managers.antialt.AntiAltManager getAntiAltManager() { return antiAltManager; }
