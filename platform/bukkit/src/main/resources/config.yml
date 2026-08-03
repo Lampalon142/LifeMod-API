@@ -374,13 +374,11 @@ modules:
     # Use strict item matching (compare full NBT/components when available)
     strict-item-matching: true
 
-  # NoClip (Creative flight with an air-mask so the moderator can fly through walls)
+  # NoClip (Spectator flight on the server with the client-side gamemode spoofed back)
   noclip:
     enabled: true
     # Flight speed while in noclip (0.0 - 1.0)
     speed: 0.3
-    # Block radius around the player that is resent as AIR on his client (higher = pass through thicker walls)
-    radius: 3
 
 # --- COMMANDS STATUS ---
 commands:
