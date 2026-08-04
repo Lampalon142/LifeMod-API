@@ -75,7 +75,7 @@ public class VanishService implements IVanishService {
         IConfigurationService config = ServiceRegistry.get(IConfigurationService.class);
         player.setCollidable(config.getBoolean("modules.mod-mode.vanish.no-collision", true));
         player.setCanPickupItems(config.getBoolean("modules.mod-mode.vanish.no-pickup", true));
-        if (config.getBoolean("modules.mod-mode.vanish.invisibility-effect", true)) {
+        if (config.getBoolean("modules.mod-mode.vanish.invisibility", false)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
         }
 

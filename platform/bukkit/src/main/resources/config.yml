@@ -82,7 +82,7 @@ modules:
     vanish:
       collidable: false
       can-pickup-items: false
-      invisibility: true
+      invisibility: false
     items:
       navigation:
         enabled: true
