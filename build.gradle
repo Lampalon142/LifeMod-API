@@ -74,10 +74,9 @@ shadowJar {
 
 task createApiJar(type: Copy) {
     dependsOn ':api:jar'
-    from project(':api').tasks.named('jar') {
-        rename { 'LifeMod-API.jar' }
-    }
+    from project(':api').tasks.named('jar').flatMap { it.archiveFile }
     into layout.projectDirectory.dir('out')
+    rename { 'LifeMod-API.jar' }
 }
 
 task deployDevServers {
