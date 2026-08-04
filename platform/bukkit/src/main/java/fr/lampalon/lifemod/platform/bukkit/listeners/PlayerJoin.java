@@ -9,6 +9,7 @@ import fr.lampalon.lifemod.common.model.SanctionType;
 import fr.lampalon.lifemod.common.service.ISanctionService;
 import fr.lampalon.lifemod.common.service.ILangService;
 import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.platform.bukkit.utils.UpdateChecker;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -36,6 +37,11 @@ public class PlayerJoin implements Listener {
         Player player = event.getPlayer();
         plugin.getVanishService().updateAllForPlayer(player);
         ILangService lang = ServiceRegistry.get(ILangService.class);
+
+        IMessagingService presenceMsg = ServiceRegistry.get(IMessagingService.class);
+        if (presenceMsg != null) {
+            presenceMsg.publish("lifemod:presence", "ONLINE|" + player.getUniqueId() + "|" + plugin.getServerName());
+        }
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             byte[] invData = plugin.getDatabaseManager().getDatabaseProvider()

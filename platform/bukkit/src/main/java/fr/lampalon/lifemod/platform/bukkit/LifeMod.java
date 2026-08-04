@@ -116,6 +116,7 @@ public class LifeMod extends JavaPlugin {
     private FileConfiguration configConfig;
     private FileConfiguration langConfig;
     private Set<UUID> moderators = new HashSet<>();
+    private final Map<UUID, String> playerServers = new ConcurrentHashMap<>();
     private final Map<UUID, Deque<Long>> cpsMap = new ConcurrentHashMap<>();
     private final Set<UUID> staffChatToggled = ConcurrentHashMap.newKeySet();
     private long startupTime;
@@ -149,6 +150,7 @@ public class LifeMod extends JavaPlugin {
         if (antiVPNService != null) antiVPNService.shutdown();
         ExecutorService executor = ServiceRegistry.get(ExecutorService.class);
         if (executor != null) executor.shutdownNow();
+        playerServers.clear();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
@@ -318,6 +320,23 @@ public class LifeMod extends JavaPlugin {
                     fullReload();
                 } catch (Exception e) {
                     getLogger().warning("Failed to process cross-server reload: " + message);
+                }
+            });
+
+            redis.subscribe("lifemod:presence", message -> {
+                try {
+                    String[] parts = message.split("\\|", -1);
+                    if (parts.length < 2) return;
+                    String action = parts[0];
+                    UUID uuid = UUID.fromString(parts[1]);
+                    if ("ONLINE".equals(action) && parts.length >= 3) {
+                        String srv = parts[2];
+                        if (!srv.equals(serverName)) playerServers.put(uuid, srv);
+                    } else if ("OFFLINE".equals(action)) {
+                        playerServers.remove(uuid);
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to process cross-server presence: " + message);
                 }
             });
         }
@@ -554,6 +573,8 @@ public class LifeMod extends JavaPlugin {
     public boolean isChatEnabled() { return chatEnabled; }
     public void setChatEnabled(boolean chatEnabled) { this.chatEnabled = chatEnabled; }
     public Set<UUID> getModerators() { return moderators; }
+    public Map<UUID, String> getPlayerServers() { return playerServers; }
+    public String getPlayerServer(UUID uuid) { return playerServers.get(uuid); }
     public boolean isFreeze(Player p) { return freezeManager.isPlayerFrozen(p.getUniqueId()); }
     public Map<UUID, Location> getFrozenPlayers() { return freezeManager.getFrozenPlayers(); }
     public void fullReload() {

@@ -752,3 +752,22 @@ alts:
     online: "&a"
     offline: "&7"
     banned: "&c"
+
+# --- LOOKUP ---
+lookup:
+  usage: "&cUsage: /lookup <player>"
+  not-found: "%prefix%&cThis player has never been recorded."
+  header: "&8&m----------------------------------------\n&6&lLookup: &e%player%\n "
+  ip: " &8• &7IP Address: &e%ip%"
+  status: " &8• &7Connected: %status%"
+  status-online: "&a&lYES"
+  status-offline: "&c&lNO"
+  status-online-server: "&a&lYES &8(&e%server%&8)"
+  first-seen: " &8• &7First Seen: &e%time%"
+  last-seen: " &8• &7Last Seen: &e%time%"
+  never: "&eNever"
+  sessions: " &8• &7Total Sessions: &e%count%"
+  sanctions: " &8• &7Sanctions: &e%total% &8(&7%warn% &awarn&8, &7%mute% &dmute&8, &7%ban% &cban&8, &7%kick% &fkick&8)"
+  active: " &8• &7Active Sanctions: &e%count%"
+  active-ban: " &8• &7Active Ban: &c&lBANNED &8(&f%reason%&8)\n   &7By: &e%issuer% &7- &7Expires in: &e%time%"
+  footer: "\n&8&m----------------------------------------"

@@ -2,6 +2,8 @@ package fr.lampalon.lifemod.platform.bukkit.listeners;
 
 import fr.lampalon.lifemod.common.database.DatabaseProvider;
 import fr.lampalon.lifemod.common.model.PlayerData;
+import fr.lampalon.lifemod.common.core.ServiceRegistry;
+import fr.lampalon.lifemod.common.messaging.IMessagingService;
 import fr.lampalon.lifemod.platform.bukkit.LifeMod;
 import fr.lampalon.lifemod.platform.bukkit.managers.DebugManager;
 import fr.lampalon.lifemod.platform.bukkit.managers.staff.VanishService;
@@ -30,6 +32,11 @@ public class PlayerQuit implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Location location = player.getLocation();
+
+        IMessagingService presenceMsg = ServiceRegistry.get(IMessagingService.class);
+        if (presenceMsg != null) {
+            presenceMsg.publish("lifemod:presence", "OFFLINE|" + uuid);
+        }
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             DatabaseProvider db = plugin.getDatabaseManager().getDatabaseProvider();

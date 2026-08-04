@@ -748,3 +748,22 @@ alts:
     online: "&a"
     offline: "&7"
     banned: "&c"
+
+# --- LOOKUP ---
+lookup:
+  usage: "&cUsage: /lookup <joueur>"
+  not-found: "%prefix%&cCe joueur n'a jamais été enregistré."
+  header: "&8&m----------------------------------------\n&6&lLookup: &e%player%\n "
+  ip: " &8• &7Adresse IP : &e%ip%"
+  status: " &8• &7Connecté : %status%"
+  status-online: "&a&lOUI"
+  status-offline: "&c&lNON"
+  status-online-server: "&a&lOUI &8(&e%server%&8)"
+  first-seen: " &8• &7Première connexion : &e%time%"
+  last-seen: " &8• &7Dernière connexion : &e%time%"
+  never: "&eJamais"
+  sessions: " &8• &7Sessions au total : &e%count%"
+  sanctions: " &8• &7Sanctions : &e%total% &8(&7%warn% &awarn&8, &7%mute% &dmute&8, &7%ban% &cban&8, &7%kick% &fkick&8)"
+  active: " &8• &7Sanctions actives : &e%count%"
+  active-ban: " &8• &7Ban actif : &c&lBANNI &8(&f%reason%&8)\n   &7Par : &e%issuer% &7- &7Expire dans : &e%time%"
+  footer: "\n&8&m----------------------------------------"
