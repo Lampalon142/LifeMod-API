@@ -511,6 +511,7 @@ public class LifeMod extends JavaPlugin {
         PacketEvents.getAPI().getEventManager().registerListener(cpsListener, PacketListenerPriority.NORMAL);
 
         pm.registerEvents(new ChatListener(), this);
+        pm.registerEvents(new ChatReportListener(this), this);
         pm.registerEvents(new ModeratorAuthListener(), this);
         pm.registerEvents(new SanctionListener(), this);
         pm.registerEvents(new ConnectionListener(), this);

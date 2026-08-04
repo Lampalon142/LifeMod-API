@@ -767,3 +767,18 @@ lookup:
   active: " &8• &7Sanctions actives : &e%count%"
   active-ban: " &8• &7Ban actif : &c&lBANNI &8(&f%reason%&8)\n   &7Par : &e%issuer% &7- &7Expire dans : &e%time%"
   footer: "\n&8&m----------------------------------------"
+
+# --- SIGNALEMENT CHAT ---
+chatreport:
+  usage: "&cUsage : /reportchat <joueur>"
+  not-found: "&cCe joueur n'est pas connecté au serveur."
+  self: "&cVous ne pouvez pas vous signaler vous-même."
+  icon: "&c⚠ "
+  hover: "&cCliquez pour signaler &e%player%"
+  name: "&e%name%"
+  prompt: "%prefix%&eSignaler &6%target%&e ? Tapez &a%confirm%&e en chat pour confirmer, autre chose pour annuler."
+  confirm: "oui"
+  cancelled: "&cSignalement annulé."
+  timeout: "&7Demande de signalement expirée. Cliquez à nouveau sur l'icône de signalement."
+  reason: "Signalé depuis le chat"
+  submitted: "&aSignalement de &e%target% &asoumis avec succès."

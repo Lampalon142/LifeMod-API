@@ -771,3 +771,18 @@ lookup:
   active: " &8• &7Active Sanctions: &e%count%"
   active-ban: " &8• &7Active Ban: &c&lBANNED &8(&f%reason%&8)\n   &7By: &e%issuer% &7- &7Expires in: &e%time%"
   footer: "\n&8&m----------------------------------------"
+
+# --- CHAT REPORT ---
+chatreport:
+  usage: "&cUsage: /reportchat <player>"
+  not-found: "&cThis player is not connected to the server."
+  self: "&cYou cannot report yourself."
+  icon: "&c⚠ "
+  hover: "&cClick to report &e%player%"
+  name: "&e%name%"
+  prompt: "%prefix%&eReport &6%target%&e? Type &a%confirm%&e in chat to confirm, anything else to cancel."
+  confirm: "yes"
+  cancelled: "&cReport cancelled."
+  timeout: "&7Report request expired. Please click the report icon again."
+  reason: "Reported from chat"
+  submitted: "&aReport for &e%target% &asubmitted successfully."

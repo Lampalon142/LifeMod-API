@@ -59,6 +59,16 @@ modules:
       - "bitch"
       - "suck"
 
+  # Clickable Chat Report
+  chat-report:
+    enabled: true
+    # Show a clickable report icon before the player's name (independent of chat plugins)
+    show-icon: true
+    # How many recent messages of the reported player are attached to the report
+    max-messages: 30
+    # Seconds a reporter has to confirm the report before it expires
+    confirm-timeout: 60
+
   # Moderator Security System
   moderator-auth:
     enabled: false
