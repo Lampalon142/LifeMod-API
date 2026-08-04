@@ -286,6 +286,7 @@ public class BungeeLifeMod extends Plugin {
     }
 
     private void shutdown() {
+        if (antiVPNService != null) antiVPNService.shutdown();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();
 

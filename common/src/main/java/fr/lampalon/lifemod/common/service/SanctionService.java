@@ -23,7 +23,11 @@ import java.util.regex.Pattern;
 
 public class SanctionService implements ISanctionService {
 
-    private static final ExecutorService LIFEMOD_EXECUTOR = Executors.newCachedThreadPool(r -> new Thread(r, "LifeMod-Async"));
+    private static final ExecutorService LIFEMOD_EXECUTOR = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r, "LifeMod-Async");
+        t.setDaemon(true);
+        return t;
+    });
 
     private final DatabaseProvider db;
     private final IMessagingService messaging;

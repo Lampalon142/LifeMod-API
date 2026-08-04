@@ -146,6 +146,9 @@ public class LifeMod extends JavaPlugin {
 
     private void shutdown() {
         if (noClipManager != null) noClipManager.shutdown();
+        if (antiVPNService != null) antiVPNService.shutdown();
+        ExecutorService executor = ServiceRegistry.get(ExecutorService.class);
+        if (executor != null) executor.shutdownNow();
         PacketEvents.getAPI().terminate();
         IMessagingService msg = ServiceRegistry.get(IMessagingService.class);
         if (msg != null) msg.close();

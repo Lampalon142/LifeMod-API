@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,24 +23,27 @@ public class AntiVPNService {
     private final Map<String, AtomicInteger> connectionRateMap = new ConcurrentHashMap<>();
     private final Map<String, Long> lastConnectionTime = new ConcurrentHashMap<>();
     private final AtomicInteger globalConnectionsLastSecond = new AtomicInteger(0);
+    private final ScheduledExecutorService rateScheduler;
 
     public AntiVPNService(ILifePlatform platform) {
         this.platform = platform;
         this.lookupManager = new IPLookupManager();
-        
-        // Rate limiting reset task
-        platform.runTaskAsync(() -> {
-            while (true) {
-                try {
-                    TimeUnit.SECONDS.sleep(1);
-                    globalConnectionsLastSecond.set(0);
-                    connectionRateMap.clear();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            }
+
+        this.rateScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "LifeMod-RateLimit");
+            t.setDaemon(true);
+            return t;
         });
+        this.rateScheduler.scheduleAtFixedRate(this::resetRateCounters, 1, 1, TimeUnit.SECONDS);
+    }
+
+    private void resetRateCounters() {
+        globalConnectionsLastSecond.set(0);
+        connectionRateMap.clear();
+    }
+
+    public void shutdown() {
+        rateScheduler.shutdownNow();
     }
 
     public CompletableFuture<Boolean> shouldAllowConnection(String ip, String name) {
