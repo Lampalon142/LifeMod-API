@@ -1,7 +1,8 @@
 # LifeMod Agent Guide
 
 ## Workflow
-- **Required order:** `./gradlew build shadowJar` then `./gradlew test`
+- **Required build order:** `./gradlew build shadowJar` then `./gradlew test`
+- **Do NOT build/compile/tests yourself** — the user runs builds (and the CI) themselves. Just make the code changes, review them, and commit & push.
 - **Commit & push proactively:** Always take the initiative to commit and push any modification to `v2` with conventional commits — do NOT wait to be asked
 - **No test classes exist** — `./gradlew test` produces 0% JaCoCo coverage; report is still generated and uploaded to Codecov
 - **No lint/format/typecheck** rules configured
