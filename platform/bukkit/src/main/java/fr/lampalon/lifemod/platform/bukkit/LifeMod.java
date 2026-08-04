@@ -173,6 +173,7 @@ public class LifeMod extends JavaPlugin {
         PacketEvents.getAPI().init();
         bukkitPlatform.setNmsProvider(NmsFactory.load(getLogger(), this));
         lifeModAPI = new LifeModAPIImpl(this);
+        LifeModAPI.Provider.set(lifeModAPI);
 
         String webhookUrl = configConfig.getString("modules.discord.webhook-url");
         boolean discordEnabled = configConfig.getBoolean("modules.discord.enabled", false);

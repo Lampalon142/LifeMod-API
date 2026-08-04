@@ -72,6 +72,14 @@ shadowJar {
 
 }
 
+task createApiJar(type: Copy) {
+    dependsOn ':api:jar'
+    from project(':api').tasks.named('jar') {
+        rename { 'LifeMod-API.jar' }
+    }
+    into layout.projectDirectory.dir('out')
+}
+
 task deployDevServers {
     doLast {
         def jarName = shadowJar.archiveFileName.get()
@@ -80,6 +88,7 @@ task deployDevServers {
         // Clean old JARs from out/
         delete fileTree(shadowJar.destinationDirectory.get().asFile).matching {
             include "LifeMod*.jar"
+            exclude "LifeMod-API.jar"
             exclude jarName
         }
 
@@ -104,3 +113,4 @@ task deployDevServers {
 }
 
 shadowJar.finalizedBy deployDevServers
+deployDevServers.dependsOn createApiJar
