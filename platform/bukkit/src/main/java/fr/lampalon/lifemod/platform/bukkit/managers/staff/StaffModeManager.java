@@ -58,6 +58,10 @@ public class StaffModeManager {
         return moderators.contains(player.getUniqueId());
     }
 
+    public Set<UUID> getStaffPlayers() {
+        return new java.util.HashSet<>(moderators);
+    }
+
     private void setStaffModeState(Player player, boolean state) {
         UUID uuid = player.getUniqueId();
         String serverName = plugin.getServerName();

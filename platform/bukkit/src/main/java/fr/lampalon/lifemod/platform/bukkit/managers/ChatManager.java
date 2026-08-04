@@ -85,6 +85,14 @@ public class ChatManager implements Listener {
         debug.log("chat", "ChatManager enabled set to " + enabled);
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public List<String> getBlacklist() {
+        return new java.util.ArrayList<>(blacklist);
+    }
+
     public void addToBlacklist(String word) {
         blacklist.add(word);
         plugin.getConfig().set("modules.chat-manager.blacklist", blacklist);
