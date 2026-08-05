@@ -1,10 +1,16 @@
 package fr.lampalon.lifemod.api;
 
+import fr.lampalon.lifemod.api.antialt.IAntiAltService;
 import fr.lampalon.lifemod.api.antivpn.IVpnService;
 import fr.lampalon.lifemod.api.chat.IChatService;
 import fr.lampalon.lifemod.api.freeze.IFreezeService;
+import fr.lampalon.lifemod.api.noclip.INoClipService;
 import fr.lampalon.lifemod.api.player.IPlayerService;
+import fr.lampalon.lifemod.api.replay.IReplayService;
+import fr.lampalon.lifemod.api.report.IReportService;
 import fr.lampalon.lifemod.api.sanction.ISanctionService;
+import fr.lampalon.lifemod.api.staff.IStaffActionService;
+import fr.lampalon.lifemod.api.staff.IStaffItemsService;
 import fr.lampalon.lifemod.api.staff.IStaffModeService;
 import fr.lampalon.lifemod.api.staff.IVanishService;
 import fr.lampalon.lifemod.api.webhook.IWebhookService;
@@ -27,6 +33,18 @@ public interface LifeModAPI {
     IChatService getChatService();
 
     IStaffModeService getStaffModeService();
+
+    IStaffItemsService getStaffItemsService();
+
+    IStaffActionService getStaffActionService();
+
+    IReplayService getReplayService();
+
+    IReportService getReportService();
+
+    IAntiAltService getAntiAltService();
+
+    INoClipService getNoClipService();
 
     IWebhookService getWebhookService();
 
