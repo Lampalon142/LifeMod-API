@@ -4,6 +4,7 @@ import fr.lampalon.lifemod.api.antialt.IAntiAltService;
 import fr.lampalon.lifemod.api.antivpn.IVpnService;
 import fr.lampalon.lifemod.api.chat.IChatService;
 import fr.lampalon.lifemod.api.freeze.IFreezeService;
+import fr.lampalon.lifemod.api.metrics.IMetricsService;
 import fr.lampalon.lifemod.api.noclip.INoClipService;
 import fr.lampalon.lifemod.api.player.IPlayerService;
 import fr.lampalon.lifemod.api.replay.IReplayService;
@@ -49,6 +50,8 @@ public interface LifeModAPI {
     IWebhookService getWebhookService();
 
     IPlayerService getPlayerService();
+
+    IMetricsService getMetricsService();
 
     /**
      * Static holder for the currently running {@link LifeModAPI} instance,
