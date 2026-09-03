@@ -10,6 +10,7 @@ import fr.lampalon.lifemod.api.player.IPlayerService;
 import fr.lampalon.lifemod.api.replay.IReplayService;
 import fr.lampalon.lifemod.api.report.IReportService;
 import fr.lampalon.lifemod.api.sanction.ISanctionService;
+import fr.lampalon.lifemod.api.scan.IScanService;
 import fr.lampalon.lifemod.api.staff.IStaffActionService;
 import fr.lampalon.lifemod.api.staff.IStaffItemsService;
 import fr.lampalon.lifemod.api.staff.IStaffModeService;
@@ -52,6 +53,8 @@ public interface LifeModAPI {
     IPlayerService getPlayerService();
 
     IMetricsService getMetricsService();
+
+    IScanService getScanService();
 
     /**
      * Static holder for the currently running {@link LifeModAPI} instance,

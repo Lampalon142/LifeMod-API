@@ -3,6 +3,7 @@ package fr.lampalon.lifemod.api.staff;
 import org.bukkit.entity.Player;
 
 import java.util.Set;
+import java.util.UUID;
 
 public interface IStaffActionService {
 
@@ -17,4 +18,10 @@ public interface IStaffActionService {
      * @return {@code false} if the action type is not registered or the target is missing
      */
     boolean execute(Player moderator, Player target, StaffActionType type);
+
+    /**
+     * Whether this staff member has passed their PIN/2FA check for their
+     * current session (see {@code /auth login}).
+     */
+    boolean isAuthenticated(UUID staffUuid);
 }
